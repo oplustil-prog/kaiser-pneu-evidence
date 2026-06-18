@@ -36,6 +36,42 @@
     localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify([...dismissed].slice(-20)));
   }
 
+  async function clearBrowserCaches() {
+    if (!("caches" in window)) return;
+    try {
+      const keys = await window.caches.keys();
+      await Promise.all(keys.map((key) => window.caches.delete(key)));
+    } catch {
+      // Cache API is not available everywhere; the URL cache-bust below is the fallback.
+    }
+  }
+
+  function buildFreshUrl() {
+    const url = new URL(window.location.href);
+    ["update", "notice", "reset"].forEach((key) => url.searchParams.delete(key));
+    url.searchParams.set("fresh", `button-refresh-${Date.now()}`);
+    return url.toString();
+  }
+
+  async function hardRefreshFromNotice(noticeId, button) {
+    rememberDismissed(noticeId);
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Obnovuji...";
+    }
+    try {
+      sessionStorage.setItem("kaiser-last-notice-refresh", new Date().toISOString());
+    } catch {
+      // Session storage can be blocked in strict browser modes.
+    }
+    await clearBrowserCaches();
+    try {
+      window.location.replace(buildFreshUrl());
+    } catch {
+      window.location.reload();
+    }
+  }
+
   function injectStyles() {
     if (document.getElementById("kaiser-system-notice-style")) return;
     const style = document.createElement("style");
@@ -120,13 +156,11 @@
         <strong>${escapeHtml(data.title)}</strong>
         <p>${escapeHtml(data.message)}</p>
       </div>
-      <button type="button">Rozumim</button>
+      <button type="button">Rozumim a obnovit</button>
     `;
     banner.hidden = false;
-    banner.querySelector("button").addEventListener("click", () => {
-      rememberDismissed(data.id);
-      banner.hidden = true;
-    });
+    const button = banner.querySelector("button");
+    button.onclick = () => hardRefreshFromNotice(data.id, button);
   }
 
   function escapeHtml(value) {
@@ -278,33 +312,55 @@
     });
   }
 
-  function loadScriptOnce(flagName, selector, src, errorTitle) {
-    if (window[flagName] || document.querySelector(selector)) return;
-    window[flagName] = true;
+  function loadLoginGate() {
+    if (window.kaiserLoginGateRequested || document.querySelector('script[src*="login-2fa"]')) return;
+    window.kaiserLoginGateRequested = true;
     const script = document.createElement("script");
-    script.src = src;
+    script.src = "./login-2fa.js?v=20260618-41";
     script.defer = true;
     script.onerror = () => {
       showNotice({
-        id: `${flagName}-error-${Date.now()}`,
+        id: `login-load-error-${Date.now()}`,
         kind: "reset",
-        title: errorTitle,
+        title: "Prihlaseni se nenacetlo",
         message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
       });
     };
     document.head.appendChild(script);
   }
 
-  function loadLoginGate() {
-    loadScriptOnce("kaiserLoginGateRequested", 'script[src*="login-2fa"]', "./login-2fa.js?v=20260618-41", "Prihlaseni se nenacetlo");
+  function loadUserInvites() {
+    if (window.kaiserUserInvitesRequested || document.querySelector('script[src*="user-invites"]')) return;
+    window.kaiserUserInvitesRequested = true;
+    const script = document.createElement("script");
+    script.src = "./user-invites.js?v=20260618-40";
+    script.defer = true;
+    script.onerror = () => {
+      showNotice({
+        id: `invites-load-error-${Date.now()}`,
+        kind: "reset",
+        title: "Pozvanky se nenacetly",
+        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
+      });
+    };
+    document.head.appendChild(script);
   }
 
   function loadPasswordReset() {
-    loadScriptOnce("kaiserPasswordResetRequested", 'script[src*="password-reset"]', "./password-reset.js?v=20260618-41", "Nastaveni hesla se nenacetlo");
-  }
-
-  function loadUserInvites() {
-    loadScriptOnce("kaiserUserInvitesRequested", 'script[src*="user-invites"]', "./user-invites.js?v=20260618-40", "Pozvanky se nenacetly");
+    if (window.kaiserPasswordResetRequested || document.querySelector('script[src*="password-reset"]')) return;
+    window.kaiserPasswordResetRequested = true;
+    const script = document.createElement("script");
+    script.src = "./password-reset.js?v=20260618-41";
+    script.defer = true;
+    script.onerror = () => {
+      showNotice({
+        id: `password-reset-load-error-${Date.now()}`,
+        kind: "reset",
+        title: "Nastaveni hesla se nenacetlo",
+        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
+      });
+    };
+    document.head.appendChild(script);
   }
 
   window.kaiserShowSystemNotice = function (message, options = {}) {
