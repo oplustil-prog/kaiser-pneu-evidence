@@ -844,8 +844,19 @@ button.preview-gauge-card:hover {
 }
 
 .quick-form {
-  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  grid-template-columns:
+    minmax(210px, 1.45fr)
+    minmax(118px, 0.75fr)
+    repeat(2, minmax(82px, 0.42fr))
+    minmax(106px, 0.58fr)
+    minmax(180px, 1fr)
+    max-content;
   align-items: end;
+}
+
+.quick-form .measure-number,
+.quick-form .measure-odometer {
+  max-width: 128px;
 }
 
 .entry-form {
@@ -865,7 +876,7 @@ label {
 }
 
 .quick-form .wide-input {
-  grid-column: span 2;
+  grid-column: auto;
 }
 
 .form-panel {
@@ -1614,6 +1625,11 @@ label {
   .entry-form,
   .quick-form {
     grid-template-columns: 1fr;
+  }
+
+  .quick-form .measure-number,
+  .quick-form .measure-odometer {
+    max-width: none;
   }
 
   .user-metrics,
