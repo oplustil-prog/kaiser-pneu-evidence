@@ -111,6 +111,7 @@
   }
 
   function assignSelected(spz, position) {
+    if (typeof window.kaiserRequireAuth === "function" && !window.kaiserRequireAuth("montaz pneu")) return;
     const tireId = document.querySelector("#positionTireSelect")?.value || "";
     const tire = (state.tires || []).find((item) => item.id === tireId);
     const vehicle = (state.vehicles || []).find((item) => item.spz === spz);
@@ -137,11 +138,13 @@
     selectedVehicle = spz;
     selectedPosition = position;
     saveState?.();
+    window.setTimeout(() => window.kaiserCloud?.pushState?.({ quiet: false, source: "Montaz pneu" }), 80);
     renderAll?.();
     showToast?.(`Pneu ${tire.id} je namontovana na ${spz} / ${position}.`);
   }
 
   function unassign(spz, position) {
+    if (typeof window.kaiserRequireAuth === "function" && !window.kaiserRequireAuth("sundani pneu")) return;
     const tire = getTire(spz, position);
     if (!tire) {
       showToast?.("Na teto pozici neni prirazena pneumatika.");
@@ -155,6 +158,7 @@
     selectedVehicle = spz;
     selectedPosition = position;
     saveState?.();
+    window.setTimeout(() => window.kaiserCloud?.pushState?.({ quiet: false, source: "Sundani pneu" }), 80);
     renderAll?.();
     showToast?.(`Pneu ${tire.id} je sundana na sklad.`);
   }
