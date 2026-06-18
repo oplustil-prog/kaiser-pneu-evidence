@@ -1,2 +1,2 @@
-// Dočasně vypnuto: předchozí verze zamrzávala veřejnou stránku.
-// Přihlašovací náhled a 2FA přidáme znovu až po stabilizaci.
+// Temporarily disabled: the previous version could freeze the public page.
+// Login preview and 2FA will be added again after the page is stable.
