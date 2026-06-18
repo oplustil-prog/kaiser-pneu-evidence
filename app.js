@@ -1,13 +1,14 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
-  number: "v0.9.1",
-  build: "20260618-28",
+  number: "v0.9.2",
+  build: "20260618-29",
   releaseDate: "18. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
     "Supabase cloud, verejna GitHub Pages aplikace a zaloha produkcnich dat.",
     "Import ostrych servisnich faktur s rozdelenim na praci, material a pneu.",
     "Automaticke zalozeni kusove evidence pneu z ostrych faktur.",
+    "Ochrana proti prazdnemu cloudovemu stavu v evidenci pneumatik.",
     "Dashboard metriky, upozorneni na 30denni rychle mereni a proklik na mereni.",
     "Mapa osazeni z pudorysu, servisni karta, uzivatele a PDF karta vozidla."
   ]
@@ -789,6 +790,23 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function ensureHydratedState() {
+  const before = {
+    tires: state.tires?.length || 0,
+    services: state.services?.length || 0,
+    imports: state.imports?.length || 0
+  };
+  state = hydrateProductionData(state);
+  const after = {
+    tires: state.tires?.length || 0,
+    services: state.services?.length || 0,
+    imports: state.imports?.length || 0
+  };
+  if (before.tires !== after.tires || before.services !== after.services || before.imports !== after.imports) {
+    saveState();
+  }
 }
 
 function hydrateProductionData(nextState) {
@@ -2369,6 +2387,7 @@ function exportCsv() {
 }
 
 function renderAll() {
+  ensureHydratedState();
   applySettings();
   renderVersionInfo();
   fillSelectOptions();
