@@ -278,6 +278,23 @@
     });
   }
 
+  function loadLoginGate() {
+    if (window.kaiserLoginGateRequested || document.querySelector('script[src*="login-2fa"]')) return;
+    window.kaiserLoginGateRequested = true;
+    const script = document.createElement("script");
+    script.src = "./login-2fa.js?v=20260618-38";
+    script.defer = true;
+    script.onerror = () => {
+      showNotice({
+        id: `login-load-error-${Date.now()}`,
+        kind: "reset",
+        title: "Prihlaseni se nenacetlo",
+        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
+      });
+    };
+    document.head.appendChild(script);
+  }
+
   window.kaiserShowSystemNotice = function (message, options = {}) {
     showNotice({
       id: options.id || `manual-${Date.now()}`,
@@ -303,9 +320,11 @@
     document.addEventListener("DOMContentLoaded", () => {
       boot();
       installCloudSaveGuard();
+      loadLoginGate();
     }, { once: true });
   } else {
     boot();
     installCloudSaveGuard();
+    loadLoginGate();
   }
 })();
