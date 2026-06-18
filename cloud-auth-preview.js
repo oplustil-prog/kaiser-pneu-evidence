@@ -275,6 +275,8 @@
     }
   }
 
+  window.kaiserSaveCloudNow = saveCloudNow;
+
   function scheduleCloudSave() {
     window.clearTimeout(cloudSaveTimer);
     cloudSaveTimer = window.setTimeout(() => saveCloudNow({ visible: false }), 450);
@@ -316,7 +318,7 @@
     if (window.kaiserLoginGateRequested || document.querySelector('script[src*="login-2fa"]')) return;
     window.kaiserLoginGateRequested = true;
     const script = document.createElement("script");
-    script.src = "./login-2fa.js?v=20260618-45";
+    script.src = "./login-2fa.js?v=20260618-47";
     script.defer = true;
     script.onerror = () => {
       showNotice({
