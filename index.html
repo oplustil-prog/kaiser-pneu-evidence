@@ -49,6 +49,10 @@
             <span class="nav-icon" aria-hidden="true">06</span>
             Reporty
           </button>
+          <button class="nav-item" type="button" data-section="settings">
+            <span class="nav-icon" aria-hidden="true">07</span>
+            Nastaveni
+          </button>
         </nav>
 
         <div class="sidebar-note">
@@ -443,6 +447,95 @@
                   </thead>
                   <tbody id="priceTableBody"></tbody>
                 </table>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="settings" aria-label="Nastaveni aplikace">
+          <div class="toolbar">
+            <div>
+              <p class="eyebrow">Konfigurace</p>
+              <h2>Nastaveni aplikace</h2>
+            </div>
+            <span class="badge badge-ok">ulozeno v tomto prohlizeci</span>
+          </div>
+
+          <div class="settings-grid">
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Provoz a limity</p>
+                  <h3>Zakladni pravidla evidence</h3>
+                </div>
+              </div>
+              <form class="entry-form settings-form" id="settingsForm">
+                <label>
+                  Nazev provozu
+                  <input name="companyName" type="text" required />
+                </label>
+                <label>
+                  Hlavni barva
+                  <input name="primaryColor" type="color" />
+                </label>
+                <label>
+                  Dezen k vymene mm
+                  <input name="treadWarning" type="number" min="1" max="12" step="0.1" required />
+                </label>
+                <label>
+                  Minimalni tlak bar
+                  <input name="pressureMin" type="number" min="4" max="12" step="0.1" required />
+                </label>
+                <label>
+                  Limit stari DOT v letech
+                  <input name="dotAgeLimit" type="number" min="1" max="12" step="1" required />
+                </label>
+                <label>
+                  Upozorneni pred vymenou
+                  <input name="replacementDays" type="number" min="1" max="180" step="1" required />
+                </label>
+                <label class="settings-switch">
+                  <input name="publicDemoMode" type="checkbox" />
+                  <span>Verejny demo rezim pro manazery</span>
+                </label>
+                <label class="settings-switch">
+                  <input name="workshopMobileMode" type="checkbox" />
+                  <span>Mobilni rezim pro dilnu jako vychozi</span>
+                </label>
+                <button class="button button-primary" type="submit">Ulozit nastaveni</button>
+              </form>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Aktualni konfigurace</p>
+                  <h3>Prehled pravidel</h3>
+                </div>
+              </div>
+              <div class="settings-summary" id="settingsSummary"></div>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Role a pristupy</p>
+                  <h3>Navrh pro ostrou verzi</h3>
+                </div>
+              </div>
+              <div class="role-grid">
+                <div class="role-card">
+                  <strong>Management</strong>
+                  <p>Dashboard, reporty, ceny, uspory a exporty bez editace servisnich karet.</p>
+                </div>
+                <div class="role-card">
+                  <strong>Dilna</strong>
+                  <p>Rychle mereni dezenu, tlaku, montaze, defekty a servisni karta z mobilu.</p>
+                </div>
+                <div class="role-card">
+                  <strong>Spravce vozoveho parku</strong>
+                  <p>Kompletni evidence pneu, vozidel, limitu, dodavatelu a importu faktur.</p>
+                </div>
               </div>
             </article>
           </div>
