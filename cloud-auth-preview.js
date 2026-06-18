@@ -262,13 +262,13 @@
     document.addEventListener("submit", (event) => {
       const form = event.target.closest("#settingsForm, #userForm, #tireForm, #measurementForm, #quickMeasurementForm, #serviceForm");
       if (!form) return;
-      window.setTimeout(() => saveCloudNow({ visible: true }), 120);
+      saveCloudNow({ visible: true });
     });
 
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("#saveVehicleImport, #parseImport, #parseVehicleImport, #resetDemoData");
       if (!trigger) return;
-      window.setTimeout(() => saveCloudNow({ visible: true }), 160);
+      saveCloudNow({ visible: true });
     });
 
     window.addEventListener("beforeunload", (event) => {
