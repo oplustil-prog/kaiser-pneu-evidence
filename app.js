@@ -1,12 +1,13 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
-  number: "v0.9.0",
-  build: "20260618-27",
+  number: "v0.9.1",
+  build: "20260618-28",
   releaseDate: "18. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
     "Supabase cloud, verejna GitHub Pages aplikace a zaloha produkcnich dat.",
     "Import ostrych servisnich faktur s rozdelenim na praci, material a pneu.",
+    "Automaticke zalozeni kusove evidence pneu z ostrych faktur.",
     "Dashboard metriky, upozorneni na 30denni rychle mereni a proklik na mereni.",
     "Mapa osazeni z pudorysu, servisni karta, uzivatele a PDF karta vozidla."
   ]
@@ -662,7 +663,7 @@ const kaiserDriverUsers = [
 ];
 
 const initialState = {
-  tires: [],
+  tires: buildTiresFromServiceInvoices(importedInvoiceData.services || []),
   vehicles: kaiserFleetVehicles,
   services: importedInvoiceData.services || [],
   measurements: [],
@@ -715,6 +716,7 @@ const initialState = {
 };
 
 let state = loadState();
+saveState();
 let activeSection = "dashboard";
 let selectedVehicle = state.vehicles[0]?.spz || "";
 let selectedPosition = "";
@@ -762,9 +764,9 @@ const formatNumber = (value, decimals = 0) =>
 function loadState() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return structuredClone(initialState);
+    if (!stored) return hydrateProductionData(structuredClone(initialState));
     const parsed = JSON.parse(stored);
-    return {
+    return hydrateProductionData({
       ...structuredClone(initialState),
       ...parsed,
       tires: parsed.tires || [],
@@ -779,14 +781,194 @@ function loadState() {
         ...structuredClone(initialState.settings),
         ...(parsed.settings || {})
       }
-    };
+    });
   } catch {
-    return structuredClone(initialState);
+    return hydrateProductionData(structuredClone(initialState));
   }
 }
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function hydrateProductionData(nextState) {
+  nextState.services = mergeImportedServices(nextState.services);
+  nextState.imports = mergeImportedRows(nextState.imports);
+  nextState.tires = mergeImportedTires(nextState.tires, nextState.services);
+  return nextState;
+}
+
+function mergeImportedServices(existing = []) {
+  const imported = importedInvoiceData.services || [];
+  if (!imported.length) return existing || [];
+  const rows = new Map();
+  imported.forEach((service) => rows.set(service.id || service.invoice, structuredClone(service)));
+  (existing || []).forEach((service) => {
+    const key = service.id || service.invoice;
+    rows.set(key, { ...(rows.get(key) || {}), ...service });
+  });
+  return [...rows.values()];
+}
+
+function importRowKey(row) {
+  return [row.date, row.invoice, row.item, row.qty, row.price, row.total, row.target].join("|");
+}
+
+function mergeImportedRows(existing = []) {
+  const imported = importedInvoiceData.imports || [];
+  if (!imported.length) return existing || [];
+  const rows = new Map();
+  imported.forEach((row) => rows.set(importRowKey(row), structuredClone(row)));
+  (existing || []).forEach((row) => rows.set(importRowKey(row), { ...(rows.get(importRowKey(row)) || {}), ...row }));
+  return [...rows.values()];
+}
+
+function mergeImportedTires(existing = [], services = []) {
+  const generated = buildTiresFromServiceInvoices(services);
+  if (!generated.length) return existing || [];
+
+  const existingRows = existing || [];
+  if (existingRows.some((tire) => tire.importedFromInvoice)) {
+    const byId = new Map(existingRows.map((tire) => [tire.id, tire]));
+    generated.forEach((tire) => {
+      if (!byId.has(tire.id)) byId.set(tire.id, tire);
+    });
+    return [...byId.values()];
+  }
+
+  if (!existingRows.length) return generated;
+  return [...existingRows, ...generated.filter((tire) => !existingRows.some((existingTire) => existingTire.id === tire.id))];
+}
+
+function buildTiresFromServiceInvoices(services = []) {
+  const tires = [];
+  (services || []).forEach((service, serviceIndex) => {
+    const tireTypes = service.tireTypes || [];
+    if (!tireTypes.length) return;
+    const totalCount = tireTypes.reduce((sum, label) => sum + importedTireCount(label), 0);
+    const unitPrice = (Number(service.tireCost) || 0) / Math.max(totalCount, 1);
+
+    tireTypes.forEach((label, typeIndex) => {
+      const count = importedTireCount(label);
+      const cleanLabel = cleanImportedTireLabel(label);
+      const size = extractTireSize(cleanLabel);
+      const manufacturer = importedTireManufacturer(cleanLabel);
+      const type = importedTireKind(cleanLabel);
+      const model = importedTireModel(cleanLabel, manufacturer, size);
+
+      for (let unitIndex = 0; unitIndex < count; unitIndex += 1) {
+        tires.push({
+          id: importedTireId(service, serviceIndex, typeIndex, unitIndex, size),
+          manufacturer,
+          model,
+          size,
+          index: importedTireIndex(cleanLabel),
+          dot: "",
+          type,
+          priceEx: Math.round(unitPrice),
+          supplier: service.supplier || "Pneuservis",
+          purchaseDate: service.date || "",
+          invoice: service.invoice || "",
+          state: "sklad",
+          vehicle: "",
+          sourceVehicle: isKnownVehicle(service.vehicle) ? service.vehicle : "",
+          sourcePerson: service.person || "",
+          position: "",
+          mounted: "",
+          mountedOdo: 0,
+          currentTread: importedTreadFor(type),
+          pressure: 0,
+          mileage: 0,
+          defects: 0,
+          importedFromInvoice: true,
+          sourceServiceId: service.id || "",
+          sourceLabel: cleanLabel
+        });
+      }
+    });
+  });
+  return tires.sort((a, b) => String(b.purchaseDate || "").localeCompare(String(a.purchaseDate || "")));
+}
+
+function importedTireCount(label) {
+  const match = String(label || "").match(/^\s*(\d+)\s*x/i);
+  return Math.max(1, Math.round(Number(match?.[1]) || 1));
+}
+
+function cleanImportedTireLabel(label) {
+  return String(label || "")
+    .replace(/^\s*\d+\s*x\s*/i, "")
+    .replace(/\*\*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function importedTireManufacturer(label) {
+  const text = String(label || "").toUpperCase();
+  const knownBrands = [
+    "HANKOOK",
+    "PIRELLI",
+    "SAILUN",
+    "LAUFENN",
+    "POINTS",
+    "BRIDGESTONE",
+    "CONTINENTAL",
+    "TOURADOR",
+    "ADVANCE",
+    "GOODRIDE",
+    "BARUM",
+    "BKT"
+  ];
+  return knownBrands.find((brand) => text.includes(brand)) || "PNEU";
+}
+
+function importedTireKind(label) {
+  const text = String(label || "").toLowerCase();
+  if (/protektor|retread|obnova/.test(text)) return "protektor";
+  if (/pouz|použ|jet[aáeé]/.test(text)) return "pouzita";
+  return "nova";
+}
+
+function importedTreadFor(type) {
+  if (type === "protektor") return 14;
+  if (type === "pouzita") return 8;
+  return 16;
+}
+
+function importedTireModel(label, manufacturer, size) {
+  let model = cleanImportedTireLabel(label);
+  model = model.replace(new RegExp(`^${manufacturer}\\s*`, "i"), "");
+  model = removeLooseSize(model, size)
+    .replace(/\b(TL|TT)\b/gi, "")
+    .replace(/[;,]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return model || "bez modelu";
+}
+
+function removeLooseSize(value, size) {
+  const source = String(value || "");
+  const compactSize = String(size || "")
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(",", "[,.]")
+    .replace("/", "\\/?");
+  if (!compactSize || compactSize === "NEZJISTENYROZMER") return source;
+  return source.replace(new RegExp(compactSize, "i"), "");
+}
+
+function importedTireIndex(label) {
+  const match = String(label || "").match(/\b\d{2,3}\/\d{2,3}[A-Z]\b|\b\d{2,3}[A-Z]\b/i);
+  return match ? match[0] : "";
+}
+
+function importedTireId(service, serviceIndex, typeIndex, unitIndex, size) {
+  const prefix = String(size || "PNE").match(/\d{2,3}/)?.[0] || "PNE";
+  const source = String(service.id || service.invoice || `IMPORT${serviceIndex + 1}`)
+    .replace(/[^a-z0-9]/gi, "")
+    .toUpperCase()
+    .slice(-10);
+  return `KS-${prefix}-${source}-${String(typeIndex + 1).padStart(2, "0")}${String(unitIndex + 1).padStart(2, "0")}`;
 }
 
 function query(selector, scope = document) {
@@ -849,7 +1031,7 @@ function getSearchTerm() {
 
 function matchesSearch(tire, term) {
   if (!term) return true;
-  return [tire.id, tire.manufacturer, tire.model, tire.size, tire.supplier, tire.vehicle, tire.invoice]
+  return [tire.id, tire.manufacturer, tire.model, tire.size, tire.supplier, tire.vehicle, tire.sourceVehicle, tire.invoice, tire.sourceLabel]
     .join(" ")
     .toLowerCase()
     .includes(term);
@@ -1317,7 +1499,10 @@ function renderTires() {
   query("#tireTableBody").innerHTML =
     tires
       .map(
-        (tire) => `
+        (tire) => {
+          const vehicleLabel = tire.vehicle || "sklad";
+          const positionLabel = tire.position || (tire.sourceVehicle ? `z faktury pro ${tire.sourceVehicle}` : "bez pozice");
+          return `
           <tr>
             <td>
               <div class="tire-id">${tire.id}</div>
@@ -1330,8 +1515,8 @@ function renderTires() {
             <td>${tire.size}</td>
             <td><span class="state-pill ${tireStatus(tire)}">${tire.state}</span></td>
             <td>
-              <strong>${tire.vehicle || "sklad"}</strong>
-              <div class="meta">${tire.position || "bez pozice"}</div>
+              <strong>${vehicleLabel}</strong>
+              <div class="meta">${positionLabel}</div>
             </td>
             <td>
               <strong>${formatNumber(tire.currentTread, 1)} mm</strong>
@@ -1343,7 +1528,8 @@ function renderTires() {
               <div class="meta">${formatCurrency(tire.priceEx)}</div>
             </td>
           </tr>
-        `
+        `;
+        }
       )
       .join("") || `<tr><td colspan="8">Zadna pneumatika neodpovida filtru.</td></tr>`;
 }
