@@ -125,6 +125,11 @@
           service.invoice ? `DL/FV ${service.invoice}` : "",
           service.deliveryPhotoName ? `foto ${service.deliveryPhotoName}` : ""
         ].filter(Boolean);
+        const photoLink = service.deliveryPhotoPath
+          ? `<div class="service-documents"><button class="service-doc-link" type="button" data-open-cloud-file="${text(service.deliveryPhotoPath)}">Foto DL</button></div>`
+          : service.deliveryPhotoUrl
+            ? `<div class="service-documents"><a class="service-doc-link" href="${text(service.deliveryPhotoUrl)}" target="_blank" rel="noopener">Foto DL</a></div>`
+          : "";
 
         return `
           <div class="service-item">
@@ -133,6 +138,7 @@
               <p>${text(service.person)}, ${text(service.supplier)}. Prace ${money(labor)}, material ${money(material)}, pneu ${money(tireCost)}.</p>
               ${chips.length ? `<div class="service-tire-line">${chips.map((chip) => `<span class="service-tire-chip">${text(chip)}</span>`).join("")}</div>` : ""}
               <p>${text(service.note || "")}</p>
+              ${photoLink}
             </div>
             <span class="service-total">${money(total)}</span>
           </div>
@@ -170,7 +176,7 @@
     showToast("Fotka DL je pripojena ke karte a cislo dokladu je predvyplnene.");
   }
 
-  function addEnhancedService(event) {
+  async function addEnhancedService(event) {
     event.preventDefault();
     event.stopImmediatePropagation();
 
@@ -184,6 +190,17 @@
     const allTireIds = [...tireIds, ...createdTires.map((tire) => tire.id)];
     const tireCount = Math.max(createCount, allTireIds.length, tirePositions.length);
     const photo = photoInput?.files?.[0];
+    let uploadedPhoto = null;
+
+    if (photo && window.kaiserCloud?.isConfigured?.()) {
+      try {
+        photoStatus.textContent = "nahravam fotku...";
+        uploadedPhoto = await window.kaiserCloud.uploadFile(photo, "delivery-notes");
+      } catch (error) {
+        photoStatus.textContent = photo.name;
+        showToast("Fotka zustala jen u karty v prohlizeci, cloud upload selhal.");
+      }
+    }
 
     state.services.unshift({
       id: `S-${Date.now()}`,
@@ -199,6 +216,8 @@
       createdTires: createdTires.map((tire) => tire.id),
       replacedTires: tireCreation.replaced,
       deliveryPhotoName: photo?.name || "",
+      deliveryPhotoPath: uploadedPhoto?.path || "",
+      deliveryPhotoUrl: uploadedPhoto?.publicUrl || "",
       labor: Number(data.labor) || 0,
       material: Number(data.material) || 0,
       tireCost: Number(data.tireCost) || 0,
