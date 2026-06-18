@@ -661,7 +661,7 @@ const initialState = {
     {
       id: "USR-001",
       name: "Radim Oplustil",
-      email: "radim@kaiserservis.cz",
+      email: "oplustil@kaiserservis.cz",
       role: "Spravce vozoveho parku",
       depot: "Brno",
       status: "aktivni",
