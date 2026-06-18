@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260618-30" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-31" />
     <link rel="stylesheet" href="./service-card.css?v=20260618-15" />
     <link rel="stylesheet" href="./vehicle-photos.css?v=20260618-16" />
   </head>
@@ -75,6 +75,13 @@
             <h1 id="pageTitle">Dashboard provozu</h1>
           </div>
           <div class="topbar-actions">
+            <div class="login-status-card" id="loginStatusBox" role="status" aria-live="polite">
+              <span class="login-status-dot" aria-hidden="true"></span>
+              <span>
+                <strong>Jste prihlasen</strong>
+                <small>jako Radim Oplustil</small>
+              </span>
+            </div>
             <label class="search-control">
               <span class="sr-only">Hledat pneu, SPZ nebo dodavatele</span>
               <input id="globalSearch" type="search" placeholder="Hledat ID pneu, SPZ, dodavatele..." />
@@ -778,7 +785,7 @@
     <script src="./supabase-sync.js?v=20260618-22" defer></script>
     <script src="./invoice-data.js?v=20260618-14" defer></script>
     <script src="./vehicle-photo-assets.js?v=20260618-16" defer></script>
-    <script src="./app.js?v=20260618-30" defer></script>
+    <script src="./app.js?v=20260618-31" defer></script>
     <script src="./quick-measure.js?v=20260618-30" defer></script>
     <script src="./service-card.js?v=20260618-15" defer></script>
     <script src="./vehicle-photos.js?v=20260618-16" defer></script>
