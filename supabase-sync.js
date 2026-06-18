@@ -388,18 +388,7 @@
     const form = panel.querySelector("#cloudConfigForm");
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      const data = Object.fromEntries(new FormData(form).entries());
-      writeConfig({
-        url: String(data.url || "").trim(),
-        anonKey: String(data.anonKey || "").trim(),
-        table: String(data.table || defaults.table).trim() || defaults.table,
-        rowId: String(data.rowId || defaults.rowId).trim() || defaults.rowId,
-        bucket: String(data.bucket || defaults.bucket).trim() || defaults.bucket,
-        autoLoad: true,
-        autoSync: true
-      });
-      setStatus(hasConnection() ? "ok" : "warn", hasConnection() ? "Cloud nastaveni je ulozeno" : "Cloud neni nastaveny");
-      refreshAuthStatus();
+      setStatus("ok", "Cloud nastaveni je zamcene", "Produkční Supabase pripojeni meni jen spravce aplikace.");
     });
 
     panel.querySelector("[data-cloud-test]").addEventListener("click", testConnection);
@@ -431,6 +420,17 @@
     form.elements.autoSync.checked = true;
     form.elements.autoLoad.disabled = true;
     form.elements.autoSync.disabled = true;
+    ["url", "anonKey", "table", "rowId", "bucket"].forEach((name) => {
+      const field = form.elements[name];
+      if (!field) return;
+      field.readOnly = true;
+      field.setAttribute("aria-readonly", "true");
+      field.tabIndex = -1;
+    });
+    const saveButton = form.querySelector("[data-cloud-save]");
+    if (saveButton) saveButton.disabled = true;
+    const disconnectButton = document.querySelector("[data-cloud-disconnect]");
+    if (disconnectButton) disconnectButton.disabled = true;
   }
 
   function ensureStyles() {
@@ -487,6 +487,31 @@
         padding-top: 14px;
       }
 
+      .cloud-config-form label.is-locked {
+        position: relative;
+      }
+
+      .cloud-config-form label.is-locked::after {
+        color: var(--brand-strong);
+        content: "zamceno";
+        font-size: .78rem;
+        font-weight: 900;
+        position: absolute;
+        right: 12px;
+        top: 4px;
+      }
+
+      .cloud-config-form label.is-locked input {
+        background: rgba(117, 189, 37, .05);
+        color: var(--ink);
+        cursor: not-allowed;
+      }
+
+      .cloud-panel .button:disabled {
+        cursor: not-allowed;
+        opacity: .62;
+      }
+
       .settings-switch.is-locked {
         border-color: rgba(117, 189, 37, .32);
         background: rgba(117, 189, 37, .08);
@@ -532,25 +557,25 @@
           <p class="cloud-meta" data-cloud-meta>${text(lastSyncLabel())}</p>
 
           <form class="entry-form cloud-config-form" id="cloudConfigForm">
-            <label>
+            <label class="is-locked" title="Produkční Supabase URL je zamčená.">
               Supabase URL
-              <input name="url" type="url" placeholder="https://...supabase.co" />
+              <input name="url" type="url" placeholder="https://...supabase.co" readonly />
             </label>
-            <label>
+            <label class="is-locked" title="Produkční publishable key je zamčený.">
               Public anon / publishable key
-              <input name="anonKey" type="password" autocomplete="off" />
+              <input name="anonKey" type="password" autocomplete="off" readonly />
             </label>
-            <label>
+            <label class="is-locked" title="Produkční tabulka je zamčená.">
               Tabulka
-              <input name="table" type="text" />
+              <input name="table" type="text" readonly />
             </label>
-            <label>
+            <label class="is-locked" title="Produkční ID dat je zamčené.">
               ID dat
-              <input name="rowId" type="text" />
+              <input name="rowId" type="text" readonly />
             </label>
-            <label>
+            <label class="is-locked" title="Produkční storage bucket je zamčený.">
               Storage bucket
-              <input name="bucket" type="text" />
+              <input name="bucket" type="text" readonly />
             </label>
             <label class="settings-switch is-locked" title="V ostrém provozu je načítání cloudu povinné.">
               <input name="autoLoad" type="checkbox" checked disabled />
@@ -560,7 +585,7 @@
               <input name="autoSync" type="checkbox" checked disabled />
               <span>Automaticky ukladat zmeny</span>
             </label>
-            <button class="button button-primary" type="submit">Ulozit cloud</button>
+            <button class="button button-primary" type="submit" data-cloud-save disabled>Cloud nastaveni zamceno</button>
           </form>
 
           <form class="entry-form cloud-auth-form" id="cloudAuthForm">
@@ -581,7 +606,7 @@
             <button class="button button-primary" type="button" data-cloud-push>Nahrat data</button>
             <button class="button button-soft" type="button" data-cloud-pull>Stahnout data</button>
             <button class="button button-soft" type="button" data-cloud-backup>Zaloha JSON</button>
-            <button class="button button-soft" type="button" data-cloud-disconnect>Odpojit</button>
+            <button class="button button-soft" type="button" data-cloud-disconnect disabled>Odpojit</button>
           </div>
         </article>
       `
