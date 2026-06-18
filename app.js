@@ -1,6 +1,652 @@
-const STORAGE_KEY = "kaiser-pneu-evidence-v1";
+const STORAGE_KEY = "kaiser-pneu-evidence-v2";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+
+const tireLayouts = {
+  van: ["L", "P", "ZL", "ZP"],
+  trailerSingleAxle: ["L", "P"],
+  trailerThreeAxle: ["L", "P", "VL", "VP", "ZL", "ZP"],
+  truckTwoAxle: ["L", "P", "HL vnitrni", "HL vnejsi", "HP vnitrni", "HP vnejsi"],
+  truckThreeAxle: [
+    "L",
+    "P",
+    "HL vnitrni",
+    "HL vnejsi",
+    "HP vnitrni",
+    "HP vnejsi",
+    "VL vnitrni",
+    "VL vnejsi",
+    "VP vnitrni",
+    "VP vnejsi"
+  ],
+  truckFourAxle: [
+    "L",
+    "P",
+    "2L",
+    "2P",
+    "HL vnitrni",
+    "HL vnejsi",
+    "HP vnitrni",
+    "HP vnejsi",
+    "VL vnitrni",
+    "VL vnejsi",
+    "VP vnitrni",
+    "VP vnejsi"
+  ]
+};
+
+const kaiserFleetVehicles = [
+  {
+    spz: "3BH3767",
+    type: "ACTROS 2551 tahač vleku",
+    driver: "Martin Pinkava",
+    odometer: 134485,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "3BI2007",
+    type: "DAF- nosič kontejneru KUHN",
+    driver: "Martin Bartoš",
+    odometer: 73324,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "2BS 6064",
+    type: "DAF_CF 530_s nástavbou IBOS",
+    driver: "Jan Gaží",
+    odometer: 205129,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "9B4 6276",
+    type: "FUSO Canter nosič kontejnerů",
+    driver: "bez ridice",
+    odometer: 160890,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckTwoAxle
+  },
+  {
+    spz: "8B7 7559",
+    type: "Hüffermann_HSA 28.70_2017",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "1BN 0213",
+    type: "Hüffermann_přívěs_HKA 18.70_2018",
+    driver: "Martin Bartoš",
+    odometer: 0,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "1BM 6146",
+    type: "Hüffermann_přívěs_HKA 18.70_2019",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "2BE 7462",
+    type: "Hüffermann_přívěs_HKA 24.70_2020",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "2BJ 7654",
+    type: "Iveco Daily MY 2019 (Rioned)",
+    driver: "Petr Kučera",
+    odometer: 149881,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.van
+  },
+  {
+    spz: "1BM 3239",
+    type: "Iveco Daily_skříň 2017",
+    driver: "Martin Bravenec",
+    odometer: 265605,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckTwoAxle
+  },
+  {
+    spz: "1BB 2674",
+    type: "Iveco popelářské auto",
+    driver: "Jakub Kozlíček",
+    odometer: 76016,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "6B7 3219",
+    type: "Kögel vlek",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "1BI 4520",
+    type: "MAN 4x2 cisterna malá 3 m3",
+    driver: "bez ridice",
+    odometer: 211342,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckTwoAxle
+  },
+  {
+    spz: "8B4 3007",
+    type: "MAN Abroll nosič kontejnerů",
+    driver: "Martin Bartoš",
+    odometer: 604243,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "5B1 4417",
+    type: "MAN cisterna 12 m3",
+    driver: "Libor Ferbar",
+    odometer: 676765,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "5E7 3753",
+    type: "MAN cisterna 12 m3",
+    driver: "Ondřej Hanzlíček",
+    odometer: 330609,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "1BC 3390",
+    type: "MAN cisterna 12 m3",
+    driver: "Bronislav Ondrášek",
+    odometer: 252901,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "8B2 0908",
+    type: "MAN cisterna_12 m3",
+    driver: "Jan Kovařík",
+    odometer: 562987,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "6B9 3840",
+    type: "MAN popelářské vozidlo KOBIT",
+    driver: "Miroslav Florián",
+    odometer: 372249,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "2BR 0904",
+    type: "MAN ramenáč s nástavbou PAK 13 - HAMER",
+    driver: "Martin Ištvánek",
+    odometer: 389232,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "1BM 1150",
+    type: "MAN TGL 12.180_malý Abroll",
+    driver: "Jan Kozumplík",
+    odometer: 382562,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckTwoAxle
+  },
+  {
+    spz: "2BE 2247",
+    type: "Mercedes 12t_skříň",
+    driver: "bez ridice",
+    odometer: 235919,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckTwoAxle
+  },
+  {
+    spz: "3BF1394",
+    type: "Mercedes Atego Abroll 12t.",
+    driver: "Stanislav Janeček",
+    odometer: 72641,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckTwoAxle
+  },
+  {
+    spz: "3BH5548",
+    type: "Mercedes Benz- AROCS 2646 LK",
+    driver: "Radek Pich",
+    odometer: 86314,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "9C83570",
+    type: "Mercedes cisterna AROCS /IBOS",
+    driver: "Milan Popelár",
+    odometer: 135034,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "EL419CT",
+    type: "Mercedes eSprinter 420",
+    driver: "David Urc",
+    odometer: 27254,
+    depot: "PIU",
+    monthlyCost: 0,
+    configuration: tireLayouts.van
+  },
+  {
+    spz: "1BP 8373",
+    type: "Mercedes popelářské auto s nástavbou RosRoca",
+    driver: "Štefan Brychnáč",
+    odometer: 0,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "1BV 6295",
+    type: "Mercedes se skříňovou nástavbou Ivacar",
+    driver: "Martin Macejka",
+    odometer: 482276,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckTwoAxle
+  },
+  {
+    spz: "1BR 6359",
+    type: "Mercedes_Abroll nosič kontejnerů Meiller 2017",
+    driver: "bez ridice",
+    odometer: 413842,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "2BD 8835",
+    type: "Mercedes_Abroll nosič kontejnerů Meiller 2019",
+    driver: "Roman Drdlík",
+    odometer: 317849,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "5B8 0857",
+    type: "Mercedes_nosič vanových kontejnerů PAK13",
+    driver: "Radek Pich",
+    odometer: 279721,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "3BN 3558",
+    type: "Mercedes-Benz Actros 5 1836 L nástavba Ros Roca Olympus - popeláři",
+    driver: "Miroslav Vašek",
+    odometer: 0,
+    depot: "PIU",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckTwoAxle
+  },
+  {
+    spz: "3BP 2836",
+    type: "Mercedes-Benz Arocs 2646 LK 6x4_ ramenový nakladač 2026",
+    driver: "Lukáš Malánik",
+    odometer: 0,
+    depot: "PIU",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "3BP 5305",
+    type: "Mercedes-Benz Arocs_ Abroll nosič kontejnerů 2025",
+    driver: "Roman Drdlík",
+    odometer: 0,
+    depot: "PIU",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "3BF6557",
+    type: "Mercedes-Benz Citan 112 CDI",
+    driver: "bez ridice",
+    odometer: 127649,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.van
+  },
+  {
+    spz: "8C92714",
+    type: "Návěs Milcom",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "2BI 2970",
+    type: "Opel Combo Van Enjoy",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.van
+  },
+  {
+    spz: "3BE 2831",
+    type: "Popeláři Mercedes s nástavbou Hanes",
+    driver: "Jakub Kozlíček",
+    odometer: 0,
+    depot: "LJE",
+    monthlyCost: 0,
+    configuration: tireLayouts.truckThreeAxle
+  },
+  {
+    spz: "3BH9041",
+    type: "přívěs SVAN",
+    driver: "Martin Pinkava",
+    odometer: 0,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "8B7 7475",
+    type: "vlek Huffermann HKA 24.70",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "8B7 5380",
+    type: "vlek Hüffermann HKA 24.70",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "8B7 6637",
+    type: "vlek Hüffermann HSA 2470 - roller",
+    driver: "bez ridice",
+    odometer: 0,
+    depot: "ROP",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerThreeAxle
+  },
+  {
+    spz: "9AJ4058",
+    type: "vozík pod člun-Brenderup",
+    driver: "Radim Opluštil",
+    odometer: 0,
+    depot: "JOL",
+    monthlyCost: 0,
+    configuration: tireLayouts.trailerSingleAxle
+  }
+];
+
+const kaiserDriverUsers = [
+  {
+    id: "RID-001",
+    name: "Bronislav Ondrášek",
+    email: "bronislav.ondrasek@kaiser.local",
+    role: "Ridic",
+    depot: "ROP",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-002",
+    name: "David Urc",
+    email: "david.urc@kaiser.local",
+    role: "Ridic",
+    depot: "PIU",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-003",
+    name: "Jakub Kozlíček",
+    email: "jakub.kozlicek@kaiser.local",
+    role: "Ridic",
+    depot: "LJE",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-004",
+    name: "Jan Gaží",
+    email: "jan.gazi@kaiser.local",
+    role: "Ridic",
+    depot: "LJE",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-005",
+    name: "Jan Kovařík",
+    email: "jan.kovarik@kaiser.local",
+    role: "Ridic",
+    depot: "ROP",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-006",
+    name: "Jan Kozumplík",
+    email: "jan.kozumplik@kaiser.local",
+    role: "Ridic",
+    depot: "LJE",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-007",
+    name: "Libor Ferbar",
+    email: "libor.ferbar@kaiser.local",
+    role: "Ridic",
+    depot: "ROP",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-008",
+    name: "Lukáš Malánik",
+    email: "lukas.malanik@kaiser.local",
+    role: "Ridic",
+    depot: "PIU",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-009",
+    name: "Martin Bartoš",
+    email: "martin.bartos@kaiser.local",
+    role: "Ridic",
+    depot: "JOL, ROP",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-010",
+    name: "Martin Bravenec",
+    email: "martin.bravenec@kaiser.local",
+    role: "Ridic",
+    depot: "LJE",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-011",
+    name: "Martin Ištvánek",
+    email: "martin.istvanek@kaiser.local",
+    role: "Ridic",
+    depot: "LJE",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-012",
+    name: "Martin Macejka",
+    email: "martin.macejka@kaiser.local",
+    role: "Ridic",
+    depot: "ROP",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-013",
+    name: "Martin Pinkava",
+    email: "martin.pinkava@kaiser.local",
+    role: "Ridic",
+    depot: "JOL",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-014",
+    name: "Milan Popelár",
+    email: "milan.popelar@kaiser.local",
+    role: "Ridic",
+    depot: "JOL",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-015",
+    name: "Miroslav Florián",
+    email: "miroslav.florian@kaiser.local",
+    role: "Ridic",
+    depot: "ROP",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-016",
+    name: "Miroslav Vašek",
+    email: "miroslav.vasek@kaiser.local",
+    role: "Ridic",
+    depot: "PIU",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-017",
+    name: "Ondřej Hanzlíček",
+    email: "ondrej.hanzlicek@kaiser.local",
+    role: "Ridic",
+    depot: "LJE",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-018",
+    name: "Petr Kučera",
+    email: "petr.kucera@kaiser.local",
+    role: "Ridic",
+    depot: "JOL",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-019",
+    name: "Radek Pich",
+    email: "radek.pich@kaiser.local",
+    role: "Ridic",
+    depot: "JOL, ROP",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-020",
+    name: "Roman Drdlík",
+    email: "roman.drdlik@kaiser.local",
+    role: "Ridic",
+    depot: "ROP, PIU",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-021",
+    name: "Stanislav Janeček",
+    email: "stanislav.janecek@kaiser.local",
+    role: "Ridic",
+    depot: "JOL",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  },
+  {
+    id: "RID-022",
+    name: "Štefan Brychnáč",
+    email: "stefan.brychnac@kaiser.local",
+    role: "Ridic",
+    depot: "ROP",
+    status: "aktivni",
+    phone: "",
+    lastActive: "2026-06-18"
+  }
+];
 
 const initialState = {
   tires: [
@@ -137,35 +783,7 @@ const initialState = {
       defects: 3
     }
   ],
-  vehicles: [
-    {
-      spz: "2BD 8835",
-      type: "Nakladni vozidlo",
-      driver: "Sovka",
-      odometer: 342800,
-      depot: "Brno",
-      monthlyCost: 28760,
-      configuration: ["L", "P", "HL vnitrni", "HL vnejsi", "HP vnitrni", "HP vnejsi", "VL", "VP"]
-    },
-    {
-      spz: "4J9 2218",
-      type: "Naves / prives",
-      driver: "Nemecek",
-      odometer: 447600,
-      depot: "Slapanice",
-      monthlyCost: 19440,
-      configuration: ["L", "P", "VL", "VP", "ZL", "ZP"]
-    },
-    {
-      spz: "6B4 9142",
-      type: "Dodavka servis",
-      driver: "Kral",
-      odometer: 214800,
-      depot: "Brno",
-      monthlyCost: 8320,
-      configuration: ["L", "P", "ZL", "ZP"]
-    }
-  ],
+  vehicles: kaiserFleetVehicles,
   services: [
     {
       id: "S-260613-01",
@@ -264,7 +882,8 @@ const initialState = {
       status: "aktivni",
       phone: "",
       lastActive: "2026-06-16"
-    }
+    },
+    ...kaiserDriverUsers
   ],
   settings: {
     companyName: "Kaiser Servis",
@@ -297,6 +916,7 @@ const titles = {
 const userRoles = [
   "Management",
   "Dilna",
+  "Ridic",
   "Spravce vozoveho parku",
   "Externi servis"
 ];
@@ -304,6 +924,7 @@ const userRoles = [
 const userPermissions = {
   Management: "Dashboard, reporty, ceny, exporty",
   Dilna: "Mereni, servisni karta, defekty",
+  Ridic: "Vlastni vozidla, mereni a servisni poznamky",
   "Spravce vozoveho parku": "Kompletni evidence, importy, nastaveni",
   "Externi servis": "Servisni zakazky a vlastni zasahy"
 };
@@ -1093,13 +1714,13 @@ function renderUsers() {
   });
 
   const activeCount = users.filter((user) => user.status === "aktivni").length;
-  const workshopCount = users.filter((user) => user.role === "Dilna").length;
+  const driverCount = users.filter((user) => user.role === "Ridic").length;
   const adminCount = users.filter((user) => user.role === "Spravce vozoveho parku").length;
   query("#userCountBadge").textContent = `${activeCount} aktivnich / ${users.length} celkem`;
 
   query("#userMetrics").innerHTML = `
     <div class="user-metric"><span>Aktivni</span><strong>${activeCount}</strong></div>
-    <div class="user-metric"><span>Dilna</span><strong>${workshopCount}</strong></div>
+    <div class="user-metric"><span>Ridici</span><strong>${driverCount}</strong></div>
     <div class="user-metric"><span>Spravci</span><strong>${adminCount}</strong></div>
     <div class="user-metric"><span>Ve filtru</span><strong>${filteredUsers.length}</strong></div>
   `;
@@ -1218,24 +1839,17 @@ function defaultVehicleConfiguration(type = "") {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
   if (/(4\s*naprav|ctyr|8\s*x\s*4|8x4)/.test(normalized)) {
-    return [
-      "L",
-      "P",
-      "2L",
-      "2P",
-      "HL vnitrni",
-      "HL vnejsi",
-      "HP vnitrni",
-      "HP vnejsi",
-      "VL vnitrni",
-      "VL vnejsi",
-      "VP vnitrni",
-      "VP vnejsi"
-    ];
+    return [...tireLayouts.truckFourAxle];
   }
-  if (/(dodavka|van|servis|osob)/.test(normalized)) return ["L", "P", "ZL", "ZP"];
-  if (/(naves|prives|trailer)/.test(normalized)) return ["L", "P", "VL", "VP", "ZL", "ZP"];
-  return ["L", "P", "HL vnitrni", "HL vnejsi", "HP vnitrni", "HP vnejsi", "VL", "VP"];
+  if (/(dodavka|daily|citan|combo|esprinter|van|servis|osob)/.test(normalized)) {
+    return [...tireLayouts.van];
+  }
+  if (/(vozik|jednonaprav)/.test(normalized)) return [...tireLayouts.trailerSingleAxle];
+  if (/(naves|prives|vlek|trailer)/.test(normalized)) return [...tireLayouts.trailerThreeAxle];
+  if (/(4\s*x\s*2|4x2|12t|atego|canter|tgl|1836|skrin|skrinova|mala)/.test(normalized)) {
+    return [...tireLayouts.truckTwoAxle];
+  }
+  return [...tireLayouts.truckThreeAxle];
 }
 
 function parseVehicleConfiguration(raw, type) {
