@@ -234,6 +234,38 @@ const initialState = {
   ],
   imports: [],
   vehicleImports: [],
+  users: [
+    {
+      id: "USR-001",
+      name: "Radim Oplustil",
+      email: "radim@kaiserservis.cz",
+      role: "Spravce vozoveho parku",
+      depot: "Brno",
+      status: "aktivni",
+      phone: "",
+      lastActive: "2026-06-18"
+    },
+    {
+      id: "USR-002",
+      name: "Vedouci dilny",
+      email: "dilna@kaiserservis.cz",
+      role: "Dilna",
+      depot: "Brno",
+      status: "aktivni",
+      phone: "",
+      lastActive: "2026-06-17"
+    },
+    {
+      id: "USR-003",
+      name: "Management",
+      email: "management@kaiserservis.cz",
+      role: "Management",
+      depot: "Slapanice",
+      status: "aktivni",
+      phone: "",
+      lastActive: "2026-06-16"
+    }
+  ],
   settings: {
     companyName: "Kaiser Servis",
     primaryColor: "#75bd25",
@@ -258,7 +290,22 @@ const titles = {
   service: "Servisni zasahy",
   import: "Import faktur",
   reports: "Reporty a naklady",
+  users: "Uzivatele a pristupy",
   settings: "Nastaveni aplikace"
+};
+
+const userRoles = [
+  "Management",
+  "Dilna",
+  "Spravce vozoveho parku",
+  "Externi servis"
+];
+
+const userPermissions = {
+  Management: "Dashboard, reporty, ceny, exporty",
+  Dilna: "Mereni, servisni karta, defekty",
+  "Spravce vozoveho parku": "Kompletni evidence, importy, nastaveni",
+  "Externi servis": "Servisni zakazky a vlastni zasahy"
 };
 
 const formatCurrency = (value) =>
@@ -289,6 +336,7 @@ function loadState() {
       priceRefs: parsed.priceRefs || [],
       imports: parsed.imports || [],
       vehicleImports: parsed.vehicleImports || [],
+      users: parsed.users || structuredClone(initialState.users),
       settings: {
         ...structuredClone(initialState.settings),
         ...(parsed.settings || {})
@@ -343,6 +391,7 @@ function setSection(section) {
   query("#pageTitle").textContent = titles[section] || "Evidence pneumatik";
   if (section === "vehicles") renderVehicles();
   if (section === "reports") renderReports();
+  if (section === "users") renderUsers();
   if (section === "settings") renderSettings();
 }
 
@@ -982,6 +1031,146 @@ function renderSettings() {
   `;
 }
 
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]
+  );
+}
+
+function userInitials(name) {
+  return String(name || "?")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "?";
+}
+
+function fillUserControls() {
+  const roleOptions = userRoles.map((role) => `<option value="${role}">${role}</option>`).join("");
+  const roleSelect = query('#userForm select[name="role"]');
+  if (roleSelect && !roleSelect.innerHTML) roleSelect.innerHTML = roleOptions;
+
+  const roleFilter = query("#userRoleFilter");
+  if (roleFilter) {
+    const current = roleFilter.value || "all";
+    roleFilter.innerHTML = `<option value="all">Vsechny role</option>${roleOptions}`;
+    roleFilter.value = userRoles.includes(current) ? current : "all";
+  }
+}
+
+function renderUsers() {
+  const users = state.users || [];
+  fillUserControls();
+
+  const roleFilter = query("#userRoleFilter")?.value || "all";
+  const statusFilter = query("#userStatusFilter")?.value || "all";
+  const filteredUsers = users.filter((user) => {
+    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+    return matchesRole && matchesStatus;
+  });
+
+  const activeCount = users.filter((user) => user.status === "aktivni").length;
+  const workshopCount = users.filter((user) => user.role === "Dilna").length;
+  const adminCount = users.filter((user) => user.role === "Spravce vozoveho parku").length;
+  query("#userCountBadge").textContent = `${activeCount} aktivnich / ${users.length} celkem`;
+
+  query("#userMetrics").innerHTML = `
+    <div class="user-metric"><span>Aktivni</span><strong>${activeCount}</strong></div>
+    <div class="user-metric"><span>Dilna</span><strong>${workshopCount}</strong></div>
+    <div class="user-metric"><span>Spravci</span><strong>${adminCount}</strong></div>
+    <div class="user-metric"><span>Ve filtru</span><strong>${filteredUsers.length}</strong></div>
+  `;
+
+  query("#userList").innerHTML =
+    filteredUsers
+      .map((user) => {
+        const isActive = user.status === "aktivni";
+        return `
+          <article class="user-card ${isActive ? "" : "is-paused"}">
+            <div class="user-avatar" aria-hidden="true">${escapeHtml(userInitials(user.name))}</div>
+            <div class="user-main">
+              <div class="user-card-header">
+                <div>
+                  <strong>${escapeHtml(user.name)}</strong>
+                  <p>${escapeHtml(user.email)}</p>
+                </div>
+                <span class="badge ${isActive ? "badge-ok" : "badge-danger"}">${isActive ? "aktivni" : "pozastaveno"}</span>
+              </div>
+              <dl class="user-detail-grid">
+                <div><dt>Role</dt><dd>${escapeHtml(user.role)}</dd></div>
+                <div><dt>Stredisko</dt><dd>${escapeHtml(user.depot)}</dd></div>
+                <div><dt>Prava</dt><dd>${escapeHtml(userPermissions[user.role] || "Vlastni pristup")}</dd></div>
+                <div><dt>Posledni aktivita</dt><dd>${escapeHtml(user.lastActive || "-")}</dd></div>
+              </dl>
+              <div class="user-actions">
+                <button class="button button-soft" type="button" data-user-fill="${escapeHtml(user.id)}">Upravit</button>
+                <button class="button ${isActive ? "button-soft" : "button-primary"}" type="button" data-user-toggle="${escapeHtml(user.id)}">
+                  ${isActive ? "Pozastavit" : "Aktivovat"}
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      })
+      .join("") || `<div class="empty-state">Zadny uzivatel neodpovida filtru.</div>`;
+}
+
+function addUser(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const email = String(data.email || "").trim().toLowerCase();
+  const existing = (state.users || []).find((user) => user.email.toLowerCase() === email);
+  const userData = {
+    name: String(data.name || "").trim(),
+    email,
+    role: data.role,
+    depot: data.depot,
+    status: data.status,
+    phone: String(data.phone || "").trim(),
+    lastActive: existing?.lastActive || todayIso()
+  };
+
+  if (existing) {
+    Object.assign(existing, userData);
+  } else {
+    state.users.unshift({
+      id: `USR-${String(Date.now()).slice(-6)}`,
+      ...userData
+    });
+  }
+
+  saveState();
+  form.reset();
+  renderAll();
+  setSection("users");
+  showToast(existing ? "Uzivatel je aktualizovany." : "Uzivatel je pridany.");
+}
+
+function fillUserForm(userId) {
+  const user = (state.users || []).find((item) => item.id === userId);
+  const form = query("#userForm");
+  if (!user || !form) return;
+  form.elements.name.value = user.name;
+  form.elements.email.value = user.email;
+  form.elements.role.value = user.role;
+  form.elements.depot.value = user.depot;
+  form.elements.status.value = user.status;
+  form.elements.phone.value = user.phone || "";
+  showToast("Uzivatel je pripraveny k uprave ve formulari.");
+}
+
+function toggleUserStatus(userId) {
+  const user = (state.users || []).find((item) => item.id === userId);
+  if (!user) return;
+  user.status = user.status === "aktivni" ? "pozastaveno" : "aktivni";
+  saveState();
+  renderUsers();
+  showToast(user.status === "aktivni" ? "Uzivatel je aktivni." : "Uzivatel je pozastaveny.");
+}
+
 function saveSettings(event) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -1315,6 +1504,7 @@ function renderAll() {
   renderImportPreview();
   renderVehicleImportPreview();
   renderReports();
+  renderUsers();
   renderSettings();
 }
 
@@ -1325,8 +1515,13 @@ function bindEvents() {
 
   document.addEventListener("click", (event) => {
     const jumpTarget = event.target.closest("[data-section-jump]");
-    if (!jumpTarget) return;
-    setSection(jumpTarget.dataset.sectionJump);
+    if (jumpTarget) setSection(jumpTarget.dataset.sectionJump);
+
+    const userFill = event.target.closest("[data-user-fill]");
+    if (userFill) fillUserForm(userFill.dataset.userFill);
+
+    const userToggle = event.target.closest("[data-user-toggle]");
+    if (userToggle) toggleUserStatus(userToggle.dataset.userToggle);
   });
 
   query("#globalSearch").addEventListener("input", renderTires);
@@ -1360,6 +1555,9 @@ function bindEvents() {
   query("#serviceForm").addEventListener("submit", addService);
   query('#serviceForm input[name="date"]').value = todayIso();
   query("#exportCsv").addEventListener("click", exportCsv);
+  query("#userForm").addEventListener("submit", addUser);
+  query("#userRoleFilter").addEventListener("change", renderUsers);
+  query("#userStatusFilter").addEventListener("change", renderUsers);
   query("#settingsForm").addEventListener("submit", saveSettings);
 
   query("#loadSampleImport").addEventListener("click", () => {
