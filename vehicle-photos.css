@@ -57,9 +57,24 @@
   font-weight: 900;
 }
 
+.vehicle-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.vehicle-card-actions .button {
+  min-width: 180px;
+}
+
 @media (max-width: 700px) {
   .vehicle-photo figcaption {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .vehicle-card-actions .button {
+    width: 100%;
   }
 }
