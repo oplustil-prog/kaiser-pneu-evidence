@@ -253,6 +253,24 @@
                 <label>Heslo <input name="password" type="password" autocomplete="current-password" placeholder="firemni heslo" required /></label>
                 <div class="kaiser-login-actions">
                   <button class="button button-primary" type="submit">Prihlasit</button>
+                  <button class="button button-soft" type="button" data-login-reset>Nastavit / obnovit heslo</button>
+                </div>
+                <div class="kaiser-login-secondary-note">Pri prvnim prihlaseni zadejte e-mail a kliknete na nastaveni hesla. Odkaz prijde e-mailem.</div>
+              </form>
+            </section>
+            <section class="kaiser-login-step" data-login-step="new-password" hidden>
+              <div class="kaiser-login-help">
+                <strong>Nastaveni noveho hesla</strong>
+                <ol>
+                  <li>Zadejte vlastni silne heslo.</li>
+                  <li>Po ulozeni budete pokracovat do overeni 2FA.</li>
+                </ol>
+              </div>
+              <form class="kaiser-login-form" id="kaiserNewPasswordForm">
+                <label>Nove heslo <input name="password" type="password" autocomplete="new-password" minlength="10" required /></label>
+                <label>Zopakovat heslo <input name="passwordConfirm" type="password" autocomplete="new-password" minlength="10" required /></label>
+                <div class="kaiser-login-actions">
+                  <button class="button button-primary" type="submit">Ulozit heslo</button>
                 </div>
               </form>
             </section>
@@ -306,7 +324,7 @@
     document.querySelectorAll("[data-login-step]").forEach((section) => {
       section.hidden = section.dataset.loginStep !== name;
     });
-    const activePill = name === "setup" || name === "mfa" ? "verify" : name;
+    const activePill = name === "setup" || name === "mfa" ? "verify" : "password";
     document.querySelectorAll("[data-login-pill]").forEach((pill) => {
       pill.classList.toggle("is-active", pill.dataset.loginPill === activePill);
     });
@@ -461,11 +479,70 @@
       const message = String(error?.message || "");
       if (message.includes("friendly name") && message.includes("already exists")) {
         status("Rozpracovane 2FA uz existuje. Zkuste prihlaseni znovu, pripravi se novy QR kod.", "danger");
+      } else if (message.includes("Invalid login credentials")) {
+        status("E-mail nebo heslo nesedi. Pri prvnim prihlaseni pouzijte Nastavit / obnovit heslo.", "danger");
       } else {
         status(message || "Prihlaseni selhalo.", "danger");
       }
       step("password");
       show(true);
+    } finally {
+      busy(false);
+    }
+  }
+
+  async function sendPasswordReset() {
+    if (gate.busy) return;
+    const form = document.querySelector("#kaiserPasswordForm");
+    const email = String(form?.elements.email.value || "").trim().toLowerCase();
+    if (!email) {
+      status("Nejdrive vyplnte e-mail.", "warn");
+      form?.elements.email.focus();
+      return;
+    }
+    busy(true);
+    status("Posilam e-mail pro nastaveni hesla...");
+    try {
+      const supabase = await client();
+      const redirectTo = `${window.location.origin}${window.location.pathname}`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) throw error;
+      status("E-mail pro nastaveni hesla je odeslany. Otevrete odkaz v dorucene poste.", "ok");
+    } catch (error) {
+      status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat.", "danger");
+    } finally {
+      busy(false);
+    }
+  }
+
+  async function submitNewPassword(event) {
+    event.preventDefault();
+    if (gate.busy) return;
+    const form = event.currentTarget;
+    const password = String(form.elements.password.value || "");
+    const passwordConfirm = String(form.elements.passwordConfirm.value || "");
+    if (password.length < 10) {
+      status("Heslo musi mit aspon 10 znaku.", "warn");
+      return;
+    }
+    if (password !== passwordConfirm) {
+      status("Hesla se neshoduji.", "warn");
+      return;
+    }
+    busy(true);
+    status("Ukladam nove heslo...");
+    try {
+      const supabase = await client();
+      const { data, error } = await supabase.auth.updateUser({ password });
+      form.reset();
+      if (error) throw error;
+      if (window.location.hash || window.location.search.includes("type=recovery")) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+      status("Heslo je ulozene. Pokracujte overenim.", "ok");
+      await afterPassword(supabase, data?.user || { email: gate.email });
+    } catch (error) {
+      status(error?.message || "Heslo se nepodarilo ulozit.", "danger");
     } finally {
       busy(false);
     }
@@ -527,6 +604,8 @@
     document.querySelector("#kaiserPasswordForm")?.addEventListener("submit", submitPassword);
     document.querySelector("#kaiserSetupForm")?.addEventListener("submit", (event) => submitCode(event, true));
     document.querySelector("#kaiserMfaForm")?.addEventListener("submit", (event) => submitCode(event, false));
+    document.querySelector("#kaiserNewPasswordForm")?.addEventListener("submit", submitNewPassword);
+    document.querySelector("[data-login-reset]")?.addEventListener("click", sendPasswordReset);
     document.querySelectorAll(".kaiser-login-code").forEach((input) => {
       input.addEventListener("input", () => {
         input.value = String(input.value || "").replace(/\D/g, "").slice(0, 6);
@@ -545,6 +624,15 @@
       const supabase = await client();
       const { data } = await supabase.auth.getSession();
       const user = data?.session?.user || null;
+      const authParams = new URLSearchParams(window.location.hash.replace(/^#/, "") || window.location.search);
+      const isRecovery = authParams.get("type") === "recovery";
+      if (isRecovery && user) {
+        gate.email = user.email || gate.email;
+        step("new-password");
+        show(true);
+        status("Zadejte nove heslo pro svuj ucet.", "ok");
+        return;
+      }
       if (!user) {
         status("");
         return;
