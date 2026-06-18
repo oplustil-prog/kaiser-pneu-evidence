@@ -23,10 +23,12 @@
     if (document.querySelector(`script[src*="${fileName}"]`)) return;
     const script = document.createElement("script");
     script.src = src;
+    script.async = false;
     script.defer = true;
     document.head.appendChild(script);
   }
 
   loadScript("./measurement-reminders.js?v=20260618-23");
+  loadScript("./supabase-config.js?v=20260618-24");
   loadScript("./supabase-sync.js?v=20260618-22");
 }());
