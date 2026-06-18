@@ -1,4 +1,16 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
+const APP_VERSION = {
+  number: "v0.9.0",
+  build: "20260618-27",
+  releaseDate: "18. 6. 2026",
+  name: "Ostra cloudova verze",
+  notes: [
+    "Supabase cloud, verejna GitHub Pages aplikace a zaloha produkcnich dat.",
+    "Import ostrych servisnich faktur s rozdelenim na praci, material a pneu.",
+    "Dashboard metriky, upozorneni na 30denni rychle mereni a proklik na mereni.",
+    "Mapa osazeni z pudorysu, servisni karta, uzivatele a PDF karta vozidla."
+  ]
+};
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 const importedInvoiceData = window.kaiserInvoiceData || { services: [], imports: [], summary: {} };
@@ -783,6 +795,16 @@ function query(selector, scope = document) {
 
 function queryAll(selector, scope = document) {
   return [...scope.querySelectorAll(selector)];
+}
+
+function renderVersionInfo() {
+  const target = query("#appVersionBadge");
+  if (!target) return;
+  target.innerHTML = `
+    <span>Verze aplikace</span>
+    <strong>${escapeHtml(APP_VERSION.number)}</strong>
+    <small>${escapeHtml(APP_VERSION.name)} / build ${escapeHtml(APP_VERSION.build)}</small>
+  `;
 }
 
 function showToast(message) {
@@ -1664,6 +1686,15 @@ function renderSettings() {
       <strong>${settings.publicDemoMode ? "Verejny demo rezim" : "Interni rezim"}</strong>
       <p>${settings.workshopMobileMode ? "Dilna ma prioritu mobilniho zadani." : "Mobilni rezim neni vychozi."}</p>
     </div>
+    <div class="settings-summary-card app-version-card">
+      <span>Verze aplikace</span>
+      <strong>${APP_VERSION.number}</strong>
+      <p>${APP_VERSION.name}. Vydano ${APP_VERSION.releaseDate}, build ${APP_VERSION.build}.</p>
+      <p>Datovy model ${STORAGE_KEY}.</p>
+      <ul class="version-list">
+        ${APP_VERSION.notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}
+      </ul>
+    </div>
   `;
 }
 
@@ -2153,6 +2184,7 @@ function exportCsv() {
 
 function renderAll() {
   applySettings();
+  renderVersionInfo();
   fillSelectOptions();
   renderDashboard();
   renderTires();
