@@ -296,7 +296,7 @@
   }
 
   function loadLoginGate() {
-    loadScriptOnce("kaiserLoginGateRequested", 'script[src*="login-2fa"]', "./login-2fa.js?v=20260618-40", "Prihlaseni se nenacetlo");
+    loadScriptOnce("kaiserLoginGateRequested", 'script[src*="login-2fa"]', "./login-2fa.js?v=20260618-41", "Prihlaseni se nenacetlo");
   }
 
   function loadPasswordReset() {
