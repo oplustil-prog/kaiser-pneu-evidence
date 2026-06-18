@@ -1,0 +1,59 @@
+.service-tire-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.service-tire-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--brand-soft);
+  color: var(--green-dark);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.service-photo-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-strong);
+}
+
+.photo-status {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.service-switch {
+  margin: 0;
+}
+
+.service-new-tire-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 13px;
+  background: #fbfdf9;
+}
+
+.service-new-tire-panel[hidden] {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .service-new-tire-panel {
+    grid-template-columns: 1fr;
+  }
+}
