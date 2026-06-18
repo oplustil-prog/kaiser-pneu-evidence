@@ -18,13 +18,15 @@
     };
   }
 
-  function loadCloudSync() {
-    if (document.querySelector('script[src*="supabase-sync.js"]')) return;
+  function loadScript(src) {
+    const fileName = src.split("?")[0];
+    if (document.querySelector(`script[src*="${fileName}"]`)) return;
     const script = document.createElement("script");
-    script.src = "./supabase-sync.js?v=20260618-22";
+    script.src = src;
     script.defer = true;
     document.head.appendChild(script);
   }
 
-  loadCloudSync();
+  loadScript("./measurement-reminders.js?v=20260618-23");
+  loadScript("./supabase-sync.js?v=20260618-22");
 }());
