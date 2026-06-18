@@ -1,6 +1,7 @@
-const STORAGE_KEY = "kaiser-pneu-evidence-v2";
+const STORAGE_KEY = "kaiser-pneu-evidence-v3";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+const importedInvoiceData = window.kaiserInvoiceData || { services: [], imports: [], summary: {} };
 
 const tireLayouts = {
   van: ["L", "P", "ZL", "ZP"],
@@ -784,7 +785,7 @@ const initialState = {
     }
   ],
   vehicles: kaiserFleetVehicles,
-  services: [
+  services: importedInvoiceData.services?.length ? importedInvoiceData.services : [
     {
       id: "S-260613-01",
       date: "2026-06-13",
@@ -850,7 +851,7 @@ const initialState = {
     { size: "265/70 R19,5", last: 4850, reference: 4650, supplier: "Pneuservis A" },
     { size: "13 R22,5", last: 2500, reference: 3900, supplier: "sklad prevod" }
   ],
-  imports: [],
+  imports: importedInvoiceData.imports || [],
   vehicleImports: [],
   users: [
     {
@@ -2000,21 +2001,30 @@ function parseImportRows(raw) {
 }
 
 function renderImportPreview(rows = state.imports) {
-  query("#importSummary").textContent = `${rows.length} radku`;
+  const visibleRows = rows.slice(0, 160);
+  const hiddenRows = Math.max(rows.length - visibleRows.length, 0);
+  query("#importSummary").textContent = hiddenRows
+    ? `${rows.length} radku / zobrazeno 160`
+    : `${rows.length} radku`;
   query("#importPreview").innerHTML =
-    rows
+    visibleRows
       .map(
-        (row) => `
+        (row) => {
+          const category = row.category || (/pneu|r\d|hankook|pirelli|laufenn/i.test(row.item || "") ? "pneumatika" : "servis");
+          const rowTotal = Number(row.total ?? (row.qty * row.price)) || 0;
+          return `
           <div class="import-item">
             <div>
-              <strong>${row.category}: ${row.item || "-"}</strong>
+              <strong>${category}: ${row.item || "-"}</strong>
               <p>${row.date || "-"} / ${row.supplier || "-"} / ${row.invoice || "-"} / ${row.target || "bez SPZ"}</p>
             </div>
-            <span class="service-total">${formatCurrency(row.qty * row.price)}</span>
+            <span class="service-total">${formatCurrency(rowTotal)}</span>
           </div>
-        `
+        `;
+        }
       )
-      .join("") || `<p class="meta">Zatim nejsou rozpoznane zadne polozky.</p>`;
+      .join("") + (hiddenRows ? `<p class="meta">Dalsich ${hiddenRows} polozek je ulozeno v importu a v servisnich kartach.</p>` : "") ||
+    `<p class="meta">Zatim nejsou rozpoznane zadne polozky.</p>`;
 }
 
 function updateServiceTotal() {
