@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260618-12" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-13" />
   </head>
   <body>
     <div class="app-shell">
@@ -132,23 +132,23 @@
                 <span class="badge badge-ok">mobilni formular</span>
               </div>
               <form class="quick-form" id="measurementForm">
-                <label>
+                <label class="measure-vehicle">
                   SPZ
                   <select name="vehicle" required></select>
                 </label>
-                <label>
+                <label class="measure-position">
                   Pozice
                   <select name="position" required></select>
                 </label>
-                <label>
+                <label class="measure-number">
                   Dezen mm
                   <input name="tread" inputmode="decimal" type="number" step="0.1" min="0" max="30" required />
                 </label>
-                <label>
+                <label class="measure-number">
                   Tlak bar
                   <input name="pressure" inputmode="decimal" type="number" step="0.1" min="0" max="15" required />
                 </label>
-                <label>
+                <label class="measure-odometer">
                   Stav km
                   <input name="odometer" inputmode="numeric" type="number" step="1" min="0" required />
                 </label>
@@ -663,7 +663,7 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./invoice-data.js?v=20260618-12" defer></script>
-    <script src="./app.js?v=20260618-12" defer></script>
+    <script src="./invoice-data.js?v=20260618-13" defer></script>
+    <script src="./app.js?v=20260618-13" defer></script>
   </body>
 </html>
