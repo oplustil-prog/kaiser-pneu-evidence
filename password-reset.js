@@ -68,7 +68,7 @@
 
   function ensureResetButton() {
     const form = document.querySelector("#kaiserPasswordForm");
-    if (!form || form.querySelector("[data-password-reset]")) return;
+    if (!form || form.querySelector("[data-login-reset], [data-password-reset]")) return;
     const actions = form.querySelector(".kaiser-login-actions");
     if (!actions) return;
     const button = document.createElement("button");
@@ -184,6 +184,7 @@
 
   function showRecoveryIfNeeded() {
     if (!isRecoveryUrl()) return;
+    if (document.querySelector("#kaiserNewPasswordForm")) return;
     ensureStyles();
     mountRecoveryDialog();
     document.querySelector("#kaiserPasswordReset")?.classList.add("is-visible");
