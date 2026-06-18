@@ -278,21 +278,33 @@
     });
   }
 
-  function loadLoginGate() {
-    if (window.kaiserLoginGateRequested || document.querySelector('script[src*="login-2fa"]')) return;
-    window.kaiserLoginGateRequested = true;
+  function loadScriptOnce(flagName, selector, src, errorTitle) {
+    if (window[flagName] || document.querySelector(selector)) return;
+    window[flagName] = true;
     const script = document.createElement("script");
-    script.src = "./login-2fa.js?v=20260618-39";
+    script.src = src;
     script.defer = true;
     script.onerror = () => {
       showNotice({
-        id: `login-load-error-${Date.now()}`,
+        id: `${flagName}-error-${Date.now()}`,
         kind: "reset",
-        title: "Prihlaseni se nenacetlo",
+        title: errorTitle,
         message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
       });
     };
     document.head.appendChild(script);
+  }
+
+  function loadLoginGate() {
+    loadScriptOnce("kaiserLoginGateRequested", 'script[src*="login-2fa"]', "./login-2fa.js?v=20260618-40", "Prihlaseni se nenacetlo");
+  }
+
+  function loadPasswordReset() {
+    loadScriptOnce("kaiserPasswordResetRequested", 'script[src*="password-reset"]', "./password-reset.js?v=20260618-40", "Nastaveni hesla se nenacetlo");
+  }
+
+  function loadUserInvites() {
+    loadScriptOnce("kaiserUserInvitesRequested", 'script[src*="user-invites"]', "./user-invites.js?v=20260618-40", "Pozvanky se nenacetly");
   }
 
   window.kaiserShowSystemNotice = function (message, options = {}) {
@@ -321,10 +333,14 @@
       boot();
       installCloudSaveGuard();
       loadLoginGate();
+      loadPasswordReset();
+      loadUserInvites();
     }, { once: true });
   } else {
     boot();
     installCloudSaveGuard();
     loadLoginGate();
+    loadPasswordReset();
+    loadUserInvites();
   }
 })();
