@@ -282,7 +282,7 @@
     if (window.kaiserLoginGateRequested || document.querySelector('script[src*="login-2fa"]')) return;
     window.kaiserLoginGateRequested = true;
     const script = document.createElement("script");
-    script.src = "./login-2fa.js?v=20260618-38";
+    script.src = "./login-2fa.js?v=20260618-39";
     script.defer = true;
     script.onerror = () => {
       showNotice({
