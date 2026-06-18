@@ -291,6 +291,45 @@ textarea {
   gap: 10px;
 }
 
+.login-status-card {
+  display: grid;
+  grid-template-columns: 10px max-content;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid rgba(117, 189, 37, 0.34);
+  border-radius: 8px;
+  background: rgba(117, 189, 37, 0.11);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.login-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 5px rgba(117, 189, 37, 0.18);
+}
+
+.login-status-card strong,
+.login-status-card small {
+  display: block;
+  line-height: 1.12;
+}
+
+.login-status-card strong {
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.login-status-card small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 .search-control input,
 label input,
 label select,
@@ -1768,6 +1807,11 @@ label {
     width: 100%;
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .login-status-card {
+    justify-content: start;
+    width: 100%;
   }
 
   .search-control {
