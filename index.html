@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260618-4" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-5" />
   </head>
   <body>
     <div class="app-shell">
@@ -123,7 +123,7 @@
               <div class="panel-header">
                 <div>
                   <p class="eyebrow">Dvor / dilna</p>
-                  <h3>Rychle mereni dezenu a tlaku</h3>
+                  <h3>Rychle mereni dezenu, tlaku a stavu km</h3>
                 </div>
                 <span class="badge badge-ok">mobilni formular</span>
               </div>
@@ -143,6 +143,10 @@
                 <label>
                   Tlak bar
                   <input name="pressure" inputmode="decimal" type="number" step="0.1" min="0" max="15" required />
+                </label>
+                <label>
+                  Stav km
+                  <input name="odometer" inputmode="numeric" type="number" step="1" min="0" required />
                 </label>
                 <label class="wide-input">
                   Poznamka
@@ -580,6 +584,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=20260618-4" defer></script>
+    <script src="./app.js?v=20260618-5" defer></script>
   </body>
 </html>
