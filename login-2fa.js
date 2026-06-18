@@ -202,6 +202,22 @@
       .kaiser-login-help li + li {
         margin-top: 4px;
       }
+      .kaiser-login-help.is-warning {
+        background: #fff8e8;
+        border-color: rgba(198, 142, 22, .32);
+      }
+      .kaiser-login-help[hidden] {
+        display: none;
+      }
+      .kaiser-login-mini-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 2px;
+      }
+      .kaiser-login-mini-actions .button {
+        min-height: 38px;
+      }
       .kaiser-login-actions {
         display: flex;
         flex-wrap: wrap;
@@ -330,13 +346,29 @@
               </form>
             </section>
             <section class="kaiser-login-step" data-login-step="mfa" hidden>
+              <div class="kaiser-login-help">
+                <strong>Authenticator uz je pro tento e-mail nastaveny</strong>
+                <p>QR kod se zobrazuje jen pri prvnim nastaveni nebo po resetu 2FA. Ted zadejte 6 cislic z aplikace v telefonu.</p>
+              </div>
               <form class="kaiser-login-form" id="kaiserMfaForm">
                 <label>6mistny kod z aplikace <input class="kaiser-login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required /></label>
                 <div class="kaiser-login-actions">
                   <button class="button button-primary" type="submit">Overit a otevrit aplikaci</button>
+                  <button class="button button-soft" type="button" data-login-mfa-help>Nemam Authenticator</button>
                   <button class="button button-soft" type="button" data-login-back>Zpet na prihlaseni</button>
                 </div>
               </form>
+              <div class="kaiser-login-help is-warning" data-login-mfa-reset-help hidden>
+                <strong>Jak ziskat novy QR kod</strong>
+                <ol>
+                  <li>Spravce musi v Supabase otevrit Authentication / Users.</li>
+                  <li>U uzivatele <span data-login-factor-email>tohoto e-mailu</span> odebere TOTP / Authenticator faktor.</li>
+                  <li>Uzivatel se potom prihlasi znovu a aplikace zobrazi novy QR kod.</li>
+                </ol>
+                <div class="kaiser-login-mini-actions">
+                  <button class="button button-soft" type="button" data-login-open-supabase>Otevrit Supabase Auth</button>
+                </div>
+              </div>
             </section>
             <div class="kaiser-login-status" data-login-status role="status" aria-live="polite"></div>
           </article>
@@ -368,6 +400,28 @@
     if (!target) return;
     target.textContent = message || "";
     target.className = `kaiser-login-status${kind ? ` is-${kind}` : ""}`;
+  }
+
+  function hideMfaResetHelp() {
+    const panel = document.querySelector("[data-login-mfa-reset-help]");
+    if (panel) panel.hidden = true;
+  }
+
+  function showMfaResetHelp() {
+    const panel = document.querySelector("[data-login-mfa-reset-help]");
+    const email = document.querySelector("[data-login-factor-email]");
+    if (email) email.textContent = gate.email || "tohoto e-mailu";
+    if (panel) panel.hidden = false;
+    status("QR kod nejde znovu zobrazit. Spravce musi odebrat 2FA faktor v Supabase, pak se ukaze novy QR kod.", "warn");
+  }
+
+  function supabaseAuthUsersUrl() {
+    const ref = String(config().url || "").match(/https:\/\/([^.]+)\.supabase\.co/i)?.[1];
+    return ref ? `https://supabase.com/dashboard/project/${ref}/auth/users` : "https://supabase.com/dashboard";
+  }
+
+  function openSupabaseAuthUsers() {
+    window.open(supabaseAuthUsersUrl(), "_blank", "noopener");
   }
 
   function busy(value) {
@@ -486,9 +540,10 @@
       return;
     }
     gate.factor = factor;
+    hideMfaResetHelp();
     step("mfa");
     show(true);
-    status("Zadejte 6 cislic z Authenticatoru.", "ok");
+    status("Zadejte 6 cislic z Authenticatoru. QR kod se ukazuje jen pri prvnim nastaveni.", "ok");
   }
 
   async function submitPassword(event) {
@@ -641,6 +696,8 @@
     document.querySelector("#kaiserMfaForm")?.addEventListener("submit", (event) => submitCode(event, false));
     document.querySelector("#kaiserNewPasswordForm")?.addEventListener("submit", submitNewPassword);
     document.querySelector("[data-login-reset]")?.addEventListener("click", sendPasswordReset);
+    document.querySelector("[data-login-mfa-help]")?.addEventListener("click", showMfaResetHelp);
+    document.querySelector("[data-login-open-supabase]")?.addEventListener("click", openSupabaseAuthUsers);
     document.querySelectorAll(".kaiser-login-code").forEach((input) => {
       input.addEventListener("input", () => {
         input.value = String(input.value || "").replace(/\D/g, "").slice(0, 6);
