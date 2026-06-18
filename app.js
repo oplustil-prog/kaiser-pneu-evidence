@@ -1,4 +1,4 @@
-const STORAGE_KEY = "kaiser-pneu-evidence-v4";
+const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 const importedInvoiceData = window.kaiserInvoiceData || { services: [], imports: [], summary: {} };
@@ -838,6 +838,97 @@ function tireCostPerKm(tire) {
   return tire.priceEx / tire.mileage;
 }
 
+function serviceTotal(service) {
+  return (Number(service.labor) || 0) + (Number(service.material) || 0) + (Number(service.tireCost) || 0);
+}
+
+function rowTotal(row) {
+  return Number(row.total ?? ((Number(row.qty) || 0) * (Number(row.price) || 0))) || 0;
+}
+
+function latestServicePeriod() {
+  const latestDate =
+    state.services
+      .map((service) => service.date)
+      .filter(Boolean)
+      .sort()
+      .at(-1) || todayIso();
+  return {
+    date: latestDate,
+    month: latestDate.slice(0, 7),
+    year: latestDate.slice(0, 4)
+  };
+}
+
+function formatMonthLabel(month) {
+  const [year, monthNumber] = String(month || "").split("-").map(Number);
+  if (!year || !monthNumber) return "posledni importovany mesic";
+  return new Intl.DateTimeFormat("cs-CZ", { month: "long", year: "numeric" }).format(
+    new Date(year, monthNumber - 1, 1)
+  );
+}
+
+function serviceCostForPrefix(prefix) {
+  return state.services
+    .filter((service) => !prefix || service.date?.startsWith(prefix))
+    .reduce((sum, service) => sum + serviceTotal(service), 0);
+}
+
+function servicesForPrefix(prefix) {
+  return state.services.filter((service) => !prefix || service.date?.startsWith(prefix));
+}
+
+function invoiceCount() {
+  return (
+    importedInvoiceData.summary?.invoiceCount ||
+    new Set(state.imports.map((row) => row.invoice).filter(Boolean)).size ||
+    new Set(state.services.map((service) => service.invoice).filter(Boolean)).size
+  );
+}
+
+function isKnownVehicle(value) {
+  return Boolean(value && value !== "nezjisteno" && value !== "bez SPZ");
+}
+
+function isTireImportRow(row) {
+  const text = `${row.category || ""} ${row.item || ""}`.toLowerCase();
+  return /(pneumatika|pneu|protektor|hankook|pirelli|sailun|laufenn|points|bridgestone|continental|tourador|advance|goodride|barum|bkt|\d{2,3}\s*\/?\s*\d{0,2}\s*r\d{2})/i.test(text);
+}
+
+function extractTireSize(value) {
+  const text = String(value || "")
+    .toUpperCase()
+    .replace(/\s+/g, "");
+  const match =
+    text.match(/\d{3}\/\d{2}R\d{2}(?:[.,]5|[.,]50)?/) ||
+    text.match(/\d{2}R\d{2}(?:[.,]5|[.,]50)?/) ||
+    text.match(/\d{3}\/\d{2}R\d{2}/) ||
+    text.match(/\d{1,2}[.,]\d{2}-\d{2}/);
+  if (!match) return "nezjisteny rozmer";
+  return match[0]
+    .replace(".", ",")
+    .replace(/^(\d{3})\/(\d{2})R/, "$1/$2 R")
+    .replace(/^(\d{2})R/, "$1 R")
+    .replace(/,50$/, ",5");
+}
+
+function tireImportRows() {
+  return state.imports
+    .filter(isTireImportRow)
+    .map((row) => {
+      const total = rowTotal(row);
+      const qty = Number(row.qty) || 1;
+      return {
+        ...row,
+        total,
+        qty,
+        unitPrice: total / Math.max(qty, 1),
+        size: extractTireSize(row.item)
+      };
+    })
+    .filter((row) => row.total > 0);
+}
+
 function tireStatus(tire) {
   if (tire.state === "vyrazeno") return "danger";
   if (tire.state === "na vozidle") return tire.currentTread < 4.5 ? "danger" : "on";
@@ -855,6 +946,31 @@ function dotYear(dot) {
 function getAlerts() {
   const alerts = [];
   const settings = currentSettings();
+  const summary = importedInvoiceData.summary || {};
+  const unmatchedInvoiceCount =
+    summary.unmatchedInvoiceCount ||
+    new Set(
+      state.services
+        .filter((service) => !isKnownVehicle(service.vehicle))
+        .map((service) => service.invoice || service.id)
+    ).size;
+
+  if (unmatchedInvoiceCount > 0) {
+    alerts.push({
+      level: "warning",
+      title: "Faktury bez SPZ",
+      body: `${unmatchedInvoiceCount} dokladu potrebuje rucne doplnit vozidlo, aby sedely naklady podle SPZ.`
+    });
+  }
+
+  if (state.tires.length === 0) {
+    alerts.push({
+      level: "warning",
+      title: "Kusova evidence pneu",
+      body: "Sklad a osazeni pneu zatim nejsou importovane. Dashboard ted pocita z vozidel a skutecnych faktur."
+    });
+  }
+
   state.tires.forEach((tire) => {
     if (tire.state === "na vozidle" && tire.currentTread < settings.treadWarning) {
       alerts.push({
@@ -894,27 +1010,25 @@ function getAlerts() {
 }
 
 function calculateKpis() {
-  const settings = currentSettings();
-  const serviceMonth = state.services
-    .filter((item) => item.date?.startsWith("2026-06"))
-    .reduce((sum, item) => sum + item.labor + item.material + item.tireCost, 0);
-  const ytd = state.services
-    .filter((item) => item.date?.startsWith("2026"))
-    .reduce((sum, item) => sum + item.labor + item.material + item.tireCost, 0);
-  const active = state.tires.filter((tire) => tire.state !== "vyrazeno").length;
-  const replaceSoon = state.tires.filter(
-    (tire) => tire.state === "na vozidle" && tire.currentTread < settings.treadWarning + 0.7
-  ).length;
-  const costKmValues = state.tires.filter((tire) => tire.mileage > 0).map(tireCostPerKm);
-  const avgCostKm =
-    costKmValues.reduce((sum, value) => sum + value, 0) / Math.max(costKmValues.length, 1);
+  const period = latestServicePeriod();
+  const serviceMonth = serviceCostForPrefix(period.month);
+  const yearServices = servicesForPrefix(period.year);
+  const ytd = serviceCostForPrefix(period.year);
+  const vehiclesWithCost = new Set(
+    yearServices
+      .map((service) => service.vehicle)
+      .filter(isKnownVehicle)
+  ).size;
+  const importedRows = state.imports.length || importedInvoiceData.summary?.importRowCount || 0;
+  const unmatched = importedInvoiceData.summary?.unmatchedInvoiceCount || 0;
+  const avgVehicleCost = ytd / Math.max(state.vehicles.length, 1);
 
   return [
-    { label: "Naklad pneu tento mesic", value: formatCurrency(serviceMonth), hint: "prace, material i pneu" },
-    { label: "Naklad pneu YTD", value: formatCurrency(ytd), hint: "souhrn za rok 2026" },
-    { label: "Aktivni pneu", value: `${active} ks`, hint: "sklad + vozidla + oprava" },
-    { label: `K vymene do ${settings.replacementDays} dnu`, value: `${replaceSoon} ks`, hint: "pod internim limitem" },
-    { label: "Prumer Kc / km", value: `${formatNumber(avgCostKm, 2)} Kc`, hint: "z evidovaneho najezdu" }
+    { label: "Naklad posledni mesic", value: formatCurrency(serviceMonth), hint: formatMonthLabel(period.month) },
+    { label: "Naklad YTD", value: formatCurrency(ytd), hint: `${yearServices.length} servisnich karet v roce ${period.year}` },
+    { label: "Vozidla v evidenci", value: `${state.vehicles.length} ks`, hint: `${vehiclesWithCost} vozidel s nakladem v importu` },
+    { label: "Faktury import", value: `${invoiceCount()} ks`, hint: `${importedRows} radku, ${unmatched} bez SPZ` },
+    { label: "Prumer / vozidlo YTD", value: formatCurrency(avgVehicleCost), hint: "naklad z faktur / vozovy park" }
   ];
 }
 
@@ -954,46 +1068,122 @@ function renderAlerts() {
       .join("") || `<p class="meta">Bez aktivnich upozorneni.</p>`;
 }
 
-function vehicleCosts() {
-  return state.vehicles
-    .map((vehicle) => {
-      const serviceCost = state.services
-        .filter((item) => item.vehicle === vehicle.spz)
-        .reduce((sum, item) => sum + item.labor + item.material + item.tireCost, 0);
-      return { label: vehicle.spz, value: vehicle.monthlyCost + serviceCost };
-    })
-    .sort((a, b) => b.value - a.value);
+function vehicleCosts(options = {}) {
+  const period = latestServicePeriod();
+  const prefix = options.prefix ?? period.year;
+  const vehicleMap = new Map(state.vehicles.map((vehicle) => [vehicle.spz, vehicle]));
+  const totals = state.services
+    .filter((service) => !prefix || service.date?.startsWith(prefix))
+    .reduce((acc, service) => {
+      const key = service.vehicle || "nezjisteno";
+      if (!acc[key]) {
+        const vehicle = vehicleMap.get(key);
+        acc[key] = {
+          label: key,
+          driver: vehicle?.driver || service.person || "nezjisteno",
+          value: 0
+        };
+      }
+      acc[key].value += serviceTotal(service);
+      return acc;
+    }, {});
+
+  if (options.includeFleetZeros) {
+    state.vehicles.forEach((vehicle) => {
+      if (!totals[vehicle.spz]) {
+        totals[vehicle.spz] = {
+          label: vehicle.spz,
+          driver: vehicle.driver,
+          value: Number(vehicle.monthlyCost) || 0
+        };
+      }
+    });
+  }
+
+  return Object.values(totals).sort((a, b) => b.value - a.value);
 }
 
 function driverDefects() {
-  return state.vehicles
-    .map((vehicle) => {
-      const tireDefects = state.tires
-        .filter((tire) => tire.vehicle === vehicle.spz)
-        .reduce((sum, tire) => sum + tire.defects, 0);
-      const serviceDefects = state.services.filter(
-        (service) => service.vehicle === vehicle.spz && service.type === "defekt"
-      ).length;
-      return { label: vehicle.driver, value: tireDefects + serviceDefects };
-    })
-    .sort((a, b) => b.value - a.value);
-}
+  const period = latestServicePeriod();
+  const vehicleMap = new Map(state.vehicles.map((vehicle) => [vehicle.spz, vehicle]));
+  const repairs = state.services
+    .filter((service) => service.date?.startsWith(period.year) && ["oprava", "defekt"].includes(service.type));
 
-function sizeCosts() {
   return Object.values(
-    state.tires.reduce((acc, tire) => {
-      if (!acc[tire.size]) acc[tire.size] = { label: tire.size, value: 0 };
-      acc[tire.size].value += tire.priceEx;
+    repairs.reduce((acc, service) => {
+      const vehicle = vehicleMap.get(service.vehicle);
+      const label = service.person || vehicle?.driver || "nezjisteno";
+      if (!acc[label]) acc[label] = { label, value: 0 };
+      acc[label].value += 1;
       return acc;
     }, {})
   ).sort((a, b) => b.value - a.value);
 }
 
+function sizeCosts() {
+  const importedRows = tireImportRows();
+  if (importedRows.length) {
+    return Object.values(
+      importedRows.reduce((acc, row) => {
+        if (!acc[row.size]) acc[row.size] = { label: row.size, value: 0, count: 0 };
+        acc[row.size].value += row.total;
+        acc[row.size].count += row.qty;
+        return acc;
+      }, {})
+    ).sort((a, b) => b.value - a.value);
+  }
+
+  return Object.values(
+    state.tires.reduce((acc, tire) => {
+      if (!acc[tire.size]) acc[tire.size] = { label: tire.size, value: 0, count: 0 };
+      acc[tire.size].value += tire.priceEx;
+      acc[tire.size].count += 1;
+      return acc;
+    }, {})
+  ).sort((a, b) => b.value - a.value);
+}
+
+function priceReferenceRows() {
+  const importedRows = tireImportRows();
+  if (!importedRows.length) return [];
+
+  return Object.values(
+    importedRows.reduce((acc, row) => {
+      if (!acc[row.size]) {
+        acc[row.size] = {
+          size: row.size,
+          totalUnitPrice: 0,
+          unitCount: 0,
+          last: 0,
+          reference: 0,
+          supplier: row.supplier || "-",
+          lastDate: ""
+        };
+      }
+      acc[row.size].totalUnitPrice += row.unitPrice * row.qty;
+      acc[row.size].unitCount += row.qty;
+      if (!acc[row.size].lastDate || String(row.date || "").localeCompare(acc[row.size].lastDate) >= 0) {
+        acc[row.size].lastDate = row.date || "";
+        acc[row.size].last = row.unitPrice;
+        acc[row.size].supplier = row.supplier || "-";
+      }
+      return acc;
+    }, {})
+  )
+    .map((item) => ({
+      ...item,
+      reference: item.totalUnitPrice / Math.max(item.unitCount, 1)
+    }))
+    .sort((a, b) => b.last - a.last);
+}
+
 function potentialSavings() {
-  return state.priceRefs.reduce((sum, item) => sum + Math.max(item.last - item.reference, 0), 0);
+  const refs = state.priceRefs.length ? state.priceRefs : priceReferenceRows();
+  return refs.reduce((sum, item) => sum + Math.max(item.last - item.reference, 0), 0);
 }
 
 function previewRows(data, formatter = formatCurrency) {
+  if (!data.length) return `<p class="meta">Zatim nejsou data k vykresleni.</p>`;
   const max = Math.max(...data.map((item) => item.value), 1);
   return data
     .map(
@@ -1017,10 +1207,9 @@ function renderLiveDashboard() {
   if (!target) return;
 
   const kpis = calculateKpis();
-  const costKmValues = state.tires.filter((tire) => tire.mileage > 0).map(tireCostPerKm);
-  const avgCostKm =
-    costKmValues.reduce((sum, value) => sum + value, 0) / Math.max(costKmValues.length, 1);
-  const needleRotation = Math.min(Math.max(-62 + avgCostKm * 170, -62), 58);
+  const period = latestServicePeriod();
+  const avgVehicleCost = serviceCostForPrefix(period.year) / Math.max(state.vehicles.length, 1);
+  const needleRotation = Math.min(Math.max(-62 + (avgVehicleCost / 20000) * 120, -62), 58);
   const topSizes = sizeCosts().slice(0, 3);
   const totalSizeCost = topSizes.reduce((sum, item) => sum + item.value, 0) || 1;
   const firstSlice = Math.round((topSizes[0]?.value || 0) / totalSizeCost * 100);
@@ -1055,12 +1244,12 @@ function renderLiveDashboard() {
     </button>
 
     <button class="preview-tile" type="button" data-section-jump="reports">
-      <div class="preview-title">ridici podle defektu</div>
+      <div class="preview-title">ridici podle oprav</div>
       <div class="preview-list">${previewRows(driverDefects().slice(0, 4), (value) => `${value}x`)}</div>
     </button>
 
     <button class="preview-tile preview-chart" type="button" data-section-jump="reports" style="--slice-one: ${firstSlice}%; --slice-two: ${secondSlice}%">
-      <div class="preview-title">rozmery podle nakladu</div>
+      <div class="preview-title">rozmery podle faktur</div>
       <span aria-hidden="true"></span>
       <strong>${topSizes[0]?.label || "-"}<small>${formatCurrency(topSizes[0]?.value || 0)}</small></strong>
     </button>
@@ -1074,6 +1263,10 @@ function renderLiveDashboard() {
 }
 
 function renderBarList(target, data, formatter = formatCurrency) {
+  if (!data.length) {
+    target.innerHTML = `<p class="meta">Zatim nejsou data k vykresleni.</p>`;
+    return;
+  }
   const max = Math.max(...data.map((item) => item.value), 1);
   target.innerHTML = data
     .map(
@@ -1387,33 +1580,19 @@ function renderServices() {
 }
 
 function renderReports() {
-  const byBrand = Object.values(
-    state.tires.reduce((acc, tire) => {
-      const key = `${tire.manufacturer} ${tire.model}`;
-      if (!acc[key]) acc[key] = { label: key, totalCostKm: 0, count: 0 };
-      if (tire.mileage > 0) {
-        acc[key].totalCostKm += tireCostPerKm(tire);
-        acc[key].count += 1;
-      }
-      return acc;
-    }, {})
-  )
-    .map((item) => ({ label: item.label, value: item.totalCostKm / Math.max(item.count, 1) }))
-    .sort((a, b) => b.value - a.value);
-
-  renderBarList(query("#brandCostBars"), byBrand, (value) => `${formatNumber(value, 2)} Kc/km`);
+  renderBarList(query("#brandCostBars"), sizeCosts().slice(0, 8), formatCurrency);
 
   const suppliers = Object.values(
     state.services.reduce((acc, service) => {
       if (!acc[service.supplier]) {
         acc[service.supplier] = { supplier: service.supplier, labor: 0, material: 0, tireCost: 0 };
       }
-      acc[service.supplier].labor += service.labor;
-      acc[service.supplier].material += service.material;
-      acc[service.supplier].tireCost += service.tireCost;
+      acc[service.supplier].labor += Number(service.labor) || 0;
+      acc[service.supplier].material += Number(service.material) || 0;
+      acc[service.supplier].tireCost += Number(service.tireCost) || 0;
       return acc;
     }, {})
-  );
+  ).sort((a, b) => (b.labor + b.material + b.tireCost) - (a.labor + a.material + a.tireCost));
 
   query("#supplierCards").innerHTML = suppliers
     .map(
@@ -1426,9 +1605,10 @@ function renderReports() {
         </div>
       `
     )
-    .join("");
+    .join("") || `<p class="meta">Zatim nejsou importovane zadne servisni naklady.</p>`;
 
-  query("#priceTableBody").innerHTML = state.priceRefs
+  const priceRows = state.priceRefs.length ? state.priceRefs : priceReferenceRows();
+  query("#priceTableBody").innerHTML = priceRows
     .map((item) => {
       const diff = item.last - item.reference;
       const isHigh = diff > 0;
@@ -1442,7 +1622,7 @@ function renderReports() {
         </tr>
       `;
     })
-    .join("");
+    .join("") || `<tr><td colspan="5">Zatim nejsou data pro porovnani cen.</td></tr>`;
 }
 
 function renderSettings() {
@@ -2064,7 +2244,7 @@ function bindEvents() {
     selectedVehicle = state.vehicles[0]?.spz || "";
     selectedPosition = "";
     renderAll();
-    showToast("Demo data byla obnovena.");
+    showToast("Importovana vychozi data byla obnovena.");
   });
 }
 
