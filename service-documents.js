@@ -48,7 +48,7 @@
 
   function renderDocumentActions(service) {
     const docs = documentFor(service);
-    if (!service.invoice && !docs) return "";
+    if (!service.invoice && !docs && !service.deliveryPhotoPath && !service.deliveryPhotoUrl) return "";
 
     const invoiceKey = normalizeInvoice(service.invoice);
     const invoicePdf = docs?.invoicePdfData
@@ -64,12 +64,18 @@
     const jobSheet = docs?.jobSheetPdfData
       ? `<button class="service-doc-link" type="button" data-open-service-doc="${text(invoiceKey)}" data-doc-kind="jobSheet">Zakazkovy list</button>`
       : `<span class="service-doc-missing">Zakazkovy list nedodan</span>`;
+    const deliveryPhoto = service.deliveryPhotoPath
+      ? `<button class="service-doc-link" type="button" data-open-cloud-file="${text(service.deliveryPhotoPath)}">Foto DL</button>`
+      : service.deliveryPhotoUrl
+        ? `<a class="service-doc-link" href="${text(service.deliveryPhotoUrl)}" target="_blank" rel="noopener">Foto DL</a>`
+      : "";
 
     return `
       <div class="service-documents" aria-label="Doklady k servisnimu zasahu">
         ${invoicePdf}
         ${jobSheet}
         ${digitoo}
+        ${deliveryPhoto}
       </div>
     `;
   }
