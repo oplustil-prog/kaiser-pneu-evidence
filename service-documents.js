@@ -53,8 +53,12 @@
     const invoiceKey = normalizeInvoice(service.invoice);
     const invoicePdf = docs?.invoicePdfData
       ? `<button class="service-doc-link" type="button" data-open-service-doc="${text(invoiceKey)}" data-doc-kind="invoice">Faktura PDF</button>`
-      : `<span class="service-doc-missing">Faktura PDF chybi</span>`;
-    const digitoo = docs?.digitooUrl
+      : docs?.digitooUrl
+        ? `<a class="service-doc-link" href="${text(docs.digitooUrl)}" target="_blank" rel="noopener">Faktura PDF</a>`
+        : docs?.invoicePdfChunks?.length && !docs?.invoicePdfError
+          ? `<span class="service-doc-missing">Faktura se nacita</span>`
+          : `<span class="service-doc-missing">Faktura PDF chybi</span>`;
+    const digitoo = docs?.digitooUrl && docs?.invoicePdfData
       ? `<a class="service-doc-link" href="${text(docs.digitooUrl)}" target="_blank" rel="noopener">Digitoo</a>`
       : "";
     const jobSheet = docs?.jobSheetPdfData
@@ -197,4 +201,5 @@
 
   window.addEventListener("DOMContentLoaded", renderServicesWithDocuments);
   window.addEventListener("load", renderServicesWithDocuments);
+  window.addEventListener("kaiserServiceDocumentsReady", renderServicesWithDocuments);
 }());
