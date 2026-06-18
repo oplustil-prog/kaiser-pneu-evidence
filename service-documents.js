@@ -202,4 +202,5 @@
   window.addEventListener("DOMContentLoaded", renderServicesWithDocuments);
   window.addEventListener("load", renderServicesWithDocuments);
   window.addEventListener("kaiserServiceDocumentsReady", renderServicesWithDocuments);
+  window.setTimeout(renderServicesWithDocuments, 0);
 }());
