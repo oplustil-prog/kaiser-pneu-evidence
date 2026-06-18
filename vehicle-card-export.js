@@ -2,6 +2,31 @@
   const PDF_WIDTH = 595.28;
   const PDF_HEIGHT = 841.89;
 
+  function injectExportStyles() {
+    if (document.querySelector("#vehicleCardExportStyles")) return;
+    const style = document.createElement("style");
+    style.id = "vehicleCardExportStyles";
+    style.textContent = `
+      .vehicle-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .vehicle-card-actions .button {
+        min-width: 180px;
+      }
+
+      @media (max-width: 700px) {
+        .vehicle-card-actions .button {
+          width: 100%;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function normalizeText(value) {
     return String(value ?? "")
       .normalize("NFD")
@@ -292,6 +317,8 @@
       `
     );
   }
+
+  injectExportStyles();
 
   if (typeof renderVehicles === "function") {
     const originalRenderVehicles = renderVehicles;
