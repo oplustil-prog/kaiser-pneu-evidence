@@ -20,6 +20,9 @@
   let syncPaused = false;
   let localSaveState = null;
   let initialized = false;
+  let activePushes = 0;
+  let lastStatusKind = "warn";
+  let lastStatusMessage = "Jen v tomto prohlizeci";
 
   function text(value) {
     return String(value || "").replace(/[&<>"']/g, (char) =>
@@ -66,6 +69,9 @@
   }
 
   function setStatus(kind, message, detail = "") {
+    lastStatusKind = kind;
+    lastStatusMessage = message;
+    updateSettingsSaveBadge(kind, message);
     const panel = document.querySelector("#cloudPanel");
     if (!panel) return;
     const dot = panel.querySelector("[data-cloud-dot]");
@@ -77,6 +83,33 @@
     status.className = `badge ${badgeClass}`;
     status.textContent = message;
     meta.textContent = detail || lastSyncLabel();
+  }
+
+  function updateSettingsSaveBadge(kind, message) {
+    const badge = document.querySelector("#settings .toolbar .badge");
+    if (!badge) return;
+
+    const labels = {
+      ok: message?.toLowerCase().includes("ulozena") || message?.toLowerCase().includes("nactena")
+        ? "ulozeno do cloudu"
+        : "cloud aktivni",
+      work: "ukladam do cloudu...",
+      warn: message?.toLowerCase().includes("prihlaseni")
+        ? "prihlaste se do cloudu"
+        : "jen v tomto prohlizeci",
+      danger: "cloud neulozil"
+    };
+
+    badge.className = `badge ${
+      kind === "ok" ? "badge-ok" : kind === "danger" ? "badge-danger" : "badge-warning"
+    }`;
+    badge.textContent = labels[kind] || message || "stav cloudu";
+  }
+
+  function notify(message) {
+    if (typeof window.showToast === "function") {
+      window.showToast(message);
+    }
   }
 
   function lastSyncLabel() {
@@ -159,11 +192,39 @@
     return client;
   }
 
+  function setAuthPreview(user) {
+    const form = document.querySelector("#cloudAuthForm");
+    if (!form) return;
+    const isAuthenticated = Boolean(user?.email);
+    const emailField = form.elements.email;
+    const passwordField = form.elements.password;
+    const signInButton = form.querySelector("[data-cloud-signin]");
+    const signOutButton = form.querySelector("[data-cloud-signout]");
+
+    form.classList.toggle("is-authenticated", isAuthenticated);
+    emailField.value = isAuthenticated ? user.email : "";
+    passwordField.value = isAuthenticated ? "*******" : "";
+    passwordField.type = isAuthenticated ? "text" : "password";
+
+    [emailField, passwordField].forEach((field) => {
+      field.readOnly = isAuthenticated;
+      field.setAttribute("aria-readonly", isAuthenticated ? "true" : "false");
+      field.tabIndex = isAuthenticated ? -1 : 0;
+    });
+
+    if (signInButton) {
+      signInButton.disabled = isAuthenticated;
+      signInButton.textContent = isAuthenticated ? "Prihlaseno" : "Prihlasit";
+    }
+    if (signOutButton) signOutButton.disabled = !isAuthenticated;
+  }
+
   async function refreshAuthStatus() {
     const target = document.querySelector("[data-cloud-auth]");
     if (!target) return null;
     if (!hasConnection()) {
       target.textContent = "bez cloudu";
+      setAuthPreview(null);
       return null;
     }
 
@@ -172,11 +233,44 @@
       const { data } = await supabase.auth.getSession();
       const user = data?.session?.user || null;
       target.textContent = user?.email || "neprihlaseno";
+      setAuthPreview(user);
+      updateTopLoginStatus(user);
       return user;
     } catch {
       target.textContent = "neprihlaseno";
+      setAuthPreview(null);
+      updateTopLoginStatus(null);
       return null;
     }
+  }
+
+  function updateTopLoginStatus(user) {
+    const box = document.querySelector("#loginStatusBox");
+    if (!box) return;
+
+    if (!user?.email) {
+      box.innerHTML = `
+        <span class="login-status-dot" aria-hidden="true"></span>
+        <span>
+          <strong>Cloud neprihlasen</strong>
+          <small>zmeny jsou zatim jen lokalne</small>
+        </span>
+      `;
+      box.title = "Prihlaste se dole v Nastaveni / Supabase databaze a uloziste.";
+      return;
+    }
+
+    const email = String(user.email || "").trim();
+    const knownUser = (state?.users || []).find((item) => item.email === email);
+    const name = knownUser?.name || email;
+    box.innerHTML = `
+      <span class="login-status-dot" aria-hidden="true"></span>
+      <span>
+        <strong>Cloud prihlasen</strong>
+        <small>${text(name)}</small>
+      </span>
+    `;
+    box.title = email;
   }
 
   async function signIn(event) {
@@ -211,6 +305,11 @@
       await supabase.auth.signOut();
       await refreshAuthStatus();
       setStatus("warn", "Uzivatel je odhlaseny", "Data zustavaji ulozena v tomto prohlizeci.");
+      if (typeof window.kaiserLockApp === "function") {
+        window.kaiserLockApp("Byli jste odhlaseni. Pro dalsi praci se znovu prihlaste.");
+      } else {
+        document.body.classList.add("kaiser-auth-locked");
+      }
     } catch (error) {
       setStatus("danger", "Odhlaseni selhalo", error.message || "");
     }
@@ -247,12 +346,21 @@
     const config = readConfig();
     if (!hasConnection(config)) {
       if (!options.quiet) setStatus("warn", "Cloud neni nastaveny", "Data zustavaji ulozena v tomto prohlizeci.");
-      return;
+      if (!options.quiet || options.notifyOnError) notify("Cloud neni nastaveny, zmena je jen v tomto prohlizeci.");
+      return { ok: false, reason: "not-configured" };
     }
 
     setStatus("work", options.quiet ? "Ukladam do cloudu..." : "Nahravam data do cloudu...");
+    activePushes += 1;
     try {
       const supabase = await getClient();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const user = sessionData?.session?.user || null;
+      if (!user) {
+        throw new Error("Nejste prihlaseny. Zmena zustala jen v tomto prohlizeci.");
+      }
+
       const now = new Date().toISOString();
       const counts = stateCounts();
       const { error } = await supabase.from(config.table).upsert(
@@ -262,7 +370,7 @@
           app_version: STORAGE_KEY,
           counts,
           updated_at: now,
-          updated_by: "github-pages"
+          updated_by: user.email || "github-pages"
         },
         { onConflict: "id" }
       );
@@ -270,8 +378,14 @@
       if (error) throw error;
       setMeta({ lastSyncAt: now, lastPushAt: now, counts });
       setStatus("ok", "Data jsou ulozena v cloudu", lastSyncLabel());
+      if (!options.quiet) notify("Data jsou ulozena do cloudu.");
+      return { ok: true, syncedAt: now, counts };
     } catch (error) {
       setStatus("danger", "Ulozeni do cloudu selhalo", error.message || "Zkontrolujte Supabase nastaveni.");
+      if (!options.quiet || options.notifyOnError) notify(error.message || "Ulozeni do cloudu selhalo.");
+      return { ok: false, reason: "push-failed", error };
+    } finally {
+      activePushes = Math.max(0, activePushes - 1);
     }
   }
 
@@ -320,8 +434,41 @@
   function schedulePush() {
     const config = readConfig();
     if (!config.autoSync || !hasConnection(config)) return;
+    if (!window.kaiserAuthState?.authenticated) return;
     window.clearTimeout(pushTimer);
-    pushTimer = window.setTimeout(() => pushState({ quiet: true }), 1200);
+    pushTimer = window.setTimeout(() => pushState({ quiet: true, notifyOnError: true }), 350);
+  }
+
+  function importantSaveLabel(target) {
+    if (!target) return "";
+    if (target.matches("#settingsForm")) return "Nastaveni";
+    if (target.matches("#userForm")) return "Uzivatel";
+    if (target.matches("#tireForm")) return "Pneumatika";
+    if (target.matches("#measurementForm, #quickMeasurementForm")) return "Mereni";
+    if (target.matches("#serviceForm")) return "Servisni karta";
+    return "";
+  }
+
+  function pushAfterImportantSave(target) {
+    const label = importantSaveLabel(target);
+    if (!label) return;
+    window.setTimeout(() => {
+      pushState({ quiet: false, source: label });
+    }, 80);
+  }
+
+  function bindImmediateCloudSaves() {
+    document.addEventListener("submit", (event) => pushAfterImportantSave(event.target));
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest("#saveVehicleImport, #parseImport, #parseVehicleImport, #resetDemoData");
+      if (!trigger) return;
+      window.setTimeout(() => pushState({ quiet: false, source: trigger.id || "akce" }), 120);
+    });
+    window.addEventListener("beforeunload", (event) => {
+      if (!activePushes) return;
+      event.preventDefault();
+      event.returnValue = "Probiha ukladani do cloudu. Pockejte prosim par sekund.";
+    });
   }
 
   async function uploadFile(file, folder = "documents") {
@@ -487,6 +634,26 @@
         padding-top: 14px;
       }
 
+      .cloud-auth-form.is-authenticated label {
+        position: relative;
+      }
+
+      .cloud-auth-form.is-authenticated label::after {
+        color: var(--brand-strong);
+        content: "zamceno";
+        font-size: .78rem;
+        font-weight: 900;
+        position: absolute;
+        right: 12px;
+        top: 4px;
+      }
+
+      .cloud-auth-form.is-authenticated input {
+        background: rgba(117, 189, 37, .05);
+        color: var(--ink);
+        cursor: not-allowed;
+      }
+
       .cloud-config-form label.is-locked {
         position: relative;
       }
@@ -597,8 +764,8 @@
               Heslo
               <input name="password" type="password" autocomplete="current-password" />
             </label>
-            <button class="button button-primary" type="submit">Prihlasit</button>
-            <button class="button button-soft" type="button" data-cloud-signout>Odhlasit</button>
+            <button class="button button-primary" type="submit" data-cloud-signin>Prihlasit</button>
+            <button class="button button-soft" type="button" data-cloud-signout disabled>Odhlasit</button>
           </form>
 
           <div class="cloud-actions">
@@ -622,6 +789,7 @@
     initialized = true;
     ensureStyles();
     patchSaveState();
+    bindImmediateCloudSaves();
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("[data-open-cloud-file]");
       if (trigger) openFile(trigger.dataset.openCloudFile);
