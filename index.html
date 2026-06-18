@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260618-33" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-40" />
     <link rel="stylesheet" href="./service-card.css?v=20260618-15" />
     <link rel="stylesheet" href="./vehicle-photos.css?v=20260618-16" />
   </head>
@@ -610,6 +610,7 @@
                   Stav
                   <select name="status" required>
                     <option value="aktivni">Aktivni</option>
+                    <option value="pozvanka">Ceka na pozvanku</option>
                     <option value="pozastaveno">Pozastaveno</option>
                   </select>
                 </label>
@@ -617,7 +618,10 @@
                   Telefon
                   <input name="phone" type="tel" placeholder="+420 ..." />
                 </label>
-                <button class="button button-primary" type="submit">Ulozit uzivatele</button>
+                <div class="user-form-actions">
+                  <button class="button button-primary" type="submit">Ulozit uzivatele</button>
+                  <button class="button button-soft" id="inviteUserButton" type="button">Pozvat uzivatele</button>
+                </div>
               </form>
             </article>
 
@@ -632,6 +636,7 @@
                   <select id="userStatusFilter" aria-label="Filtrovat podle stavu">
                     <option value="all">Vsechny stavy</option>
                     <option value="aktivni">Aktivni</option>
+                    <option value="pozvanka">Ceka na pozvanku</option>
                     <option value="pozastaveno">Pozastaveno</option>
                   </select>
                 </div>
@@ -784,10 +789,10 @@
     <script src="./supabase-config.js?v=20260618-32" defer></script>
     <script src="./cloud-autosave.js?v=20260618-32" defer></script>
     <script src="./supabase-sync.js?v=20260618-36" defer></script>
-    <script src="./cloud-auth-preview.js?v=20260618-36" defer></script>
+    <script src="./cloud-auth-preview.js?v=20260618-41" defer></script>
     <script src="./invoice-data.js?v=20260618-14" defer></script>
     <script src="./vehicle-photo-assets.js?v=20260618-16" defer></script>
-    <script src="./app.js?v=20260618-36" defer></script>
+    <script src="./app.js?v=20260618-40" defer></script>
     <script src="./quick-measure.js?v=20260618-30" defer></script>
     <script src="./service-card.js?v=20260618-15" defer></script>
     <script src="./vehicle-photos.js?v=20260618-16" defer></script>
