@@ -74,9 +74,11 @@
         box-shadow: 0 28px 80px rgba(25, 34, 28, .2);
         display: grid;
         gap: 18px;
-        max-width: 480px;
+        max-height: calc(100vh - 36px);
+        max-width: 560px;
+        overflow: auto;
         padding: 24px;
-        width: min(100%, 480px);
+        width: min(100%, 560px);
       }
       .kaiser-login-logo {
         align-items: center;
@@ -106,7 +108,7 @@
       .kaiser-login-progress {
         display: grid;
         gap: 8px;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .kaiser-login-progress span {
         background: rgba(30, 41, 36, .07);
@@ -144,8 +146,28 @@
       }
       .kaiser-login-code {
         font-size: 1.35rem;
-        letter-spacing: .18em;
+        letter-spacing: .08em;
         text-align: center;
+      }
+      .kaiser-login-help {
+        background: rgba(117, 189, 37, .09);
+        border: 1px solid rgba(117, 189, 37, .24);
+        border-radius: 8px;
+        color: var(--ink, #19221c);
+        display: grid;
+        gap: 8px;
+        line-height: 1.38;
+        padding: 13px;
+      }
+      .kaiser-login-help strong {
+        color: var(--brand-strong, #579718);
+      }
+      .kaiser-login-help ol {
+        margin: 0;
+        padding-left: 20px;
+      }
+      .kaiser-login-help li + li {
+        margin-top: 4px;
       }
       .kaiser-login-actions {
         display: flex;
@@ -168,13 +190,19 @@
         border-radius: 8px;
         display: grid;
         justify-items: center;
-        min-height: 210px;
+        min-height: 230px;
         padding: 14px;
       }
       .kaiser-login-qr img {
         display: block;
         max-width: 210px;
         width: 100%;
+      }
+      .kaiser-login-qr p {
+        color: var(--muted, #61705e);
+        font-weight: 800;
+        margin: 0;
+        text-align: center;
       }
       .kaiser-login-secret {
         background: rgba(117, 189, 37, .08);
@@ -186,6 +214,12 @@
         font-weight: 800;
         overflow-wrap: anywhere;
         padding: 10px;
+      }
+      .kaiser-login-secondary-note {
+        color: var(--muted, #61705e);
+        font-size: .86rem;
+        font-weight: 800;
+        line-height: 1.35;
       }
       @media (max-width: 620px) {
         .kaiser-login-gate { align-items: stretch; padding: 10px; }
@@ -207,42 +241,49 @@
             </div>
             <div class="kaiser-login-title">
               <h2 id="kaiserLoginTitle">Prihlaseni do aplikace</h2>
-              <p>Pristup je chraneny heslem a dvoufaktorovym overenim.</p>
+              <p>Nejdrive zadejte firemni e-mail a heslo. Overovaci kod se zadava az v dalsim kroku.</p>
             </div>
             <div class="kaiser-login-progress" aria-hidden="true">
-              <span data-login-pill="password" class="is-active">1. Heslo</span>
-              <span data-login-pill="setup">2. Nastaveni</span>
-              <span data-login-pill="mfa">3. Kod</span>
+              <span data-login-pill="password" class="is-active">1. Prihlaseni</span>
+              <span data-login-pill="verify">2. Overeni</span>
             </div>
             <section class="kaiser-login-step" data-login-step="password">
               <form class="kaiser-login-form" id="kaiserPasswordForm">
-                <label>E-mail <input name="email" type="email" autocomplete="email" required /></label>
-                <label>Heslo <input name="password" type="password" autocomplete="current-password" required /></label>
+                <label>E-mail <input name="email" type="email" autocomplete="email" placeholder="oplustil@kaiserservis.cz" required /></label>
+                <label>Heslo <input name="password" type="password" autocomplete="current-password" placeholder="firemni heslo" required /></label>
                 <div class="kaiser-login-actions">
                   <button class="button button-primary" type="submit">Prihlasit</button>
                 </div>
               </form>
             </section>
             <section class="kaiser-login-step" data-login-step="setup" hidden>
+              <div class="kaiser-login-help">
+                <strong>Prvni nastaveni dvoufaktoru</strong>
+                <ol>
+                  <li>Otevrite v telefonu Microsoft Authenticator, Google Authenticator nebo 1Password.</li>
+                  <li>Naskenujte QR kod nize.</li>
+                  <li>Do pole pod QR kodem napiste 6 cislic z telefonu. Nepiste rucni klic.</li>
+                </ol>
+              </div>
               <div class="kaiser-login-setup">
-                <p>Naskenujte QR kod v autentizacni aplikaci a zadejte prvni kod.</p>
                 <div class="kaiser-login-qr" data-login-qr></div>
                 <div class="kaiser-login-secret" data-login-secret hidden></div>
               </div>
               <form class="kaiser-login-form" id="kaiserSetupForm">
-                <label>Prvni overovaci kod <input class="kaiser-login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required /></label>
+                <label>6mistny kod z aplikace <input class="kaiser-login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required /></label>
                 <div class="kaiser-login-actions">
-                  <button class="button button-primary" type="submit">Aktivovat 2FA</button>
-                  <button class="button button-soft" type="button" data-login-back>Zpet</button>
+                  <button class="button button-primary" type="submit">Aktivovat a pokracovat</button>
+                  <button class="button button-soft" type="button" data-login-back>Zpet na prihlaseni</button>
                 </div>
+                <div class="kaiser-login-secondary-note">Rucni klic slouzi jen jako zaloha, kdyz nejde naskenovat QR kod.</div>
               </form>
             </section>
             <section class="kaiser-login-step" data-login-step="mfa" hidden>
               <form class="kaiser-login-form" id="kaiserMfaForm">
-                <label>Overovaci kod <input class="kaiser-login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required /></label>
+                <label>6mistny kod z aplikace <input class="kaiser-login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required /></label>
                 <div class="kaiser-login-actions">
-                  <button class="button button-primary" type="submit">Overit kod</button>
-                  <button class="button button-soft" type="button" data-login-back>Zpet</button>
+                  <button class="button button-primary" type="submit">Overit a otevrit aplikaci</button>
+                  <button class="button button-soft" type="button" data-login-back>Zpet na prihlaseni</button>
                 </div>
               </form>
             </section>
@@ -265,8 +306,9 @@
     document.querySelectorAll("[data-login-step]").forEach((section) => {
       section.hidden = section.dataset.loginStep !== name;
     });
+    const activePill = name === "setup" || name === "mfa" ? "verify" : name;
     document.querySelectorAll("[data-login-pill]").forEach((pill) => {
-      pill.classList.toggle("is-active", pill.dataset.loginPill === name);
+      pill.classList.toggle("is-active", pill.dataset.loginPill === activePill);
     });
   }
 
@@ -300,9 +342,40 @@
   function qrSrc(value) {
     const code = String(value || "");
     if (!code) return "";
-    if (code.startsWith("data:")) return code;
-    if (code.trim().startsWith("<svg")) return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(code)}`;
-    return code;
+    const trimmed = code.trim();
+    if (trimmed.startsWith("<svg")) return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`;
+    if (trimmed.startsWith("data:image/svg+xml")) {
+      const comma = trimmed.indexOf(",");
+      if (comma > -1 && trimmed.slice(comma + 1).trim().startsWith("<svg")) {
+        return `${trimmed.slice(0, comma)},${encodeURIComponent(trimmed.slice(comma + 1))}`;
+      }
+      return trimmed;
+    }
+    if (trimmed.startsWith("data:")) return trimmed;
+    return trimmed;
+  }
+
+  function renderQr(qr, rawQrCode) {
+    qr.replaceChildren();
+    const source = qrSrc(rawQrCode);
+    if (!source) {
+      const message = document.createElement("p");
+      message.textContent = "QR kod neni dostupny. Pouzijte rucni klic nize.";
+      qr.appendChild(message);
+      return;
+    }
+    const image = document.createElement("img");
+    image.alt = "QR kod pro dvoufaktorove overeni";
+    image.decoding = "async";
+    image.loading = "eager";
+    image.src = source;
+    image.addEventListener("error", () => {
+      qr.replaceChildren();
+      const message = document.createElement("p");
+      message.textContent = "QR kod se nepodarilo zobrazit. Pouzijte rucni klic nize.";
+      qr.appendChild(message);
+    }, { once: true });
+    qr.appendChild(image);
   }
 
   async function firstVerifiedFactor(supabase) {
@@ -332,25 +405,20 @@
     status("Pripravuji QR kod pro 2FA...");
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: "totp",
-      friendlyName: `Kaiser ${gate.email || "uzivatel"}`
+      friendlyName: `Kaiser aplikace ${new Date().toISOString().replace(/[:.]/g, "-")}`
     });
     if (error) throw error;
     gate.factor = data;
-    const image = qrSrc(data?.totp?.qr_code);
     const qr = document.querySelector("[data-login-qr]");
     const secret = document.querySelector("[data-login-secret]");
-    if (qr) {
-      qr.innerHTML = image
-        ? `<img src="${image}" alt="QR kod pro dvoufaktorove overeni" />`
-        : "<p>QR kod neni dostupny. Pouzijte rucni klic.</p>";
-    }
+    if (qr) renderQr(qr, data?.totp?.qr_code);
     if (secret) {
       secret.hidden = !data?.totp?.secret;
-      secret.textContent = data?.totp?.secret ? `Rucni klic: ${data.totp.secret}` : "";
+      secret.textContent = data?.totp?.secret ? `Rucni klic pro zalozni zadani: ${data.totp.secret}` : "";
     }
     step("setup");
     show(true);
-    status("Naskenujte QR kod a zadejte prvni 6mistny kod.", "ok");
+    status("Zadejte 6 cislic z Authenticatoru. Neopisujte rucni klic.", "ok");
   }
 
   async function afterPassword(supabase, user) {
@@ -368,7 +436,7 @@
     gate.factor = factor;
     step("mfa");
     show(true);
-    status("Zadejte 6mistny kod z autentizacni aplikace.", "ok");
+    status("Zadejte 6 cislic z Authenticatoru.", "ok");
   }
 
   async function submitPassword(event) {
@@ -390,7 +458,12 @@
       if (error) throw error;
       await afterPassword(supabase, data?.user || { email: gate.email });
     } catch (error) {
-      status(error?.message || "Prihlaseni selhalo.", "danger");
+      const message = String(error?.message || "");
+      if (message.includes("friendly name") && message.includes("already exists")) {
+        status("Rozpracovane 2FA uz existuje. Zkuste prihlaseni znovu, pripravi se novy QR kod.", "danger");
+      } else {
+        status(message || "Prihlaseni selhalo.", "danger");
+      }
       step("password");
       show(true);
     } finally {
@@ -454,6 +527,11 @@
     document.querySelector("#kaiserPasswordForm")?.addEventListener("submit", submitPassword);
     document.querySelector("#kaiserSetupForm")?.addEventListener("submit", (event) => submitCode(event, true));
     document.querySelector("#kaiserMfaForm")?.addEventListener("submit", (event) => submitCode(event, false));
+    document.querySelectorAll(".kaiser-login-code").forEach((input) => {
+      input.addEventListener("input", () => {
+        input.value = String(input.value || "").replace(/\D/g, "").slice(0, 6);
+      });
+    });
     document.querySelectorAll("[data-login-back]").forEach((button) => button.addEventListener("click", backToPassword));
 
     show(true);
