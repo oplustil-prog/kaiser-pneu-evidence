@@ -14,11 +14,11 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260618-45" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-47" />
     <link rel="stylesheet" href="./service-card.css?v=20260618-15" />
     <link rel="stylesheet" href="./vehicle-photos.css?v=20260618-16" />
   </head>
-  <body>
+  <body class="kaiser-auth-locked">
     <div class="app-shell">
       <aside class="sidebar" aria-label="Hlavni navigace">
         <button class="brand brand-home" type="button" data-section="dashboard" aria-label="Zpet na dashboard">
@@ -82,10 +82,13 @@
                 <small>jako Radim Oplustil</small>
               </span>
             </div>
-            <label class="search-control">
-              <span class="sr-only">Hledat pneu, SPZ nebo dodavatele</span>
-              <input id="globalSearch" type="search" placeholder="Hledat ID pneu, SPZ, dodavatele..." />
-            </label>
+            <div class="global-search-wrap">
+              <label class="search-control">
+                <span class="sr-only">Hledat pneu, SPZ nebo dodavatele</span>
+                <input id="globalSearch" type="search" placeholder="Hledat pneu, SPZ, servis, ridice..." autocomplete="off" />
+              </label>
+              <div class="global-search-panel" id="globalSearchPanel" hidden></div>
+            </div>
             <button class="button button-soft" id="qrFocusButton" type="button">
               <span aria-hidden="true">QR</span>
               Zadat kod
@@ -787,15 +790,15 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./measurement-reminders.js?v=20260618-23" defer></script>
     <script src="./supabase-config.js?v=20260618-32" defer></script>
-    <script src="./cloud-autosave.js?v=20260618-32" defer></script>
-    <script src="./supabase-sync.js?v=20260618-45" defer></script>
-    <script src="./cloud-auth-preview.js?v=20260618-45" defer></script>
+    <script src="./cloud-autosave.js?v=20260618-47" defer></script>
+    <script src="./supabase-sync.js?v=20260618-47" defer></script>
+    <script src="./cloud-auth-preview.js?v=20260618-47" defer></script>
     <script src="./invoice-data.js?v=20260618-14" defer></script>
     <script src="./vehicle-photo-assets.js?v=20260618-16" defer></script>
-    <script src="./app.js?v=20260618-45" defer></script>
-    <script src="./tire-assignment.js?v=20260618-43" defer></script>
+    <script src="./app.js?v=20260618-47" defer></script>
+    <script src="./tire-assignment.js?v=20260618-47" defer></script>
     <script src="./quick-measure.js?v=20260618-30" defer></script>
-    <script src="./service-card.js?v=20260618-15" defer></script>
+    <script src="./service-card.js?v=20260618-47" defer></script>
     <script src="./vehicle-photos.js?v=20260618-16" defer></script>
   </body>
 </html>
