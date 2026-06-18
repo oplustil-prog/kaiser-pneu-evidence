@@ -792,16 +792,34 @@ function renderVehicles() {
 }
 
 function getPositionSide(position, index) {
+  if (/^\d+\s*P/i.test(position) || /^SP/i.test(position)) return "right";
+  if (/^\d+\s*L/i.test(position) || /^SL/i.test(position)) return "left";
   if (/^(P|HP|VP|ZP)/.test(position)) return "right";
   if (/^(L|HL|VL|ZL)/.test(position)) return "left";
   return index % 2 === 0 ? "left" : "right";
 }
 
 function getPositionRow(position, index, configuration) {
+  const numericAxle = String(position).match(/^(\d+)/);
+  if (numericAxle) return Math.max(0, Number(numericAxle[1]) - 1);
+  if (/^S[LP]/i.test(position)) return 1;
+
+  const hasExplicitSecondAxle = configuration.some((item) => /^([2-9]|S[LP])/i.test(item));
+  const hasDriveAxle = configuration.some((item) => /^H/i.test(item));
+  const hasMiddleAxle = configuration.some((item) => /^V/i.test(item));
+
   if (position === "L" || position === "P") return 0;
-  if (/^H/.test(position)) return 1;
-  if (/^V/.test(position)) return configuration.length <= 4 ? 1 : 2;
-  if (/^Z/.test(position)) return configuration.length <= 6 ? 2 : 3;
+  if (/^H/i.test(position)) return hasExplicitSecondAxle ? 2 : 1;
+  if (/^V/i.test(position)) {
+    if (hasDriveAxle) return hasExplicitSecondAxle ? 3 : 2;
+    return 1;
+  }
+  if (/^Z/i.test(position)) {
+    if (hasDriveAxle && hasMiddleAxle) return hasExplicitSecondAxle ? 4 : 3;
+    if (hasMiddleAxle) return 2;
+    if (hasDriveAxle) return hasExplicitSecondAxle ? 3 : 2;
+    return 1;
+  }
   return Math.floor(index / 2);
 }
 
@@ -884,17 +902,20 @@ function renderVehicleMap(vehicle) {
     });
   });
 
-  selectedPosition = selectedPosition || vehicle.configuration[0];
+  if (!vehicle.configuration.includes(selectedPosition)) {
+    selectedPosition = vehicle.configuration[0];
+  }
   renderPositionDetail(vehicle.spz, selectedPosition);
 }
 
 function shortPosition(position) {
-  return position
+  const normalized = position
     .replace("vnitrni", "V")
-    .replace("vnejsi", "X")
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
+    .replace("vnejsi", "X");
+  const [main, variant] = normalized.split(/\s+/);
+  if (/^\d+[LP]$/i.test(main)) return `${main}${variant || ""}`.toUpperCase().slice(0, 4);
+  return `${main || ""}${variant || ""}`
+    .replace(/[^0-9A-Z]/gi, "")
     .slice(0, 3)
     .toUpperCase();
 }
@@ -1192,9 +1213,28 @@ function saveSettings(event) {
 }
 
 function defaultVehicleConfiguration(type = "") {
-  const normalized = type.toLowerCase();
+  const normalized = type
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (/(4\s*naprav|ctyr|8\s*x\s*4|8x4)/.test(normalized)) {
+    return [
+      "L",
+      "P",
+      "2L",
+      "2P",
+      "HL vnitrni",
+      "HL vnejsi",
+      "HP vnitrni",
+      "HP vnejsi",
+      "VL vnitrni",
+      "VL vnejsi",
+      "VP vnitrni",
+      "VP vnejsi"
+    ];
+  }
   if (/(dodavka|van|servis|osob)/.test(normalized)) return ["L", "P", "ZL", "ZP"];
-  if (/(naves|navěs|prives|příves|trailer)/.test(normalized)) return ["L", "P", "VL", "VP", "ZL", "ZP"];
+  if (/(naves|prives|trailer)/.test(normalized)) return ["L", "P", "VL", "VP", "ZL", "ZP"];
   return ["L", "P", "HL vnitrni", "HL vnejsi", "HP vnitrni", "HP vnejsi", "VL", "VP"];
 }
 
@@ -1569,7 +1609,7 @@ function bindEvents() {
 
   query("#loadSampleVehicles").addEventListener("click", () => {
     query("#vehicleImport").value =
-      "3BF 4421;Nakladni vozidlo;Novak;285400;Brno;22500;L,P,HL vnitrni,HL vnejsi,HP vnitrni,HP vnejsi,VL,VP\n" +
+      "3BF 4421;Nakladni vozidlo 4 napravy 8x4;Novak;285400;Brno;22500;\n" +
       "7B8 1204;Dodavka servis;Dvorak;98400;Praha;6900;L,P,ZL,ZP\n" +
       "9J3 7780;Naves / prives;Kovar;0;Slapanice;14200;L,P,VL,VP,ZL,ZP";
   });
