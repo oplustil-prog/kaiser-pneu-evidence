@@ -25,6 +25,9 @@ to authenticated
 using (id = 'production')
 with check (id = 'production');
 
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.kaiser_app_state to authenticated;
+
 insert into storage.buckets (id, name, public)
 values ('kaiser-documents', 'kaiser-documents', false)
 on conflict (id) do update set public = excluded.public;
