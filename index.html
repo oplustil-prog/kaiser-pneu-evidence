@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260618-5" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-6" />
   </head>
   <body>
     <div class="app-shell">
@@ -49,8 +49,12 @@
             <span class="nav-icon" aria-hidden="true">06</span>
             Reporty
           </button>
-          <button class="nav-item" type="button" data-section="settings">
+          <button class="nav-item" type="button" data-section="users">
             <span class="nav-icon" aria-hidden="true">07</span>
+            Uzivatele
+          </button>
+          <button class="nav-item" type="button" data-section="settings">
+            <span class="nav-icon" aria-hidden="true">08</span>
             Nastaveni
           </button>
         </nav>
@@ -492,6 +496,81 @@
           </div>
         </section>
 
+        <section class="section" id="users" aria-label="Uzivatele aplikace">
+          <div class="toolbar">
+            <div>
+              <p class="eyebrow">Pristupy</p>
+              <h2>Uzivatele</h2>
+            </div>
+            <span class="badge badge-ok" id="userCountBadge">0 aktivnich</span>
+          </div>
+
+          <div class="users-grid">
+            <article class="panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Novy pristup</p>
+                  <h3>Pridat nebo aktualizovat uzivatele</h3>
+                </div>
+              </div>
+              <form class="entry-form user-form" id="userForm">
+                <label>
+                  Jmeno
+                  <input name="name" type="text" placeholder="napr. Petr Novak" required />
+                </label>
+                <label>
+                  E-mail
+                  <input name="email" type="email" placeholder="jmeno@kaiserservis.cz" required />
+                </label>
+                <label>
+                  Role
+                  <select name="role" required></select>
+                </label>
+                <label>
+                  Stredisko
+                  <select name="depot" required>
+                    <option value="Brno">Brno</option>
+                    <option value="Slapanice">Slapanice</option>
+                    <option value="Praha">Praha</option>
+                    <option value="Externi">Externi</option>
+                  </select>
+                </label>
+                <label>
+                  Stav
+                  <select name="status" required>
+                    <option value="aktivni">Aktivni</option>
+                    <option value="pozastaveno">Pozastaveno</option>
+                  </select>
+                </label>
+                <label>
+                  Telefon
+                  <input name="phone" type="tel" placeholder="+420 ..." />
+                </label>
+                <button class="button button-primary" type="submit">Ulozit uzivatele</button>
+              </form>
+            </article>
+
+            <article class="panel wide-panel">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Adresar a role</p>
+                  <h3>Prehled pristupu</h3>
+                </div>
+                <div class="toolbar-actions">
+                  <select id="userRoleFilter" aria-label="Filtrovat podle role"></select>
+                  <select id="userStatusFilter" aria-label="Filtrovat podle stavu">
+                    <option value="all">Vsechny stavy</option>
+                    <option value="aktivni">Aktivni</option>
+                    <option value="pozastaveno">Pozastaveno</option>
+                  </select>
+                </div>
+              </div>
+              <div class="user-metrics" id="userMetrics"></div>
+              <div class="user-list" id="userList"></div>
+            </article>
+          </div>
+        </section>
+
         <section class="section" id="settings" aria-label="Nastaveni aplikace">
           <div class="toolbar">
             <div>
@@ -584,6 +663,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=20260618-5" defer></script>
+    <script src="./app.js?v=20260618-6" defer></script>
   </body>
 </html>
