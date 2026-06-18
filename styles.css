@@ -198,6 +198,36 @@ textarea {
   line-height: 1.45;
 }
 
+.sidebar-version {
+  padding: 12px 14px;
+  border: 1px solid rgba(117, 189, 37, 0.26);
+  border-radius: 8px;
+  background: rgba(117, 189, 37, 0.1);
+  color: rgba(255, 255, 255, 0.76);
+  display: grid;
+  gap: 3px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.sidebar-version span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.sidebar-version strong {
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+.sidebar-version small {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.76rem;
+}
+
 .status-dot {
   flex: 0 0 auto;
   width: 10px;
@@ -1410,6 +1440,23 @@ label {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
   gap: 18px;
+}
+
+.app-version-card {
+  grid-column: 1 / -1;
+}
+
+.version-list {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.version-list li {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.38;
 }
 
 .users-grid {
