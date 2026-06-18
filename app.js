@@ -230,7 +230,17 @@ const initialState = {
     { size: "265/70 R19,5", last: 4850, reference: 4650, supplier: "Pneuservis A" },
     { size: "13 R22,5", last: 2500, reference: 3900, supplier: "sklad prevod" }
   ],
-  imports: []
+  imports: [],
+  settings: {
+    companyName: "Kaiser Servis",
+    primaryColor: "#75bd25",
+    treadWarning: 4.5,
+    pressureMin: 8.2,
+    dotAgeLimit: 5,
+    replacementDays: 30,
+    publicDemoMode: true,
+    workshopMobileMode: true
+  }
 };
 
 let state = loadState();
@@ -244,7 +254,8 @@ const titles = {
   vehicles: "Vozidla a pozice",
   service: "Servisni zasahy",
   import: "Import faktur",
-  reports: "Reporty a naklady"
+  reports: "Reporty a naklady",
+  settings: "Nastaveni aplikace"
 };
 
 const formatCurrency = (value) =>
@@ -273,7 +284,11 @@ function loadState() {
       services: parsed.services || [],
       measurements: parsed.measurements || [],
       priceRefs: parsed.priceRefs || [],
-      imports: parsed.imports || []
+      imports: parsed.imports || [],
+      settings: {
+        ...structuredClone(initialState.settings),
+        ...(parsed.settings || {})
+      }
     };
   } catch {
     return structuredClone(initialState);
@@ -300,6 +315,21 @@ function showToast(message) {
   showToast.timeout = window.setTimeout(() => toast.classList.remove("is-visible"), 2600);
 }
 
+function currentSettings() {
+  state.settings = {
+    ...structuredClone(initialState.settings),
+    ...(state.settings || {})
+  };
+  return state.settings;
+}
+
+function applySettings() {
+  const settings = currentSettings();
+  const color = settings.primaryColor || initialState.settings.primaryColor;
+  document.documentElement.style.setProperty("--brand", color);
+  document.documentElement.style.setProperty("--green", color);
+}
+
 function setSection(section) {
   activeSection = section;
   queryAll(".section").forEach((el) => el.classList.toggle("is-active", el.id === section));
@@ -309,6 +339,7 @@ function setSection(section) {
   query("#pageTitle").textContent = titles[section] || "Evidence pneumatik";
   if (section === "vehicles") renderVehicles();
   if (section === "reports") renderReports();
+  if (section === "settings") renderSettings();
 }
 
 function getSearchTerm() {
@@ -344,8 +375,9 @@ function dotYear(dot) {
 
 function getAlerts() {
   const alerts = [];
+  const settings = currentSettings();
   state.tires.forEach((tire) => {
-    if (tire.state === "na vozidle" && tire.currentTread < 4.5) {
+    if (tire.state === "na vozidle" && tire.currentTread < settings.treadWarning) {
       alerts.push({
         level: "danger",
         title: `${tire.vehicle} / ${tire.position}`,
@@ -353,7 +385,7 @@ function getAlerts() {
       });
     }
 
-    if (tire.state === "na vozidle" && tire.pressure > 0 && tire.pressure < 8.2) {
+    if (tire.state === "na vozidle" && tire.pressure > 0 && tire.pressure < settings.pressureMin) {
       alerts.push({
         level: "warning",
         title: `${tire.vehicle} / ${tire.position}`,
@@ -362,7 +394,7 @@ function getAlerts() {
     }
 
     const year = dotYear(tire.dot);
-    if (year && new Date().getFullYear() - year >= 5 && tire.state !== "vyrazeno") {
+    if (year && new Date().getFullYear() - year >= settings.dotAgeLimit && tire.state !== "vyrazeno") {
       alerts.push({
         level: "warning",
         title: `${tire.id} / DOT ${tire.dot}`,
@@ -383,6 +415,7 @@ function getAlerts() {
 }
 
 function calculateKpis() {
+  const settings = currentSettings();
   const serviceMonth = state.services
     .filter((item) => item.date?.startsWith("2026-06"))
     .reduce((sum, item) => sum + item.labor + item.material + item.tireCost, 0);
@@ -391,7 +424,7 @@ function calculateKpis() {
     .reduce((sum, item) => sum + item.labor + item.material + item.tireCost, 0);
   const active = state.tires.filter((tire) => tire.state !== "vyrazeno").length;
   const replaceSoon = state.tires.filter(
-    (tire) => tire.state === "na vozidle" && tire.currentTread < 5.2
+    (tire) => tire.state === "na vozidle" && tire.currentTread < settings.treadWarning + 0.7
   ).length;
   const costKmValues = state.tires.filter((tire) => tire.mileage > 0).map(tireCostPerKm);
   const avgCostKm =
@@ -401,7 +434,7 @@ function calculateKpis() {
     { label: "Naklad pneu tento mesic", value: formatCurrency(serviceMonth), hint: "prace, material i pneu" },
     { label: "Naklad pneu YTD", value: formatCurrency(ytd), hint: "souhrn za rok 2026" },
     { label: "Aktivni pneu", value: `${active} ks`, hint: "sklad + vozidla + oprava" },
-    { label: "K vymene do 30 dnu", value: `${replaceSoon} ks`, hint: "pod internim limitem" },
+    { label: `K vymene do ${settings.replacementDays} dnu`, value: `${replaceSoon} ks`, hint: "pod internim limitem" },
     { label: "Prumer Kc / km", value: `${formatNumber(avgCostKm, 2)} Kc`, hint: "z evidovaneho najezdu" }
   ];
 }
@@ -697,34 +730,66 @@ function renderVehicles() {
   renderVehicleMap(vehicle);
 }
 
-function getPositionCoordinates(position, index, total) {
-  const axleIndex = Math.floor(index / 2);
-  const sideIndex = index % 2;
-  const top = 110 + axleIndex * Math.max(78, 230 / Math.max(Math.ceil(total / 2), 1));
-  const isLeft = sideIndex === 0;
-  return {
-    left: isLeft ? "15%" : "calc(85% - 76px)",
-    top: `${Math.min(top, 330)}px`
-  };
+function getPositionSide(position, index) {
+  if (/^(P|HP|VP|ZP)/.test(position)) return "right";
+  if (/^(L|HL|VL|ZL)/.test(position)) return "left";
+  return index % 2 === 0 ? "left" : "right";
+}
+
+function getPositionRow(position, index, configuration) {
+  if (position === "L" || position === "P") return 0;
+  if (/^H/.test(position)) return 1;
+  if (/^V/.test(position)) return configuration.length <= 4 ? 1 : 2;
+  if (/^Z/.test(position)) return configuration.length <= 6 ? 2 : 3;
+  return Math.floor(index / 2);
+}
+
+function getPositionCoordinates(position, index, configuration) {
+  const row = getPositionRow(position, index, configuration);
+  const side = getPositionSide(position, index);
+  const isInner = position.includes("vnitrni");
+  const isOuter = position.includes("vnejsi");
+  const rowCount = Math.max(2, ...configuration.map((item, itemIndex) => getPositionRow(item, itemIndex, configuration))) + 1;
+  const spacing = rowCount > 3 ? 82 : 102;
+  const top = 108 + row * spacing;
+
+  let left = side === "left" ? "16%" : "calc(84% - var(--wheel-size))";
+  if (side === "left" && isInner) left = "26%";
+  if (side === "left" && isOuter) left = "13%";
+  if (side === "right" && isInner) left = "calc(74% - var(--wheel-size))";
+  if (side === "right" && isOuter) left = "calc(87% - var(--wheel-size))";
+
+  return { left, top, row, side };
 }
 
 function renderVehicleMap(vehicle) {
-  const axleLines = vehicle.configuration
-    .filter((_, index) => index % 2 === 0)
-    .map((_, index) => `<div class="axle" style="top: ${146 + index * 84}px"></div>`)
+  const settings = currentSettings();
+  const placements = vehicle.configuration.map((position, index) => ({
+    position,
+    ...getPositionCoordinates(position, index, vehicle.configuration)
+  }));
+  const rowTops = [...new Set(placements.map((placement) => placement.top))].sort((a, b) => a - b);
+  const axleLines = rowTops
+    .map((top, index) => `<div class="axle" style="top: ${top + 38}px"><span>Naprava ${index + 1}</span></div>`)
     .join("");
 
-  const positions = vehicle.configuration
-    .map((position, index) => {
+  const positions = placements
+    .map(({ position, top, left, side }) => {
       const tire = tireForPosition(vehicle.spz, position);
-      const coords = getPositionCoordinates(position, index, vehicle.configuration.length);
-      const status = tire ? (tire.currentTread < 4.5 ? "low" : tire.currentTread < 5.5 ? "warn" : "") : "warn";
+      const status = tire
+        ? tire.currentTread < settings.treadWarning
+          ? "low"
+          : tire.currentTread < settings.treadWarning + 1
+            ? "warn"
+            : ""
+        : "warn";
       return `
         <button
           class="position-button ${status}"
           type="button"
-          style="left: ${coords.left}; top: ${coords.top}"
+          style="left: ${left}; top: ${top}px"
           data-position="${position}"
+          data-side="${side}"
           aria-label="${position} ${tire ? tire.id : "bez pneu"}"
         >
           <span>${shortPosition(position)}</span>
@@ -734,8 +799,19 @@ function renderVehicleMap(vehicle) {
     .join("");
 
   query("#vehicleMap").innerHTML = `
-    <div class="vehicle-body" aria-hidden="true"></div>
-    <div class="vehicle-cabin" aria-hidden="true"></div>
+    <div class="truck-sketch" aria-hidden="true">
+      <div class="truck-front-label">predni cast</div>
+      <div class="vehicle-cabin">
+        <span>kabina</span>
+        <i></i>
+      </div>
+      <div class="truck-hood"></div>
+      <div class="vehicle-body">
+        <span>nakladovy prostor</span>
+      </div>
+      <div class="truck-frame"></div>
+      <div class="truck-bumper"></div>
+    </div>
     ${axleLines}
     ${positions}
   `;
@@ -859,6 +935,59 @@ function renderReports() {
       `;
     })
     .join("");
+}
+
+function renderSettings() {
+  const settings = currentSettings();
+  const form = query("#settingsForm");
+  if (form) {
+    form.elements.companyName.value = settings.companyName;
+    form.elements.primaryColor.value = settings.primaryColor;
+    form.elements.treadWarning.value = settings.treadWarning;
+    form.elements.pressureMin.value = settings.pressureMin;
+    form.elements.dotAgeLimit.value = settings.dotAgeLimit;
+    form.elements.replacementDays.value = settings.replacementDays;
+    form.elements.publicDemoMode.checked = Boolean(settings.publicDemoMode);
+    form.elements.workshopMobileMode.checked = Boolean(settings.workshopMobileMode);
+  }
+
+  query("#settingsSummary").innerHTML = `
+    <div class="settings-summary-card">
+      <span>Provoz</span>
+      <strong>${settings.companyName}</strong>
+      <p>Barva rozhrani ${settings.primaryColor}</p>
+    </div>
+    <div class="settings-summary-card">
+      <span>Bezpecnostni limity</span>
+      <strong>${formatNumber(settings.treadWarning, 1)} mm / ${formatNumber(settings.pressureMin, 1)} bar</strong>
+      <p>Upozorneni na dezen, tlak a DOT starsi nez ${settings.dotAgeLimit} let.</p>
+    </div>
+    <div class="settings-summary-card">
+      <span>Rezimy</span>
+      <strong>${settings.publicDemoMode ? "Verejny demo rezim" : "Interni rezim"}</strong>
+      <p>${settings.workshopMobileMode ? "Dilna ma prioritu mobilniho zadani." : "Mobilni rezim neni vychozi."}</p>
+    </div>
+  `;
+}
+
+function saveSettings(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  state.settings = {
+    companyName: form.elements.companyName.value.trim() || initialState.settings.companyName,
+    primaryColor: form.elements.primaryColor.value || initialState.settings.primaryColor,
+    treadWarning: Number(form.elements.treadWarning.value) || initialState.settings.treadWarning,
+    pressureMin: Number(form.elements.pressureMin.value) || initialState.settings.pressureMin,
+    dotAgeLimit: Number(form.elements.dotAgeLimit.value) || initialState.settings.dotAgeLimit,
+    replacementDays: Number(form.elements.replacementDays.value) || initialState.settings.replacementDays,
+    publicDemoMode: form.elements.publicDemoMode.checked,
+    workshopMobileMode: form.elements.workshopMobileMode.checked
+  };
+  applySettings();
+  saveState();
+  renderAll();
+  setSection("settings");
+  showToast("Nastaveni aplikace je ulozeno.");
 }
 
 function parseImportRows(raw) {
@@ -1027,6 +1156,7 @@ function exportCsv() {
 }
 
 function renderAll() {
+  applySettings();
   fillSelectOptions();
   renderDashboard();
   renderTires();
@@ -1034,6 +1164,7 @@ function renderAll() {
   renderServices();
   renderImportPreview();
   renderReports();
+  renderSettings();
 }
 
 function bindEvents() {
@@ -1077,6 +1208,7 @@ function bindEvents() {
   query("#serviceForm").addEventListener("submit", addService);
   query('#serviceForm input[name="date"]').value = todayIso();
   query("#exportCsv").addEventListener("click", exportCsv);
+  query("#settingsForm").addEventListener("submit", saveSettings);
 
   query("#loadSampleImport").addEventListener("click", () => {
     query("#invoiceImport").value =
