@@ -11,12 +11,24 @@
 
   function setOpen(open) {
     dock.classList.toggle("is-open", open);
+    if (open) dock.classList.remove("is-editing");
     panel.hidden = !open;
     toggle.setAttribute("aria-expanded", String(open));
     if (open) {
       refreshQuickForm();
       requestAnimationFrame(() => form.elements.tread?.focus());
     }
+  }
+
+  function isEditingTarget(target) {
+    if (!target || dock.contains(target)) return false;
+    return Boolean(
+      target.closest?.("input, select, textarea, button, label, [contenteditable='true']")
+    );
+  }
+
+  function updateEditingMode(target = document.activeElement) {
+    dock.classList.toggle("is-editing", isEditingTarget(target));
   }
 
   function fillVehicles() {
@@ -56,6 +68,9 @@
 
   toggle.addEventListener("click", () => setOpen(!dock.classList.contains("is-open")));
   close.addEventListener("click", () => setOpen(false));
+  document.addEventListener("focusin", (event) => updateEditingMode(event.target));
+  document.addEventListener("focusout", () => window.setTimeout(() => updateEditingMode(), 0));
+  document.addEventListener("pointerdown", (event) => updateEditingMode(event.target));
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") setOpen(false);
   });
@@ -76,4 +91,5 @@
   });
 
   refreshQuickForm();
+  updateEditingMode();
 })();
