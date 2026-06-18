@@ -9,6 +9,37 @@
     busy: false
   };
 
+  function setAuthState(user) {
+    const authenticated = Boolean(user?.email);
+    window.kaiserAuthState = {
+      authenticated,
+      email: user?.email || "",
+      user: user || null,
+      checkedAt: new Date().toISOString()
+    };
+    document.body.classList.toggle("kaiser-auth-locked", !authenticated);
+    window.dispatchEvent(new CustomEvent("kaiser-auth-state", { detail: window.kaiserAuthState }));
+  }
+
+  window.kaiserIsAuthenticated = function () {
+    return Boolean(window.kaiserAuthState?.authenticated);
+  };
+
+  window.kaiserRequireAuth = function (action = "upravu dat") {
+    if (window.kaiserIsAuthenticated()) return true;
+    step("password");
+    show(true);
+    status(`Pro ${action} se nejdrive prihlaste. Bez prihlaseni nelze menit data.`, "warn");
+    return false;
+  };
+
+  window.kaiserLockApp = function (message = "Aplikace je zamcena. Nejdrive se prihlaste.") {
+    setAuthState(null);
+    step("password");
+    show(true);
+    status(message, "warn");
+  };
+
   function readJson(key, fallback) {
     try {
       const value = localStorage.getItem(key);
@@ -50,6 +81,8 @@
     style.id = "kaiserLoginGateStyles";
     style.textContent = `
       body.kaiser-login-active { overflow: hidden; }
+      body.kaiser-auth-locked .app-shell,
+      body.kaiser-auth-locked .quick-measure-dock,
       body.kaiser-login-active .app-shell,
       body.kaiser-login-active .quick-measure-dock {
         filter: blur(2px);
@@ -241,7 +274,7 @@
             </div>
             <div class="kaiser-login-title">
               <h2 id="kaiserLoginTitle">Prihlaseni do aplikace</h2>
-              <p>Nejdrive zadejte firemni e-mail a heslo. Overovaci kod se zadava az v dalsim kroku.</p>
+              <p>Nejdrive zadejte firemni e-mail a heslo. U Supabase uctu se overovaci kod zadava az v dalsim kroku.</p>
             </div>
             <div class="kaiser-login-progress" aria-hidden="true">
               <span data-login-pill="password" class="is-active">1. Prihlaseni</span>
@@ -253,9 +286,9 @@
                 <label>Heslo <input name="password" type="password" autocomplete="current-password" placeholder="firemni heslo" required /></label>
                 <div class="kaiser-login-actions">
                   <button class="button button-primary" type="submit">Prihlasit</button>
-                  <button class="button button-soft" type="button" data-login-reset>Nastavit / obnovit heslo</button>
+                  <button class="button button-soft" type="button" data-login-reset>Obnovit e-mailem</button>
                 </div>
-                <div class="kaiser-login-secondary-note">Pri prvnim prihlaseni zadejte e-mail a kliknete na nastaveni hesla. Odkaz prijde e-mailem.</div>
+                <div class="kaiser-login-secondary-note">Kdyz e-mail neprijde, spravce zkontroluje ucet v Supabase.</div>
               </form>
             </section>
             <section class="kaiser-login-step" data-login-step="new-password" hidden>
@@ -412,8 +445,9 @@
     gate.factor = null;
     gate.email = user?.email || gate.email;
     if (typeof window.kaiserSetLoginUser === "function") {
-      window.kaiserSetLoginUser({ email: gate.email, name: gate.email });
+      window.kaiserSetLoginUser({ email: gate.email, name: user?.name || gate.email });
     }
+    setAuthState(user || { email: gate.email });
     show(false);
     window.dispatchEvent(new CustomEvent("kaiser-auth-ready", { detail: { user } }));
     if (window.kaiserCloud?.pullState) window.setTimeout(() => window.kaiserCloud.pullState(), 250);
@@ -480,7 +514,7 @@
       if (message.includes("friendly name") && message.includes("already exists")) {
         status("Rozpracovane 2FA uz existuje. Zkuste prihlaseni znovu, pripravi se novy QR kod.", "danger");
       } else if (message.includes("Invalid login credentials")) {
-        status("E-mail nebo heslo nesedi. Pri prvnim prihlaseni pouzijte Nastavit / obnovit heslo.", "danger");
+        status("E-mail nebo heslo nesedi. Zkuste obnovu hesla e-mailem.", "danger");
       } else {
         status(message || "Prihlaseni selhalo.", "danger");
       }
@@ -601,6 +635,7 @@
   async function boot() {
     ensureStyles();
     mount();
+    setAuthState(null);
     document.querySelector("#kaiserPasswordForm")?.addEventListener("submit", submitPassword);
     document.querySelector("#kaiserSetupForm")?.addEventListener("submit", (event) => submitCode(event, true));
     document.querySelector("#kaiserMfaForm")?.addEventListener("submit", (event) => submitCode(event, false));
@@ -644,6 +679,20 @@
       show(true);
     }
   }
+
+  function blockUnauthenticatedAppEvent(event) {
+    if (window.kaiserIsAuthenticated()) return;
+    const target = event.target;
+    if (target?.closest?.("#kaiserLoginGate, #kaiser-system-notice")) return;
+    if (!target?.closest?.(".app-shell, .quick-measure-dock")) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.kaiserRequireAuth("praci v aplikaci");
+  }
+
+  document.addEventListener("click", blockUnauthenticatedAppEvent, true);
+  document.addEventListener("submit", blockUnauthenticatedAppEvent, true);
+  document.addEventListener("input", blockUnauthenticatedAppEvent, true);
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot, { once: true });
