@@ -186,6 +186,98 @@
     if (notice) showNotice(notice);
   }
 
+  function readCloudMeta() {
+    try {
+      return JSON.parse(localStorage.getItem("kaiser-pneu-supabase-meta-v1") || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function updateCloudBadge(kind, text) {
+    const badge = document.querySelector("#settings .toolbar .badge");
+    if (!badge) return;
+    badge.className = `badge ${
+      kind === "ok" ? "badge-ok" : kind === "danger" ? "badge-danger" : "badge-warning"
+    }`;
+    badge.textContent = text;
+  }
+
+  function toast(message) {
+    if (typeof window.showToast === "function") {
+      window.showToast(message);
+    }
+  }
+
+  let activeCloudSaves = 0;
+  let cloudSaveTimer = 0;
+
+  async function saveCloudNow(options = {}) {
+    if (!window.kaiserCloud?.pushState || !window.kaiserCloud?.isConfigured?.()) {
+      updateCloudBadge("warn", "jen v tomto prohlizeci");
+      if (options.visible) toast("Cloud neni pripojeny, zmena je jen v tomto prohlizeci.");
+      return false;
+    }
+
+    const before = readCloudMeta().lastPushAt || "";
+    activeCloudSaves += 1;
+    updateCloudBadge("warn", "ukladam do cloudu...");
+
+    try {
+      await window.kaiserCloud.pushState({ quiet: !options.visible });
+      const after = readCloudMeta().lastPushAt || "";
+      const saved = Boolean(after && after !== before);
+      updateCloudBadge(saved ? "ok" : "danger", saved ? "ulozeno do cloudu" : "cloud neulozil");
+      if (options.visible) {
+        toast(saved ? "Data jsou ulozena do cloudu." : "Cloud neulozil. Zkontrolujte prihlaseni v Nastaveni.");
+      }
+      return saved;
+    } catch (error) {
+      updateCloudBadge("danger", "cloud neulozil");
+      if (options.visible) toast(error?.message || "Cloudove ulozeni selhalo.");
+      return false;
+    } finally {
+      activeCloudSaves = Math.max(0, activeCloudSaves - 1);
+    }
+  }
+
+  function scheduleCloudSave() {
+    window.clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = window.setTimeout(() => saveCloudNow({ visible: false }), 450);
+  }
+
+  function installCloudSaveGuard() {
+    if (window.kaiserCloudSaveGuardInstalled) return;
+    window.kaiserCloudSaveGuardInstalled = true;
+
+    if (typeof window.saveState === "function") {
+      const originalSaveState = window.saveState;
+      window.saveState = function (...args) {
+        const result = originalSaveState.apply(this, args);
+        scheduleCloudSave();
+        return result;
+      };
+    }
+
+    document.addEventListener("submit", (event) => {
+      const form = event.target.closest("#settingsForm, #userForm, #tireForm, #measurementForm, #quickMeasurementForm, #serviceForm");
+      if (!form) return;
+      window.setTimeout(() => saveCloudNow({ visible: true }), 120);
+    });
+
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest("#saveVehicleImport, #parseImport, #parseVehicleImport, #resetDemoData");
+      if (!trigger) return;
+      window.setTimeout(() => saveCloudNow({ visible: true }), 160);
+    });
+
+    window.addEventListener("beforeunload", (event) => {
+      if (!activeCloudSaves) return;
+      event.preventDefault();
+      event.returnValue = "Probiha ukladani do cloudu. Pockejte prosim par sekund.";
+    });
+  }
+
   window.kaiserShowSystemNotice = function (message, options = {}) {
     showNotice({
       id: options.id || `manual-${Date.now()}`,
@@ -208,8 +300,12 @@
   });
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot, { once: true });
+    document.addEventListener("DOMContentLoaded", () => {
+      boot();
+      installCloudSaveGuard();
+    }, { once: true });
   } else {
     boot();
+    installCloudSaveGuard();
   }
 })();
