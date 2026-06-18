@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260618-14" />
+    <link rel="stylesheet" href="./styles.css?v=20260618-15" />
   </head>
   <body>
     <div class="app-shell">
@@ -333,6 +333,22 @@
                   <input name="supplier" type="text" required placeholder="interne / Pneuservis A" />
                 </label>
                 <label>
+                  DL / faktura
+                  <input name="invoice" type="text" placeholder="cislo DL nebo faktury" />
+                </label>
+                <label>
+                  Pneu / ID
+                  <input name="tireIds" type="text" placeholder="KS-315-00061, KS-315-00062" />
+                </label>
+                <label>
+                  Pozice pneu
+                  <input name="tirePositions" type="text" placeholder="napr. HL vnejsi, HP vnejsi" />
+                </label>
+                <label>
+                  Pocet pneu ks
+                  <input name="tireCount" type="number" min="0" step="1" value="0" />
+                </label>
+                <label>
                   Cena prace
                   <input name="labor" type="number" min="0" step="1" value="0" required />
                 </label>
@@ -344,6 +360,51 @@
                   Cena pneu
                   <input name="tireCost" type="number" min="0" step="1" value="0" required />
                 </label>
+                <div class="service-photo-actions wide-input">
+                  <button class="button button-soft" id="openDeliveryPhoto" type="button">Otevrit fotak / DL</button>
+                  <input id="deliveryPhoto" name="deliveryPhoto" type="file" accept="image/*" capture="environment" hidden />
+                  <span class="photo-status" id="deliveryPhotoStatus">bez fotky</span>
+                </div>
+                <label class="settings-switch service-switch wide-input">
+                  <input id="createServiceTires" name="createTires" type="checkbox" />
+                  <span>Pri prezuti rovnou zalozit nove pneu</span>
+                </label>
+                <div class="service-new-tire-panel wide-input" id="serviceNewTirePanel" hidden>
+                  <label>
+                    Vyrobce
+                    <input name="newTireManufacturer" type="text" placeholder="Hankook" />
+                  </label>
+                  <label>
+                    Model / dezen
+                    <input name="newTireModel" type="text" placeholder="AH31" />
+                  </label>
+                  <label>
+                    Rozmer
+                    <select name="newTireSize">
+                      <option>315/80 R22,5</option>
+                      <option>13 R22,5</option>
+                      <option>265/70 R19,5</option>
+                      <option>315/60 R22,5</option>
+                      <option>385/65 R22,5</option>
+                    </select>
+                  </label>
+                  <label>
+                    DOT
+                    <input name="newTireDot" type="text" inputmode="numeric" placeholder="1826" />
+                  </label>
+                  <label>
+                    Typ pneu
+                    <select name="newTireType">
+                      <option>nova</option>
+                      <option>protektor</option>
+                      <option>pouzita</option>
+                    </select>
+                  </label>
+                  <label>
+                    Cena ks bez DPH
+                    <input name="newTirePrice" type="number" min="0" step="1" placeholder="podle ceny pneu" />
+                  </label>
+                </div>
                 <label class="wide-input">
                   Poznamka
                   <input name="note" type="text" placeholder="napr. ventil, zavazi, doklad doplnen" />
@@ -712,5 +773,6 @@
     <script src="./invoice-data.js?v=20260618-14" defer></script>
     <script src="./app.js?v=20260618-14" defer></script>
     <script src="./quick-measure.js?v=20260618-14" defer></script>
+    <script src="./service-card.js?v=20260618-15" defer></script>
   </body>
 </html>
