@@ -11,7 +11,7 @@
     rowId: "production",
     bucket: "kaiser-documents",
     autoLoad: true,
-    autoSync: false
+    autoSync: true
   };
 
   let client = null;
@@ -41,12 +41,14 @@
     return {
       ...defaults,
       ...runtimeDefaults,
-      ...readJson(CONFIG_KEY, {})
+      ...readJson(CONFIG_KEY, {}),
+      autoLoad: true,
+      autoSync: true
     };
   }
 
   function writeConfig(config) {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...defaults, ...config }));
+    localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...defaults, ...config, autoLoad: true, autoSync: true }));
     client = null;
     clientKey = "";
   }
@@ -393,8 +395,8 @@
         table: String(data.table || defaults.table).trim() || defaults.table,
         rowId: String(data.rowId || defaults.rowId).trim() || defaults.rowId,
         bucket: String(data.bucket || defaults.bucket).trim() || defaults.bucket,
-        autoLoad: Boolean(data.autoLoad),
-        autoSync: Boolean(data.autoSync)
+        autoLoad: true,
+        autoSync: true
       });
       setStatus(hasConnection() ? "ok" : "warn", hasConnection() ? "Cloud nastaveni je ulozeno" : "Cloud neni nastaveny");
       refreshAuthStatus();
@@ -425,8 +427,10 @@
     form.elements.table.value = config.table || defaults.table;
     form.elements.rowId.value = config.rowId || defaults.rowId;
     form.elements.bucket.value = config.bucket || defaults.bucket;
-    form.elements.autoLoad.checked = Boolean(config.autoLoad);
-    form.elements.autoSync.checked = Boolean(config.autoSync);
+    form.elements.autoLoad.checked = true;
+    form.elements.autoSync.checked = true;
+    form.elements.autoLoad.disabled = true;
+    form.elements.autoSync.disabled = true;
   }
 
   function ensureStyles() {
@@ -482,6 +486,22 @@
         border-top: 1px solid rgba(30, 41, 36, .1);
         padding-top: 14px;
       }
+
+      .settings-switch.is-locked {
+        border-color: rgba(117, 189, 37, .32);
+        background: rgba(117, 189, 37, .08);
+      }
+
+      .settings-switch.is-locked input {
+        cursor: not-allowed;
+      }
+
+      .settings-switch.is-locked span::after {
+        color: var(--brand-strong);
+        content: " zamceno";
+        font-size: .78rem;
+        font-weight: 800;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -532,12 +552,12 @@
               Storage bucket
               <input name="bucket" type="text" />
             </label>
-            <label class="settings-switch">
-              <input name="autoLoad" type="checkbox" />
+            <label class="settings-switch is-locked" title="V ostrém provozu je načítání cloudu povinné.">
+              <input name="autoLoad" type="checkbox" checked disabled />
               <span>Nacist cloud pri otevreni</span>
             </label>
-            <label class="settings-switch">
-              <input name="autoSync" type="checkbox" />
+            <label class="settings-switch is-locked" title="V ostrém provozu je automatické ukládání povinné.">
+              <input name="autoSync" type="checkbox" checked disabled />
               <span>Automaticky ukladat zmeny</span>
             </label>
             <button class="button button-primary" type="submit">Ulozit cloud</button>
