@@ -1,7 +1,7 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
-  number: "v0.9.3",
-  build: "20260618-30",
+  number: "v0.9.4",
+  build: "20260618-31",
   releaseDate: "18. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
@@ -10,6 +10,7 @@ const APP_VERSION = {
     "Automaticke zalozeni kusove evidence pneu z ostrych faktur.",
     "Ochrana proti prazdnemu cloudovemu stavu v evidenci pneumatik.",
     "Plovouci rychle mereni neprekryva tlacitka pri editaci formularu.",
+    "Info prihlasovaci box v horni liste aplikace.",
     "Dashboard metriky, upozorneni na 30denni rychle mereni a proklik na mereni.",
     "Mapa osazeni z pudorysu, servisni karta, uzivatele a PDF karta vozidla."
   ]
@@ -1007,6 +1008,24 @@ function renderVersionInfo() {
     <small>${escapeHtml(APP_VERSION.name)} / build ${escapeHtml(APP_VERSION.build)}</small>
   `;
 }
+
+function renderLoginStatus(user = {}) {
+  const target = query("#loginStatusBox");
+  if (!target) return;
+  const email = String(user.email || "oplustil@kaiserservis.cz").trim();
+  const knownUser = state.users.find((item) => item.email === email);
+  const name = user.name || knownUser?.name || "Radim Oplustil";
+  target.innerHTML = `
+    <span class="login-status-dot" aria-hidden="true"></span>
+    <span>
+      <strong>Jste prihlasen</strong>
+      <small>jako ${escapeHtml(name)}</small>
+    </span>
+  `;
+  target.title = email;
+}
+
+window.kaiserSetLoginUser = renderLoginStatus;
 
 function showToast(message) {
   const toast = query("#toast");
@@ -2391,6 +2410,7 @@ function renderAll() {
   ensureHydratedState();
   applySettings();
   renderVersionInfo();
+  renderLoginStatus();
   fillSelectOptions();
   renderDashboard();
   renderTires();
