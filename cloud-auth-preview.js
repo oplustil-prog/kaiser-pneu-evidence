@@ -300,7 +300,7 @@
   }
 
   function loadPasswordReset() {
-    loadScriptOnce("kaiserPasswordResetRequested", 'script[src*="password-reset"]', "./password-reset.js?v=20260618-40", "Nastaveni hesla se nenacetlo");
+    loadScriptOnce("kaiserPasswordResetRequested", 'script[src*="password-reset"]', "./password-reset.js?v=20260618-41", "Nastaveni hesla se nenacetlo");
   }
 
   function loadUserInvites() {
