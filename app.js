@@ -209,6 +209,7 @@ const initialState = {
       date: "2026-06-15",
       vehicle: "2BD 8835",
       position: "HP vnejsi",
+      odometer: 342800,
       tread: 3.9,
       pressure: 8.1,
       person: "dilna",
@@ -218,6 +219,7 @@ const initialState = {
       date: "2026-06-12",
       vehicle: "4J9 2218",
       position: "P",
+      odometer: 447600,
       tread: 6.1,
       pressure: 8.9,
       person: "dilna",
@@ -674,6 +676,7 @@ function fillSelectOptions() {
   vehicleSelect.value = selectedVehicle;
 
   fillPositionOptions(query('#measurementForm select[name="vehicle"]').value);
+  syncMeasurementOdometer(query('#measurementForm select[name="vehicle"]').value);
 }
 
 function fillPositionOptions(spz) {
@@ -682,6 +685,13 @@ function fillPositionOptions(spz) {
   select.innerHTML = (vehicle?.configuration || [])
     .map((position) => `<option value="${position}">${position}</option>`)
     .join("");
+}
+
+function syncMeasurementOdometer(spz) {
+  const input = query('#measurementForm input[name="odometer"]');
+  if (!input) return;
+  const vehicle = state.vehicles.find((item) => item.spz === spz);
+  input.value = vehicle?.odometer ? Math.round(vehicle.odometer) : "";
 }
 
 function renderDashboard() {
@@ -1212,24 +1222,37 @@ function addMeasurement(event) {
   const form = event.currentTarget;
   const data = Object.fromEntries(new FormData(form).entries());
   const tire = tireForPosition(data.vehicle, data.position);
+  const vehicle = state.vehicles.find((item) => item.spz === data.vehicle);
+  const odometer = Number(data.odometer) || 0;
   const measurement = {
     date: todayIso(),
     vehicle: data.vehicle,
     position: data.position,
+    odometer,
     tread: Number(data.tread) || 0,
     pressure: Number(data.pressure) || 0,
     person: "dilna",
     note: data.note || ""
   };
   state.measurements.unshift(measurement);
+  if (vehicle && odometer > 0) {
+    vehicle.odometer = Math.max(vehicle.odometer || 0, odometer);
+  }
   if (tire) {
     tire.currentTread = measurement.tread;
     tire.pressure = measurement.pressure;
+    if (odometer > 0 && tire.mountedOdo > 0) {
+      tire.mileage = Math.max(tire.mileage || 0, odometer - tire.mountedOdo);
+    }
   }
   saveState();
   form.reset();
+  form.elements.vehicle.value = data.vehicle;
   fillPositionOptions(data.vehicle);
+  form.elements.position.value = data.position;
   renderAll();
+  form.elements.position.value = data.position;
+  syncMeasurementOdometer(data.vehicle);
   showToast(tire ? "Mereni ulozeno a pneu aktualizovana." : "Mereni ulozeno, pozice zatim nema prirazene ID pneu.");
 }
 
@@ -1321,9 +1344,10 @@ function bindEvents() {
   query("#closeTireForm").addEventListener("click", () => (query("#tireFormPanel").hidden = true));
   query("#tireForm").addEventListener("submit", addTire);
 
-  query('#measurementForm select[name="vehicle"]').addEventListener("change", (event) =>
-    fillPositionOptions(event.target.value)
-  );
+  query('#measurementForm select[name="vehicle"]').addEventListener("change", (event) => {
+    fillPositionOptions(event.target.value);
+    syncMeasurementOdometer(event.target.value);
+  });
   query("#measurementForm").addEventListener("submit", addMeasurement);
 
   query("#vehicleSelect").addEventListener("change", (event) => {
