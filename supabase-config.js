@@ -5,5 +5,5 @@ window.kaiserSupabaseDefaults = {
   rowId: "production",
   bucket: "kaiser-documents",
   autoLoad: true,
-  autoSync: false
+  autoSync: true
 };
