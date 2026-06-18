@@ -1,7 +1,7 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
-  number: "v0.9.7",
-  build: "20260618-34",
+  number: "v0.9.8",
+  build: "20260618-35",
   releaseDate: "18. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
@@ -13,6 +13,7 @@ const APP_VERSION = {
     "Info prihlasovaci box v horni liste aplikace.",
     "Automaticke ukladani zmen do Supabase cloudu po prihlaseni.",
     "Cloudove nacteni a automaticke ukladani jsou v ostrem provozu zamcene.",
+    "Produkční Supabase nastaveni je chranene proti prepsani.",
     "Kliknuti na logo vraci aplikaci na hlavni dashboard.",
     "Dashboard metriky, upozorneni na 30denni rychle mereni a proklik na mereni.",
     "Mapa osazeni z pudorysu, servisni karta, uzivatele a PDF karta vozidla."
