@@ -1448,31 +1448,40 @@ function getPositionCoordinates(position, index, configuration) {
   const isInner = position.includes("vnitrni");
   const isOuter = position.includes("vnejsi");
   const rowCount = Math.max(2, ...configuration.map((item, itemIndex) => getPositionRow(item, itemIndex, configuration))) + 1;
-  const spacing = rowCount > 3 ? 82 : 102;
-  const top = 108 + row * spacing;
+  const spacing = rowCount > 4 ? 86 : rowCount > 3 ? 94 : 112;
+  const top = 118 + row * spacing;
 
-  let left = side === "left" ? "16%" : "calc(84% - var(--wheel-size))";
-  if (side === "left" && isInner) left = "26%";
-  if (side === "left" && isOuter) left = "13%";
-  if (side === "right" && isInner) left = "calc(74% - var(--wheel-size))";
-  if (side === "right" && isOuter) left = "calc(87% - var(--wheel-size))";
+  let left = side === "left" ? "13%" : "calc(87% - var(--wheel-width))";
+  if (side === "left" && isInner) left = "22%";
+  if (side === "left" && isOuter) left = "8%";
+  if (side === "right" && isInner) left = "calc(78% - var(--wheel-width))";
+  if (side === "right" && isOuter) left = "calc(92% - var(--wheel-width))";
 
-  return { left, top, row, side };
+  return { left, top, row, side, isInner, isOuter };
 }
 
 function renderVehicleMap(vehicle) {
   const settings = currentSettings();
+  const map = query("#vehicleMap");
+  const rowCount = Math.max(
+    2,
+    ...vehicle.configuration.map((item, itemIndex) => getPositionRow(item, itemIndex, vehicle.configuration))
+  ) + 1;
+  const spacing = rowCount > 4 ? 86 : rowCount > 3 ? 94 : 112;
+  const mapHeight = Math.max(540, 118 + (rowCount - 1) * spacing + 110);
+  map.style.setProperty("--map-min-height", `${mapHeight}px`);
+
   const placements = vehicle.configuration.map((position, index) => ({
     position,
     ...getPositionCoordinates(position, index, vehicle.configuration)
   }));
   const rowTops = [...new Set(placements.map((placement) => placement.top))].sort((a, b) => a - b);
   const axleLines = rowTops
-    .map((top, index) => `<div class="axle" style="top: ${top + 38}px"><span>Naprava ${index + 1}</span></div>`)
+    .map((top, index) => `<div class="axle" style="top: ${top + 42}px"><span>Naprava ${index + 1}</span></div>`)
     .join("");
 
   const positions = placements
-    .map(({ position, top, left, side }) => {
+    .map(({ position, top, left, side, isInner, isOuter }) => {
       const tire = tireForPosition(vehicle.spz, position);
       const status = tire
         ? tire.currentTread < settings.treadWarning
@@ -1483,7 +1492,7 @@ function renderVehicleMap(vehicle) {
         : "warn";
       return `
         <button
-          class="position-button ${status}"
+          class="position-button ${status} side-${side} ${isInner ? "inner-wheel" : ""} ${isOuter ? "outer-wheel" : ""}"
           type="button"
           style="left: ${left}; top: ${top}px"
           data-position="${position}"
@@ -1496,25 +1505,25 @@ function renderVehicleMap(vehicle) {
     })
     .join("");
 
-  query("#vehicleMap").innerHTML = `
-    <div class="truck-sketch" aria-hidden="true">
-      <div class="truck-front-label">predni cast</div>
+  map.innerHTML = `
+    <div class="truck-sketch plan-view" aria-hidden="true">
+      <div class="plan-direction">predni cast</div>
       <div class="vehicle-cabin">
-        <span>kabina</span>
         <i></i>
+        <span>kabina</span>
       </div>
-      <div class="truck-hood"></div>
       <div class="vehicle-body">
-        <span>nakladovy prostor</span>
+        <span>${vehicle.configuration.length <= 4 ? "dodavka / servis" : "ram / nastavba"}</span>
       </div>
       <div class="truck-frame"></div>
       <div class="truck-bumper"></div>
+      <div class="plan-rear-label">zadni cast</div>
     </div>
     ${axleLines}
     ${positions}
   `;
 
-  queryAll(".position-button", query("#vehicleMap")).forEach((button) => {
+  queryAll(".position-button", map).forEach((button) => {
     button.addEventListener("click", () => {
       selectedPosition = button.dataset.position;
       renderPositionDetail(vehicle.spz, selectedPosition);
