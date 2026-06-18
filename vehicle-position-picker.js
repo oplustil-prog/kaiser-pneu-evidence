@@ -187,4 +187,21 @@
   window.addEventListener("DOMContentLoaded", refreshCurrentPositionPicker);
   window.addEventListener("load", refreshCurrentPositionPicker);
   window.setTimeout(refreshCurrentPositionPicker, 0);
+
+  function loadServiceDocuments() {
+    if (document.querySelector('script[src*="service-documents.js"]')) return;
+
+    const dataScript = document.createElement("script");
+    dataScript.src = "./service-document-data.js?v=20260618-20";
+    dataScript.defer = true;
+    dataScript.onload = () => {
+      const documentScript = document.createElement("script");
+      documentScript.src = "./service-documents.js?v=20260618-20";
+      documentScript.defer = true;
+      document.body.appendChild(documentScript);
+    };
+    document.body.appendChild(dataScript);
+  }
+
+  loadServiceDocuments();
 }());
