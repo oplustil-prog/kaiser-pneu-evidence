@@ -32,10 +32,10 @@
       "Postup pro prihlaseni:",
       "1. Otevrete odkaz do aplikace.",
       "2. Do pole E-mail zadejte svuj prihlasovaci e-mail.",
-      "3. Pokud heslo jeste nemate, kliknete na Obnovit e-mailem a nastavte si vlastni heslo.",
+      "3. Kliknete na Obnovit e-mailem a nastavte si vlastni heslo.",
       "4. Pri prvnim vstupu nastavte dvoufaktorove overeni podle pokynu na obrazovce.",
       "",
-      "Pokud e-mail neprijde, pozadejte spravce o kontrolu uctu v Supabase."
+      "E-mail s obnovou hesla odesila Supabase pres Twilio SendGrid SMTP."
     ].filter(Boolean).join("\n");
   }
 
@@ -47,8 +47,8 @@
     const subject = "Pozvanka do Kaiser evidence pneumatik";
     const body = buildInviteText(user);
     navigator.clipboard?.writeText(body).catch(() => {});
-    window.location.href = `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    toast("Pozvanka je pripravena v e-mailu a text je zkopirovany.");
+    window.open(`mailto:${encodeURIComponent(user.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, "_self");
+    toast("Pozvanka je pripravena k rucnimu odeslani a text je zkopirovany.");
   }
 
   function ensureStyles() {
@@ -127,7 +127,7 @@
     button.className = "button button-soft";
     button.id = "inviteUserButton";
     button.type = "button";
-    button.textContent = "Pozvat uzivatele";
+    button.textContent = "Pripravit pozvanku";
     button.addEventListener("click", inviteFromForm);
     wrapper.appendChild(button);
   }
@@ -165,7 +165,7 @@
       button.className = "button button-soft";
       button.type = "button";
       button.dataset.userMailInvite = email;
-      button.textContent = "Poslat pozvanku";
+      button.textContent = "Pripravit pozvanku";
       button.addEventListener("click", () => openInviteEmail(user));
       actions.insertBefore(button, actions.querySelector("[data-user-email-preview]") || actions.querySelector("[data-user-toggle]") || null);
     });
