@@ -1,18 +1,4 @@
 (function () {
-  function loadAuthPersistence() {
-    if (window.kaiserAuthPersistenceRequested || document.querySelector('script[src*="auth-persistence"]')) return;
-    window.kaiserAuthPersistenceRequested = true;
-    const script = document.createElement("script");
-    script.src = "./auth-persistence.js?v=20260619-57";
-    script.async = false;
-    script.onerror = () => {
-      if (typeof window.showToast === "function") {
-        window.showToast("Dlouhe prihlaseni se nenacetlo. Zkuste tvrdy refresh prohlizece.");
-      }
-    };
-    document.head.appendChild(script);
-  }
-
   function loadInviteTemplateFallback() {
     if (window.kaiserEmailTemplates || window.kaiserInviteTemplateRequested) return;
     window.kaiserInviteTemplateRequested = true;
@@ -31,7 +17,7 @@
     if (window.kaiserInviteSenderRequested || document.querySelector('script[src*="invite-sender"]')) return;
     window.kaiserInviteSenderRequested = true;
     const script = document.createElement("script");
-    script.src = "./invite-sender.js?v=20260619-58";
+    script.src = "./invite-sender.js?v=20260619-59";
     script.async = false;
     script.onerror = () => {
       if (typeof window.showToast === "function") {
@@ -52,14 +38,13 @@
       <strong>Twilio SendGrid SMTP</strong>
       <p>Supabase Authentication / SMTP: host smtp.sendgrid.net, port 587, uzivatel apikey.</p>
       <p>Pozvanky pouzivaji vychozi grafiku Kaiser a heslo se nikdy neposila primo v e-mailu.</p>
-      <p>Po uspesnem 2FA zustane tento prohlizec duveryhodny az 90 dni, pokud se uzivatel rucne neodhlasi.</p>
+      <p>Prihlaseni zustava ulozene podle bezpecne Supabase session, pokud se uzivatel rucne neodhlasi.</p>
     `;
     const versionCard = summary.querySelector(".app-version-card");
     summary.insertBefore(card, versionCard || null);
   }
 
   function boot() {
-    loadAuthPersistence();
     loadInviteTemplateFallback();
     loadInviteSender();
     insertEmailSettingsCard();
