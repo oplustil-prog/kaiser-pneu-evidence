@@ -20,6 +20,31 @@
     }).format(Number(value) || 0);
   }
 
+  function pushCritical(label) {
+    if (typeof pushCriticalChange === "function") {
+      pushCriticalChange(label);
+      return;
+    }
+    window.kaiserCriticalCloudSavePending = true;
+    const clear = () => {
+      window.kaiserCriticalCloudSavePending = false;
+    };
+    const saver = window.kaiserSaveCloudNow || window.kaiserCloud?.pushState;
+    if (!saver) {
+      clear();
+      return;
+    }
+    try {
+      Promise.resolve(
+        window.kaiserSaveCloudNow
+          ? window.kaiserSaveCloudNow({ visible: true, source: label })
+          : window.kaiserCloud.pushState({ quiet: false, source: label })
+      ).finally(clear);
+    } catch {
+      clear();
+    }
+  }
+
   function getTire(spz, position) {
     if (typeof tireForPosition === "function") return tireForPosition(spz, position);
     return (state.tires || []).find((tire) => tire.vehicle === spz && tire.position === position);
@@ -46,31 +71,6 @@
     if (!tire || tire.id === currentTire?.id) return false;
     if (tire.state === "vyrazeno" || tire.state === "oprava") return false;
     return !tire.vehicle || tire.state === "sklad";
-  }
-
-  function pushCloudChange(source) {
-    window.setTimeout(() => {
-      if (window.location.protocol === "file:") {
-        showToast?.("Bezi lokalni soubor. Pro trvale ulozeni pouzijte verejnou cloudovou adresu.");
-        return;
-      }
-
-      if (!window.kaiserCloud?.isConfigured?.() || !window.kaiserCloud?.pushState) {
-        showToast?.("Zmena je zatim jen v tomto prohlizeci. Cloud neni pripojeny.");
-        return;
-      }
-
-      try {
-        const result = window.kaiserCloud.pushState({ quiet: false, source });
-        if (result?.then) {
-          result.catch((error) => {
-            showToast?.(error?.message || "Cloudove ulozeni selhalo. Zkontrolujte prihlaseni v Nastaveni.");
-          });
-        }
-      } catch (error) {
-        showToast?.(error?.message || "Cloudove ulozeni selhalo. Zkontrolujte prihlaseni v Nastaveni.");
-      }
-    }, 120);
   }
 
   function score(tire, spz, currentTire) {
@@ -136,6 +136,7 @@
   }
 
   function assignSelected(spz, position) {
+    if (typeof window.kaiserRequireAuth === "function" && !window.kaiserRequireAuth("montaz pneu")) return;
     const tireId = document.querySelector("#positionTireSelect")?.value || "";
     const tire = (state.tires || []).find((item) => item.id === tireId);
     const vehicle = (state.vehicles || []).find((item) => item.spz === spz);
@@ -162,12 +163,13 @@
     selectedVehicle = spz;
     selectedPosition = position;
     saveState?.();
-    pushCloudChange("Montaz pneu");
+    pushCritical("Montaz pneu");
     renderAll?.();
     showToast?.(`Pneu ${tire.id} je namontovana na ${spz} / ${position}.`);
   }
 
   function unassign(spz, position) {
+    if (typeof window.kaiserRequireAuth === "function" && !window.kaiserRequireAuth("sundani pneu")) return;
     const tire = getTire(spz, position);
     if (!tire) {
       showToast?.("Na teto pozici neni prirazena pneumatika.");
@@ -181,7 +183,7 @@
     selectedVehicle = spz;
     selectedPosition = position;
     saveState?.();
-    pushCloudChange("Sundani pneu");
+    pushCritical("Sundani pneu");
     renderAll?.();
     showToast?.(`Pneu ${tire.id} je sundana na sklad.`);
   }
