@@ -3,6 +3,7 @@
   const CONFIG_KEY = "kaiser-pneu-supabase-config-v1";
   const SUPABASE_MODULE_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
   const INVITE_STATUS = "pozvanka";
+  const PUBLIC_APP_URL = "https://oplustil-prog.github.io/kaiser-pneu-evidence/";
 
   let client = null;
   let clientKey = "";
@@ -120,7 +121,12 @@
   }
 
   function appUrl() {
-    return `${window.location.origin}${window.location.pathname}`;
+    const origin = String(window.location.origin || "");
+    if (!origin || origin === "null" || origin.includes("localhost") || origin.includes("127.0.0.1")) {
+      return PUBLIC_APP_URL;
+    }
+    const url = `${origin}${window.location.pathname || "/"}`;
+    return url.endsWith("/") ? url : `${url}/`;
   }
 
   async function callInviteFunction(user) {
@@ -209,8 +215,11 @@
 
   function labelButtons() {
     document.querySelectorAll("#inviteUserButton, [data-user-invite], [data-user-mail-invite]").forEach((button) => {
-      if (!button.disabled) button.textContent = "Poslat pozvanku";
-      button.title = "Odeslat pozvanku e-mailem pres Twilio SendGrid";
+      if (!button.disabled && button.textContent !== "Poslat pozvanku") {
+        button.textContent = "Poslat pozvanku";
+      }
+      const title = "Odeslat pozvanku e-mailem pres Twilio SendGrid";
+      if (button.title !== title) button.title = title;
     });
   }
 
