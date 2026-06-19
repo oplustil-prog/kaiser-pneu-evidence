@@ -72,10 +72,10 @@
       "1. Otevrete odkaz do aplikace.",
       "2. Do pole E-mail zadejte svuj prihlasovaci e-mail.",
       "3. Kliknete na Obnovit e-mailem a nastavte si vlastni heslo.",
-      "4. Pri prvnim vstupu aktivujte dvoufaktorove overeni pres QR kod.",
+      "4. V dorucene poste otevrete odkaz pro nastaveni hesla.",
+      "5. Pri prvnim vstupu aktivujte dvoufaktorove overeni pres QR kod.",
       "",
-      "Heslo vam nikdo neposila. Nastavujete si jej sami.",
-      "Pokud e-mail neprijde, pozadejte spravce o kontrolu uctu v Supabase."
+      "E-mail s obnovou hesla odesila Supabase pres Twilio SendGrid SMTP."
     ]
       .filter(Boolean)
       .join("\n");
@@ -377,10 +377,10 @@
           <li><span class="step-num">01</span><span>Otevřete odkaz do aplikace.</span></li>
           <li><span class="step-num">02</span><span>Do pole <strong>E-mail</strong> zadejte svůj přihlašovací e-mail.</span></li>
           <li><span class="step-num">03</span><span>Klikněte na <strong>Obnovit e-mailem</strong> a nastavte si vlastní heslo.</span></li>
-          <li><span class="step-num">04</span><span>V doručené poště otevřete odkaz a nastavte si vlastní heslo.</span></li>
+          <li><span class="step-num">04</span><span>V doručené poště otevřete odkaz pro nastavení hesla.</span></li>
           <li><span class="step-num">05</span><span>Při prvním vstupu aktivujte <strong>dvoufaktorové ověření</strong> přes QR kód.</span></li>
         </ol>
-        <div class="note"><strong>Heslo Vám nikdo neposílá.</strong> Nastavujete si jej sami. Pokud e-mail pro nastavení hesla nepřijde, požádejte správce o aktivaci účtu.</div>
+        <div class="note"><strong>Obnova hesla jde přes Twilio SendGrid.</strong> V Supabase musí být zapnuté vlastní SMTP: smtp.sendgrid.net, uživatel apikey, port 587.</div>
         <div class="cta-wrap"><a href="${APP_URL}" class="cta-btn">Otevřít aplikaci →</a></div>
       </div>
       <div class="footer">
@@ -440,7 +440,7 @@
     copyRichEmail(html, text)
       .then((mode) => {
         if (mode === "html") {
-          toast("Grafická HTML pozvánka je zkopírovaná. V e-mailu ji vložte do těla zprávy.");
+          toast("Pozvánka je zkopírovaná. Obnovu hesla odešle Supabase přes Twilio SendGrid.");
         } else if (mode === "text") {
           toast("Text pozvánky je zkopírovaný. HTML schránka není v tomto prohlížeči dostupná.");
         }
@@ -448,7 +448,7 @@
       .catch(() => toast("Pozvánka je připravená. Pokud se nekopíruje, použijte náhled e-mailu."));
 
     if (options.preview) openPreview(user);
-    if (options.mailto !== false) window.setTimeout(() => openMailClient(user), 80);
+    if (options.mailto === true) window.setTimeout(() => openMailClient(user), 80);
   }
 
   function upsertInviteUserFromForm() {
@@ -481,7 +481,7 @@
     event.stopImmediatePropagation();
     const user = previewOnly ? formUser() : upsertInviteUserFromForm();
     if (!user?.email) return;
-    prepareOutgoingInvite(user, { preview: true, mailto: !previewOnly });
+    prepareOutgoingInvite(user, { preview: true, mailto: false });
   }
 
   function handleExistingInvite(event, previewOnly = false) {
@@ -494,7 +494,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (!previewOnly) markExistingUserInvited(user);
-    prepareOutgoingInvite(user, { preview: true, mailto: !previewOnly });
+    prepareOutgoingInvite(user, { preview: true, mailto: false });
   }
 
   function ensureStyles() {
@@ -508,11 +508,33 @@
       .user-actions {
         flex-wrap: wrap;
       }
+      .user-mail-mode-note {
+        background: #f4faef;
+        border: 1px solid rgba(117, 189, 37, .25);
+        border-radius: 8px;
+        color: #5d6f58;
+        font-size: 14px;
+        font-weight: 700;
+        grid-column: 1 / -1;
+        line-height: 1.45;
+        padding: 12px 14px;
+      }
     `;
     document.head.appendChild(style);
   }
 
+  function ensureMailModeNotice() {
+    const form = document.querySelector("#userForm");
+    if (!form || form.querySelector(".user-mail-mode-note")) return;
+    const actions = form.querySelector(".user-form-actions");
+    const note = document.createElement("div");
+    note.className = "user-mail-mode-note";
+    note.textContent = "Pozvanku pripravite z nahledu. Obnovu hesla pak odesle Supabase pres Twilio SendGrid SMTP.";
+    form.insertBefore(note, actions || null);
+  }
+
   function ensurePreviewButtons() {
+    ensureMailModeNotice();
     const formActions = document.querySelector(".user-form-actions");
     if (formActions && !formActions.querySelector("[data-user-invite-preview-form]")) {
       const button = document.createElement("button");
