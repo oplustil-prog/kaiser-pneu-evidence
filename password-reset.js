@@ -54,15 +54,15 @@
       form?.elements.email.focus();
       return;
     }
-    status("Posilam e-mail pro nastaveni hesla...");
+    status("Posilam e-mail pro nastaveni hesla pres Twilio SendGrid...");
     try {
       const supabase = await client();
       const redirectTo = `${window.location.origin}${window.location.pathname}`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
-      status("E-mail pro nastaveni hesla je odeslany. Otevrete odkaz v dorucene poste.", "ok");
+      status("E-mail pro nastaveni hesla je odeslany. Pokud neprijde, zkontrolujte Twilio SendGrid SMTP v Supabase.", "ok");
     } catch (error) {
-      status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat.", "danger");
+      status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat. Zkontrolujte Twilio SendGrid SMTP.", "danger");
     }
   }
 
@@ -80,7 +80,7 @@
     actions.appendChild(button);
     const note = document.createElement("div");
     note.className = "kaiser-login-secondary-note";
-    note.textContent = "Pri prvnim prihlaseni zadejte e-mail a kliknete na nastaveni hesla. Odkaz prijde e-mailem.";
+    note.textContent = "Pri prvnim prihlaseni zadejte e-mail a kliknete na obnovu hesla. Odkaz odesle Supabase pres Twilio SendGrid SMTP.";
     form.appendChild(note);
   }
 
