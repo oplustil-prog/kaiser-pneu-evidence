@@ -355,6 +355,23 @@
     document.head.appendChild(script);
   }
 
+  function loadCloudLiveHotfix() {
+    if (window.kaiserCloudLiveHotfixRequested || document.querySelector('script[src*="cloud-live-hotfix"]')) return;
+    window.kaiserCloudLiveHotfixRequested = true;
+    const script = document.createElement("script");
+    script.src = `./cloud-live-hotfix.js?v=20260619-58-${Date.now()}`;
+    script.defer = true;
+    script.onerror = () => {
+      showNotice({
+        id: `cloud-live-hotfix-load-error-${Date.now()}`,
+        kind: "reset",
+        title: "Cloudove ukladani se nenacetlo",
+        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
+      });
+    };
+    document.head.appendChild(script);
+  }
+
   window.kaiserShowSystemNotice = function (message, options = {}) {
     showNotice({
       id: options.id || `manual-${Date.now()}`,
@@ -392,6 +409,7 @@
       loadLoginGate();
       loadUserInvites();
       loadInviteSenderHotfix();
+      loadCloudLiveHotfix();
     }, { once: true });
   } else {
     boot();
@@ -399,5 +417,6 @@
     loadLoginGate();
     loadUserInvites();
     loadInviteSenderHotfix();
+    loadCloudLiveHotfix();
   }
 })();
