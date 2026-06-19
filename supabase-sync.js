@@ -698,6 +698,9 @@
       setStatus("warn", "Lokalni rezim", "Data jsou zatim jen v tomto prohlizeci.");
       updateTopCloudStatus(null);
     }
+
+    window.setTimeout(refreshAuthStatus, 800);
+    window.setTimeout(refreshAuthStatus, 2200);
   }
 
   window.kaiserCloud = {
