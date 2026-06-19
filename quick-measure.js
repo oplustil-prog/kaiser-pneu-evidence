@@ -1,6 +1,28 @@
 (function () {
   if (typeof setQuickMeasureOpen === "function") return;
 
+  function clearOdometer(formElement) {
+    const input = formElement?.elements?.odometer;
+    if (!input) return;
+    input.value = "";
+    input.placeholder = "opsat aktualni km";
+    input.autocomplete = "off";
+  }
+
+  function installMainMeasurementGuard() {
+    const mainForm = document.querySelector("#measurementForm");
+    if (!mainForm) return;
+    clearOdometer(mainForm);
+    mainForm.elements.vehicle?.addEventListener("change", () => {
+      window.setTimeout(() => clearOdometer(mainForm), 0);
+    });
+    mainForm.addEventListener("submit", () => {
+      window.setTimeout(() => clearOdometer(mainForm), 0);
+    });
+  }
+
+  installMainMeasurementGuard();
+
   const dock = document.querySelector("#quickMeasureDock");
   const panel = document.querySelector("#quickMeasurePanel");
   const toggle = document.querySelector("#quickMeasureToggle");
@@ -54,9 +76,8 @@
       : positions[0] || "";
   }
 
-  function syncOdometer(spz) {
-    const vehicle = state.vehicles.find((item) => item.spz === spz);
-    form.elements.odometer.value = vehicle?.odometer ? Math.round(vehicle.odometer) : "";
+  function syncOdometer() {
+    clearOdometer(form);
   }
 
   function refreshQuickForm(spz = form.elements.vehicle.value, position = form.elements.position.value) {
