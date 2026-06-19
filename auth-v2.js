@@ -39,8 +39,6 @@
     const style = document.createElement("style");
     style.id = "kaiserAuthV2Styles";
     style.textContent = `
-      body.kaiser-auth-v2-loading .app-shell,
-      body.kaiser-auth-v2-loading .quick-measure-dock,
       body.kaiser-auth-v2-locked .app-shell,
       body.kaiser-auth-v2-locked .quick-measure-dock {
         display: none !important;
@@ -450,7 +448,6 @@
   }
 
   async function checkSession() {
-    document.body.classList.add("kaiser-auth-v2-loading");
     authRoot();
     try {
       const supabase = await client();
