@@ -16,10 +16,12 @@
 
   let client = null;
   let clientKey = "";
+  let clientPromise = null;
   let pushTimer = 0;
   let syncPaused = false;
   let localSaveState = null;
   let initialized = false;
+  let cloudSessionReady = false;
 
   function text(value) {
     return String(value || "").replace(/[&<>"']/g, (char) =>
@@ -55,6 +57,10 @@
 
   function hasConnection(config = readConfig()) {
     return Boolean(String(config.url || "").trim() && String(config.anonKey || "").trim());
+  }
+
+  function hasAuthenticatedSession() {
+    return Boolean(window.kaiserAuthState?.authenticated || cloudSessionReady);
   }
 
   function getMeta() {
@@ -145,18 +151,32 @@
     if (!hasConnection(config)) throw new Error("Supabase neni nastaveny.");
 
     const key = `${config.url}|${config.anonKey}`;
-    if (client && clientKey === key) return client;
+    if (window.kaiserAuthSimple?.getClient) {
+      const sharedClient = await window.kaiserAuthSimple.getClient();
+      client = sharedClient;
+      clientKey = key;
+      return sharedClient;
+    }
 
-    const module = await import(SUPABASE_MODULE_URL);
-    client = module.createClient(config.url.trim(), config.anonKey.trim(), {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    });
+    if (client && clientKey === key) return client;
+    if (clientPromise && clientKey === key) return clientPromise;
+
     clientKey = key;
-    return client;
+    clientPromise = import(SUPABASE_MODULE_URL)
+      .then((module) => {
+        client = module.createClient(config.url.trim(), config.anonKey.trim(), {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: false
+          }
+        });
+        return client;
+      })
+      .finally(() => {
+        clientPromise = null;
+      });
+    return clientPromise;
   }
 
   async function refreshAuthStatus() {
@@ -171,48 +191,13 @@
       const supabase = await getClient();
       const { data } = await supabase.auth.getSession();
       const user = data?.session?.user || null;
+      cloudSessionReady = Boolean(user);
       target.textContent = user?.email || "neprihlaseno";
       return user;
     } catch {
+      cloudSessionReady = false;
       target.textContent = "neprihlaseno";
       return null;
-    }
-  }
-
-  async function signIn(event) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = Object.fromEntries(new FormData(form).entries());
-    const email = String(data.email || "").trim();
-    const password = String(data.password || "");
-
-    if (!email || !password) {
-      setStatus("warn", "Doplnte e-mail a heslo");
-      return;
-    }
-
-    setStatus("work", "Prihlasuji...");
-    try {
-      const supabase = await getClient();
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      form.elements.password.value = "";
-      await refreshAuthStatus();
-      setStatus("ok", "Uzivatel je prihlaseny", lastSyncLabel());
-      if (readConfig().autoLoad) window.setTimeout(() => pullState(), 300);
-    } catch (error) {
-      setStatus("danger", "Prihlaseni selhalo", error.message || "Zkontrolujte e-mail a heslo.");
-    }
-  }
-
-  async function signOut() {
-    try {
-      const supabase = await getClient();
-      await supabase.auth.signOut();
-      await refreshAuthStatus();
-      setStatus("warn", "Uzivatel je odhlaseny", "Data zustavaji ulozena v tomto prohlizeci.");
-    } catch (error) {
-      setStatus("danger", "Odhlaseni selhalo", error.message || "");
     }
   }
 
@@ -249,6 +234,10 @@
       if (!options.quiet) setStatus("warn", "Cloud neni nastaveny", "Data zustavaji ulozena v tomto prohlizeci.");
       return;
     }
+    if (!hasAuthenticatedSession()) {
+      if (!options.quiet) setStatus("warn", "Cloud ceka na prihlaseni", "Nejdrive se prihlaste.");
+      return;
+    }
 
     setStatus("work", options.quiet ? "Ukladam do cloudu..." : "Nahravam data do cloudu...");
     try {
@@ -281,6 +270,10 @@
       setStatus("warn", "Cloud neni nastaveny", "Data zustavaji ulozena v tomto prohlizeci.");
       return;
     }
+    if (!hasAuthenticatedSession()) {
+      setStatus("warn", "Cloud ceka na prihlaseni", "Nejdrive se prihlaste.");
+      return;
+    }
 
     setStatus("work", "Stahuji data z cloudu...");
     try {
@@ -310,6 +303,7 @@
       selectedPosition = "";
       saveLocalOnly();
       if (typeof renderAll === "function") renderAll();
+      window.kaiserAuthSimple?.renderHeader?.();
       setMeta({ lastSyncAt: new Date().toISOString(), lastPullAt: new Date().toISOString(), counts: data.counts || stateCounts() });
       setStatus("ok", "Cloudova data jsou nactena", lastSyncLabel());
     } catch (error) {
@@ -319,14 +313,14 @@
 
   function schedulePush() {
     const config = readConfig();
-    if (!config.autoSync || !hasConnection(config)) return;
+    if (!config.autoSync || !hasConnection(config) || !hasAuthenticatedSession()) return;
     window.clearTimeout(pushTimer);
     pushTimer = window.setTimeout(() => pushState({ quiet: true }), 1200);
   }
 
   async function uploadFile(file, folder = "documents") {
     const config = readConfig();
-    if (!file || !hasConnection(config)) return null;
+    if (!file || !hasConnection(config) || !hasAuthenticatedSession()) return null;
 
     const supabase = await getClient();
     const safeName = String(file.name || "soubor")
@@ -354,7 +348,7 @@
 
   async function openFile(path) {
     const config = readConfig();
-    if (!path || !hasConnection(config)) return;
+    if (!path || !hasConnection(config) || !hasAuthenticatedSession()) return;
     try {
       const supabase = await getClient();
       const { data, error } = await supabase.storage.from(config.bucket).createSignedUrl(path, 60 * 10);
@@ -403,8 +397,6 @@
       refreshAuthStatus();
       setStatus("warn", "Cloud je odpojeny", "Data zustavaji ulozena v tomto prohlizeci.");
     });
-    panel.querySelector("#cloudAuthForm").addEventListener("submit", signIn);
-    panel.querySelector("[data-cloud-signout]").addEventListener("click", signOut);
   }
 
   function fillForm() {
@@ -583,22 +575,9 @@
             </label>
             <label class="settings-switch is-locked" title="V ostrém provozu je automatické ukládání povinné.">
               <input name="autoSync" type="checkbox" checked disabled />
-              <span>Automaticky ukladat zmeny</span>
+              <span>Automaticky ukladat zmenz</span>
             </label>
             <button class="button button-primary" type="submit" data-cloud-save disabled>Cloud nastaveni zamceno</button>
-          </form>
-
-          <form class="entry-form cloud-auth-form" id="cloudAuthForm">
-            <label>
-              E-mail
-              <input name="email" type="email" autocomplete="email" />
-            </label>
-            <label>
-              Heslo
-              <input name="password" type="password" autocomplete="current-password" />
-            </label>
-            <button class="button button-primary" type="submit">Prihlasit</button>
-            <button class="button button-soft" type="button" data-cloud-signout>Odhlasit</button>
           </form>
 
           <div class="cloud-actions">
@@ -632,7 +611,7 @@
     if (hasConnection(config)) {
       setStatus("ok", "Cloud pripraven", lastSyncLabel());
       refreshAuthStatus().then((user) => {
-        if (config.autoLoad && user) {
+        if (config.autoLoad && hasAuthenticatedSession() && user) {
           window.setTimeout(() => pullState(), 500);
         } else if (config.autoLoad) {
           setStatus("warn", "Cloud pripraven, cekam na prihlaseni", lastSyncLabel());
@@ -652,6 +631,19 @@
     testConnection,
     uploadFile
   };
+
+  window.addEventListener("kaiser-auth-ready", () => {
+    cloudSessionReady = true;
+    setStatus("work", "Cloudove prihlaseni overeno", "Stahuji produkcni data...");
+    refreshAuthStatus();
+    if (readConfig().autoLoad) window.setTimeout(() => pullState(), 300);
+  });
+
+  window.addEventListener("kaiser-auth-signed-out", () => {
+    cloudSessionReady = false;
+    refreshAuthStatus();
+    setStatus("warn", "Uzivatel je odhlaseny", "Data zustavaji ulozena v tomto prohlizeci.");
+  });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initCloudSync);
