@@ -38,6 +38,119 @@
     }).format(Number(value) || 0);
   }
 
+  function ensureStyles() {
+    if (document.getElementById("kaiserGlobalSearchStyles")) return;
+    const style = document.createElement("style");
+    style.id = "kaiserGlobalSearchStyles";
+    style.textContent = `
+      .search-control {
+        position: relative;
+      }
+
+      .global-search-panel {
+        background: #ffffff;
+        border: 1px solid rgba(117, 189, 37, 0.28);
+        border-radius: 8px;
+        box-shadow: 0 18px 45px rgba(25, 34, 28, 0.16);
+        color: var(--ink);
+        display: grid;
+        gap: 8px;
+        left: 0;
+        max-height: min(62vh, 520px);
+        min-width: min(520px, 88vw);
+        overflow: auto;
+        padding: 10px;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        z-index: 80;
+      }
+
+      .global-search-panel[hidden] {
+        display: none;
+      }
+
+      .global-search-head,
+      .global-search-empty {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 10px;
+      }
+
+      .global-search-head span {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 900;
+      }
+
+      .global-search-list {
+        display: grid;
+        gap: 6px;
+      }
+
+      .global-search-result {
+        align-items: center;
+        background: var(--surface-strong);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--ink);
+        cursor: pointer;
+        display: grid;
+        gap: 3px 10px;
+        grid-template-columns: auto minmax(0, 1fr);
+        padding: 10px;
+        text-align: left;
+      }
+
+      .global-search-result:hover,
+      .global-search-result:focus-visible {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px rgba(117, 189, 37, 0.13);
+        outline: none;
+      }
+
+      .global-search-result strong,
+      .global-search-result small {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .global-search-result small {
+        color: var(--muted);
+        font-weight: 700;
+        grid-column: 2;
+      }
+
+      @media (max-width: 760px) {
+        .global-search-panel {
+          left: auto;
+          min-width: min(92vw, 440px);
+          right: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function ensurePanel(input) {
+    if (!input) return null;
+    const existing = byId("globalSearchPanel");
+    if (existing) return existing;
+
+    const holder = input.closest(".search-control") || input.parentElement;
+    if (!holder) return null;
+    holder.classList.add("global-search-wrap");
+    const panel = document.createElement("div");
+    panel.className = "global-search-panel";
+    panel.id = "globalSearchPanel";
+    panel.hidden = true;
+    holder.appendChild(panel);
+    return panel;
+  }
+
   function currentState() {
     if (typeof state === "undefined") return { vehicles: [], tires: [], services: [], users: [] };
     return state || { vehicles: [], tires: [], services: [], users: [] };
@@ -213,10 +326,11 @@
 
   function boot() {
     const input = byId("globalSearch");
-    const panel = byId("globalSearchPanel");
+    const panel = ensurePanel(input);
     if (!input || !panel) return;
 
     window.kaiserGlobalSearchInstalled = true;
+    ensureStyles();
     input.addEventListener("input", renderPanel);
     input.addEventListener("focus", renderPanel);
     input.addEventListener("keydown", (event) => {
@@ -238,7 +352,7 @@
         openResult(result);
         return;
       }
-      if (!event.target.closest(".global-search-wrap")) panel.hidden = true;
+      if (!event.target.closest(".global-search-wrap") && !event.target.closest(".search-control")) panel.hidden = true;
     });
 
     document.addEventListener("keydown", (event) => {
