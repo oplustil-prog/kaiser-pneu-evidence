@@ -12,6 +12,7 @@
   };
 
   const PUBLIC_APP_URL = "https://oplustil-prog.github.io/kaiser-pneu-evidence/";
+  window.kaiserAuthPersistenceRequested = true;
 
   function getScriptBuild() {
     const script = document.currentScript || document.querySelector('script[src*="cloud-auth-preview"]');
@@ -336,6 +337,23 @@
     document.head.appendChild(script);
   }
 
+  function loadInviteSenderHotfix() {
+    if (window.kaiserInviteSenderRequested || document.querySelector('script[src*="invite-sender"]')) return;
+    window.kaiserInviteSenderRequested = true;
+    const script = document.createElement("script");
+    script.src = "./invite-sender.js?v=20260619-59";
+    script.defer = true;
+    script.onerror = () => {
+      showNotice({
+        id: `invite-sender-load-error-${Date.now()}`,
+        kind: "reset",
+        title: "Odesilani pozvanek se nenacetlo",
+        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
+      });
+    };
+    document.head.appendChild(script);
+  }
+
   window.kaiserShowSystemNotice = function (message, options = {}) {
     showNotice({
       id: options.id || `manual-${Date.now()}`,
@@ -363,11 +381,13 @@
       installCloudSaveGuard();
       loadLoginGate();
       loadUserInvites();
+      loadInviteSenderHotfix();
     }, { once: true });
   } else {
     boot();
     installCloudSaveGuard();
     loadLoginGate();
     loadUserInvites();
+    loadInviteSenderHotfix();
   }
 })();
