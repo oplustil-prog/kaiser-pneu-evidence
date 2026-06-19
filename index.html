@@ -4,6 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kaiser Servis | Evidence pneumatik</title>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var fresh = String(params.get("fresh") || "");
+        if (fresh.indexOf("hotfix-auth-preview") === -1) return;
+        var url = new URL("https://oplustil-prog.github.io/kaiser-pneu-evidence/");
+        url.searchParams.set("fresh", "auth-url-fixed-" + Date.now());
+        window.location.replace(url.toString());
+      })();
+    </script>
     <meta
       name="description"
       content="Responzivni aplikace pro evidenci pneumatik, vozidel, mereni, servisu a nakladu."
@@ -130,7 +140,7 @@
                   <h3>SPZ podle nakladu YTD</h3>
                 </div>
                 <button class="icon-button" type="button" data-section-jump="reports" aria-label="Otevrit reporty">
-                  <span aria-hidden="true">-&gt;</span>
+                  <span aria-hidden="true">-></span>
                 </button>
               </div>
               <div class="bar-list" id="vehicleCostBars"></div>
