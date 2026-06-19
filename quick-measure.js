@@ -7,8 +7,12 @@
     if (input.dataset.userEdited === "true") return;
     input.value = "";
     input.defaultValue = "";
+    input.removeAttribute("value");
     input.placeholder = "opsat aktualni km";
     input.autocomplete = "off";
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("data-lpignore", "true");
+    input.setAttribute("data-1p-ignore", "true");
   }
 
   function resetOdometer(formElement) {
@@ -56,6 +60,7 @@
     window.setTimeout(clearAllOdometers, 0);
     window.setTimeout(clearAllOdometers, 600);
     window.setTimeout(clearAllOdometers, 1800);
+    window.addEventListener("pageshow", clearAllOdometers);
   }
 
   function installMainMeasurementGuard() {
