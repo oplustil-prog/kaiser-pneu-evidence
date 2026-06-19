@@ -1,4 +1,7 @@
 (function () {
+  if (window.kaiserEmailTemplatesInstalled) return;
+  window.kaiserEmailTemplatesInstalled = true;
+
   const APP_URL = "https://oplustil-prog.github.io/kaiser-pneu-evidence/";
   const STORAGE_KEY = "kaiser-pneu-evidence-v5";
   const INVITE_STATUS = "pozvanka";
@@ -14,7 +17,7 @@
     try {
       if (typeof state !== "undefined") return state || {};
     } catch {
-      // The main app may not be loaded yet.
+      // Main app state may not be available yet.
     }
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
@@ -71,18 +74,19 @@
       "Postup pro prvni prihlaseni:",
       "1. Otevrete odkaz do aplikace.",
       "2. Do pole E-mail zadejte svuj prihlasovaci e-mail.",
-      "3. Kliknete na Obnovit e-mailem a nastavte si vlastni heslo.",
-      "4. V dorucene poste otevrete odkaz pro nastaveni hesla.",
+      "3. Kliknete na Nastavit / obnovit heslo.",
+      "4. V dorucene poste otevrete odkaz a nastavte si vlastni heslo.",
       "5. Pri prvnim vstupu aktivujte dvoufaktorove overeni pres QR kod.",
       "",
-      "E-mail s obnovou hesla odesila Supabase pres Twilio SendGrid SMTP."
+      "Heslo vam nikdo neposila. Nastavujete si jej sami. Pokud e-mail pro nastaveni hesla neprijde, pozadejte spravce o aktivaci uctu."
     ]
       .filter(Boolean)
       .join("\n");
   }
 
   function buildInviteHtml(user) {
-    const displayName = user.name || user.email || "uzivateli";
+    const displayName = user.name || "";
+    const appHost = "oplustil-prog.github.io/kaiser-pneu-evidence";
     return `<!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -93,23 +97,23 @@
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #1a241c;
+      background: #1a2420;
       font-family: 'Inter', Arial, sans-serif;
-      color: #e5ede5;
+      color: #e5e5e5;
       padding: 48px 16px;
       min-height: 100vh;
     }
     .wrapper { max-width: 540px; margin: 0 auto; }
     .card {
-      background: #202c22;
+      background: #222d28;
       border-radius: 20px;
       overflow: hidden;
-      border: 1px solid #2d3d2d;
+      border: 1px solid #2e3d32;
       box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.4);
     }
     .header {
-      background: #1a241c;
-      border-bottom: 1px solid #2d3d2d;
+      background: #1a2420;
+      border-bottom: 1px solid #2e3d32;
       padding: 36px 32px 32px;
       position: relative;
       overflow: hidden;
@@ -140,7 +144,7 @@
     .header-sub {
       font-size: 13px;
       font-weight: 600;
-      color: #6b8a6b;
+      color: #6a8a70;
       letter-spacing: 1.5px;
       text-transform: uppercase;
       position: relative;
@@ -160,7 +164,7 @@
     .header-desc {
       margin-top: 8px;
       font-size: 14px;
-      color: #8aa08a;
+      color: #7a9a80;
       position: relative;
       z-index: 1;
       font-weight: 500;
@@ -168,14 +172,14 @@
     .body { padding: 32px 32px 28px; }
     .greeting {
       font-size: 14px;
-      color: #a0b8a0;
+      color: #9ab5a0;
       margin-bottom: 24px;
       line-height: 1.65;
     }
-    .greeting strong { color: #e5ede5; }
+    .greeting strong { color: #e5e5e5; }
     .info-box {
-      background: #263029;
-      border: 1px solid #2d3d2d;
+      background: #1e2c24;
+      border: 1px solid #2e3d32;
       border-radius: 14px;
       overflow: hidden;
       margin-bottom: 28px;
@@ -185,15 +189,17 @@
       align-items: flex-start;
       gap: 14px;
       padding: 14px 18px;
-      border-bottom: 1px solid #2d3d2d;
+      border-bottom: 1px solid #2e3d32;
+      transition: background 0.15s;
     }
     .info-row:last-child { border-bottom: none; }
+    .info-row:hover { background: #263a2c; }
     .num-badge {
       flex-shrink: 0;
       width: 28px;
       height: 28px;
       border-radius: 8px;
-      background: #2d3d2d;
+      background: #2a3d2e;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -208,13 +214,13 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      color: #5a7a5a;
+      color: #5a7a60;
       margin-bottom: 3px;
     }
     .info-value {
       font-size: 13.5px;
       font-weight: 600;
-      color: #e5ede5;
+      color: #e5e5e5;
       word-break: break-all;
     }
     .info-value a { color: #75bd25; text-decoration: none; }
@@ -234,7 +240,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 2px;
-      color: #5a7a5a;
+      color: #5a7a60;
       margin-bottom: 12px;
     }
     .steps {
@@ -249,19 +255,19 @@
       align-items: flex-start;
       gap: 14px;
       font-size: 13.5px;
-      color: #a0b8a0;
+      color: #9ab5a0;
       line-height: 1.6;
       padding: 10px 14px;
-      background: #263029;
-      border: 1px solid #2d3d2d;
+      background: #1e2c24;
+      border: 1px solid #2e3d32;
       border-radius: 10px;
     }
-    .steps li strong { color: #e5ede5; }
+    .steps li strong { color: #e5e5e5; }
     .step-num {
       flex-shrink: 0;
       width: 26px;
       height: 26px;
-      background: #2d3d2d;
+      background: #2a3d2e;
       color: #75bd25;
       border-radius: 7px;
       display: flex;
@@ -273,7 +279,7 @@
       letter-spacing: 0.5px;
     }
     .note {
-      background: #1e1e10;
+      background: #222010;
       border: 1px solid #3d3a20;
       border-left: 3px solid #f59e0b;
       border-radius: 0 10px 10px 0;
@@ -296,33 +302,35 @@
       border-radius: 10px;
       letter-spacing: 0.3px;
       box-shadow: 0 4px 20px rgba(117,189,37,0.30), 0 1px 3px rgba(0,0,0,0.3);
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .cta-btn:hover {
+      background: #82cc2a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(117,189,37,0.40), 0 2px 6px rgba(0,0,0,0.3);
     }
     .footer {
-      background: #161f18;
-      border-top: 1px solid #2d3d2d;
+      background: #161e18;
+      border-top: 1px solid #2e3d32;
       padding: 18px 32px;
     }
-    .signature {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+    .signature { display: flex; align-items: center; gap: 14px; }
     .sig-avatar {
       width: 40px;
       height: 40px;
       border-radius: 10px;
-      background: #2d3d2d;
-      border: 1px solid #3a4d3a;
+      background: #2a3d2e;
+      border: 1px solid #3a5040;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       flex-shrink: 0;
     }
-    .sig-name { font-size: 14px; font-weight: 700; color: #e5ede5; }
+    .sig-name { font-size: 14px; font-weight: 700; color: #e5e5e5; }
     .sig-meta {
       font-size: 12px;
-      color: #5a7a5a;
+      color: #5a7a60;
       margin-top: 3px;
       display: flex;
       align-items: center;
@@ -330,7 +338,7 @@
       flex-wrap: wrap;
     }
     .sig-meta a { color: #75bd25; text-decoration: none; font-weight: 600; }
-    .dot { color: #3a4d3a; }
+    .dot { color: #3a5040; }
     @media (max-width: 600px) {
       body { padding: 20px 10px; }
       .header, .body, .footer { padding-left: 20px; padding-right: 20px; }
@@ -354,7 +362,7 @@
             <div class="num-badge">01</div>
             <div>
               <div class="info-label">Odkaz na aplikaci</div>
-              <div class="info-value"><a href="${APP_URL}">oplustil-prog.github.io/kaiser-pneu-evidence</a></div>
+              <div class="info-value"><a href="${APP_URL}">${appHost}</a></div>
             </div>
           </div>
           <div class="info-row">
@@ -376,22 +384,22 @@
         <ol class="steps">
           <li><span class="step-num">01</span><span>Otevřete odkaz do aplikace.</span></li>
           <li><span class="step-num">02</span><span>Do pole <strong>E-mail</strong> zadejte svůj přihlašovací e-mail.</span></li>
-          <li><span class="step-num">03</span><span>Klikněte na <strong>Obnovit e-mailem</strong> a nastavte si vlastní heslo.</span></li>
-          <li><span class="step-num">04</span><span>V doručené poště otevřete odkaz pro nastavení hesla.</span></li>
+          <li><span class="step-num">03</span><span>Klikněte na <strong>Nastavit / obnovit heslo</strong>.</span></li>
+          <li><span class="step-num">04</span><span>V doručené poště otevřete odkaz a nastavte si vlastní heslo.</span></li>
           <li><span class="step-num">05</span><span>Při prvním vstupu aktivujte <strong>dvoufaktorové ověření</strong> přes QR kód.</span></li>
         </ol>
-        <div class="note"><strong>Obnova hesla jde přes Twilio SendGrid.</strong> V Supabase musí být zapnuté vlastní SMTP: smtp.sendgrid.net, uživatel apikey, port 587.</div>
+        <div class="note">🔒 <strong>Heslo Vám nikdo neposílá.</strong> Nastavujete si jej sami. Pokud e-mail pro nastavení hesla nepřijde, požádejte správce o aktivaci účtu.</div>
         <div class="cta-wrap"><a href="${APP_URL}" class="cta-btn">Otevřít aplikaci →</a></div>
       </div>
       <div class="footer">
         <div class="signature">
-          <div class="sig-avatar">R</div>
+          <div class="sig-avatar">👤</div>
           <div>
             <div class="sig-name">Radim</div>
             <div class="sig-meta">
               <a href="https://kaiserservis.cz">kaiserservis.cz</a>
               <span class="dot">·</span>
-              <span>604 542 004</span>
+              <span>📞 604 542 004</span>
             </div>
           </div>
         </div>
@@ -439,11 +447,8 @@
     const text = buildInviteText(user);
     copyRichEmail(html, text)
       .then((mode) => {
-        if (mode === "html") {
-          toast("Pozvánka je zkopírovaná. Obnovu hesla odešle Supabase přes Twilio SendGrid.");
-        } else if (mode === "text") {
-          toast("Text pozvánky je zkopírovaný. HTML schránka není v tomto prohlížeči dostupná.");
-        }
+        if (mode === "html") toast("Pozvánka je zkopírovaná ve výchozí grafice Kaiser.");
+        else if (mode === "text") toast("Text pozvánky je zkopírovaný. HTML schránka není v tomto prohlížeči dostupná.");
       })
       .catch(() => toast("Pozvánka je připravená. Pokud se nekopíruje, použijte náhled e-mailu."));
 
@@ -487,6 +492,7 @@
   function handleExistingInvite(event, previewOnly = false) {
     if (window.kaiserRequireAuth && !window.kaiserRequireAuth("pozvani uzivatele")) return;
     const trigger = event.target.closest("[data-user-invite], [data-user-mail-invite], [data-user-email-preview]");
+    if (!trigger) return;
     const user = trigger.dataset.userInvite
       ? userById(trigger.dataset.userInvite)
       : userByEmail(trigger.dataset.userMailInvite || trigger.dataset.userEmailPreview);
@@ -502,12 +508,8 @@
     const style = document.createElement("style");
     style.id = "kaiserEmailTemplateStyles";
     style.textContent = `
-      .user-form-actions {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      }
-      .user-actions {
-        flex-wrap: wrap;
-      }
+      .user-form-actions { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+      .user-actions { flex-wrap: wrap; }
       .user-mail-mode-note {
         background: #f4faef;
         border: 1px solid rgba(117, 189, 37, .25);
@@ -529,7 +531,7 @@
     const actions = form.querySelector(".user-form-actions");
     const note = document.createElement("div");
     note.className = "user-mail-mode-note";
-    note.textContent = "Pozvanku pripravite z nahledu. Obnovu hesla pak odesle Supabase pres Twilio SendGrid SMTP.";
+    note.textContent = "Pozvanka se pripravi ve vychozi grafice Kaiser. Heslo si uzivatel nastavi sam pres tlacitko Nastavit / obnovit heslo.";
     form.insertBefore(note, actions || null);
   }
 
