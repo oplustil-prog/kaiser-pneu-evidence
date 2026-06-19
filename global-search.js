@@ -1,5 +1,6 @@
 (function () {
-  if (window.kaiserGlobalSearchInstalled) return;
+  if (window.kaiserGlobalSearchRepairInstalled) return;
+  window.kaiserGlobalSearchRepairInstalled = true;
 
   const MAX_RESULTS = 12;
 
