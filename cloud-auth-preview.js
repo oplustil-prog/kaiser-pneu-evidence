@@ -282,6 +282,12 @@
     box.title = email;
   }
 
+  function stabilizeHeader() {
+    [0, 150, 500, 1200, 2500].forEach((delay) => {
+      window.setTimeout(renderHeader, delay);
+    });
+  }
+
   function showLogin() {
     const root = authRoot();
     root.classList.add("is-visible");
@@ -304,6 +310,7 @@
       authVersion: "simple"
     };
     renderHeader();
+    stabilizeHeader();
     window.dispatchEvent(new CustomEvent("kaiser-auth-state", { detail: window.kaiserAuthState }));
     window.dispatchEvent(
       new CustomEvent(authenticated ? "kaiser-auth-ready" : "kaiser-auth-locked", {
@@ -369,7 +376,7 @@
     document.querySelector("#kaiser-system-notice")?.remove();
     document.querySelector("#kaiser-system-notice-style")?.remove();
     authRoot();
-    renderHeader();
+    stabilizeHeader();
 
     if (!hasConfig()) {
       setAuth(null);
