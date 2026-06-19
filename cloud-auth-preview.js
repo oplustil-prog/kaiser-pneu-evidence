@@ -335,7 +335,7 @@
     if (window.kaiserUserInvitesRequested || document.querySelector('script[src*="user-invites"]')) return;
     window.kaiserUserInvitesRequested = true;
     const script = document.createElement("script");
-    script.src = "./user-invites.js?v=20260619-51";
+    script.src = "./user-invites.js?v=20260619-52";
     script.defer = true;
     script.onerror = () => {
       showNotice({
