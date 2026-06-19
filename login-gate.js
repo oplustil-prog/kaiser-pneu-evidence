@@ -1,6 +1,7 @@
 (function () {
   const CONFIG_KEY = "kaiser-pneu-supabase-config-v1";
   const SUPABASE_MODULE_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  const PUBLIC_APP_URL = "https://oplustil-prog.github.io/kaiser-pneu-evidence/";
   const gate = {
     client: null,
     clientKey: "",
@@ -55,6 +56,19 @@
 
   function isConfigured(next = config()) {
     return Boolean(String(next.url || "").trim() && String(next.anonKey || "").trim());
+  }
+
+  function publicRedirectUrl() {
+    const origin = String(window.location.origin || "");
+    if (!origin || origin === "null" || origin.includes("localhost") || origin.includes("127.0.0.1")) {
+      return PUBLIC_APP_URL;
+    }
+    try {
+      const url = new URL(window.location.pathname || "/", origin);
+      return url.toString();
+    } catch {
+      return PUBLIC_APP_URL;
+    }
   }
 
   async function client() {
@@ -365,7 +379,7 @@
     status("Posilam e-mail pro nastaveni hesla...");
     try {
       const supabase = await client();
-      const redirectTo = `${window.location.origin}${window.location.pathname}`;
+      const redirectTo = publicRedirectUrl();
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
       status("E-mail pro nastaveni hesla je odeslany.", "ok");
