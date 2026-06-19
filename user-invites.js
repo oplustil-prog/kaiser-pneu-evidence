@@ -167,7 +167,7 @@
       button.dataset.userMailInvite = email;
       button.textContent = "Poslat pozvanku";
       button.addEventListener("click", () => openInviteEmail(user));
-      actions.insertBefore(button, actions.querySelector("[data-user-toggle]") || null);
+      actions.insertBefore(button, actions.querySelector("[data-user-email-preview]") || actions.querySelector("[data-user-toggle]") || null);
     });
   }
 
