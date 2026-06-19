@@ -38,23 +38,6 @@
     localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify([...dismissed].slice(-20)));
   }
 
-  async function clearBrowserCaches() {
-    if (!("caches" in window)) return;
-    try {
-      const keys = await window.caches.keys();
-      await Promise.all(keys.map((key) => window.caches.delete(key)));
-    } catch {
-      // Cache API is not available everywhere; the URL cache-bust below is the fallback.
-    }
-  }
-
-  function buildFreshUrl() {
-    const url = new URL(window.location.href);
-    ["update", "notice", "reset"].forEach((key) => url.searchParams.delete(key));
-    url.searchParams.set("fresh", `button-refresh-${Date.now()}`);
-    return url.toString();
-  }
-
   function redirectLegacyHotfixLink() {
     const params = new URLSearchParams(window.location.search);
     const fresh = String(params.get("fresh") || "");
@@ -71,23 +54,9 @@
     }
   }
 
-  function hardRefreshFromNotice(noticeId, button) {
+  function dismissNotice(noticeId) {
     rememberDismissed(noticeId);
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Obnovuji...";
-    }
-    try {
-      sessionStorage.setItem("kaiser-last-notice-refresh", new Date().toISOString());
-    } catch {
-      // Session storage can be blocked in strict browser modes.
-    }
-    clearBrowserCaches();
-    try {
-      window.location.replace(buildFreshUrl());
-    } catch {
-      window.location.reload();
-    }
+    document.getElementById("kaiser-system-notice")?.remove();
   }
 
   function injectStyles() {
@@ -174,11 +143,11 @@
         <strong>${escapeHtml(data.title)}</strong>
         <p>${escapeHtml(data.message)}</p>
       </div>
-      <button type="button">Rozumim a obnovit</button>
+      <button type="button">Rozumim</button>
     `;
     banner.hidden = false;
     const button = banner.querySelector("button");
-    button.onclick = () => hardRefreshFromNotice(data.id, button);
+    button.onclick = () => dismissNotice(data.id);
   }
 
   function escapeHtml(value) {
