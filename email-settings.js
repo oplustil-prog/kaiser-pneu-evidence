@@ -27,6 +27,20 @@
     document.head.appendChild(script);
   }
 
+  function loadInviteSender() {
+    if (window.kaiserInviteSenderRequested || document.querySelector('script[src*="invite-sender"]')) return;
+    window.kaiserInviteSenderRequested = true;
+    const script = document.createElement("script");
+    script.src = "./invite-sender.js?v=20260619-58";
+    script.async = false;
+    script.onerror = () => {
+      if (typeof window.showToast === "function") {
+        window.showToast("Odesilani pozvanek se nenacetlo. Zkuste tvrdy refresh prohlizece.");
+      }
+    };
+    document.head.appendChild(script);
+  }
+
   function insertEmailSettingsCard() {
     const summary = document.querySelector("#settingsSummary");
     if (!summary || summary.querySelector("[data-email-settings-card]")) return;
@@ -47,6 +61,7 @@
   function boot() {
     loadAuthPersistence();
     loadInviteTemplateFallback();
+    loadInviteSender();
     insertEmailSettingsCard();
     const target = document.querySelector("#settingsSummary") || document.body;
     const observer = new MutationObserver(insertEmailSettingsCard);
