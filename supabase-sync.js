@@ -232,11 +232,11 @@
     const config = readConfig();
     if (!hasConnection(config)) {
       if (!options.quiet) setStatus("warn", "Cloud neni nastaveny", "Data zustavaji ulozena v tomto prohlizeci.");
-      return;
+      return false;
     }
     if (!hasAuthenticatedSession()) {
       if (!options.quiet) setStatus("warn", "Cloud ceka na prihlaseni", "Nejdrive se prihlaste.");
-      return;
+      return false;
     }
 
     setStatus("work", options.quiet ? "Ukladam do cloudu..." : "Nahravam data do cloudu...");
@@ -259,8 +259,10 @@
       if (error) throw error;
       setMeta({ lastSyncAt: now, lastPushAt: now, counts });
       setStatus("ok", "Data jsou ulozena v cloudu", lastSyncLabel());
+      return true;
     } catch (error) {
       setStatus("danger", "Ulozeni do cloudu selhalo", error.message || "Zkontrolujte Supabase nastaveni.");
+      return false;
     }
   }
 
@@ -316,6 +318,37 @@
     if (!config.autoSync || !hasConnection(config) || !hasAuthenticatedSession()) return;
     window.clearTimeout(pushTimer);
     pushTimer = window.setTimeout(() => pushState({ quiet: true }), 1200);
+  }
+
+  function bindSettingsCloudFlush() {
+    document.addEventListener("submit", (event) => {
+      if (event.target?.id !== "settingsForm") return;
+      const form = event.target;
+      const button = form.querySelector('button[type="submit"]');
+      const buttonLabel = button?.textContent || "";
+      const beforeUnload = (unloadEvent) => {
+        unloadEvent.preventDefault();
+        unloadEvent.returnValue = "Nastaveni se jeste uklada do cloudu.";
+        return unloadEvent.returnValue;
+      };
+      window.addEventListener("beforeunload", beforeUnload);
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Ukladam do cloudu...";
+      }
+      window.setTimeout(async () => {
+        window.clearTimeout(pushTimer);
+        try {
+          await pushState({ quiet: false, source: "Nastaveni" });
+        } finally {
+          window.removeEventListener("beforeunload", beforeUnload);
+          if (button) {
+            button.disabled = false;
+            button.textContent = buttonLabel;
+          }
+        }
+      }, 0);
+    });
   }
 
   async function uploadFile(file, folder = "documents") {
@@ -575,7 +608,7 @@
             </label>
             <label class="settings-switch is-locked" title="V ostrém provozu je automatické ukládání povinné.">
               <input name="autoSync" type="checkbox" checked disabled />
-              <span>Automaticky ukladat zmenz</span>
+              <span>Automaticky ukladat zmeny</span>
             </label>
             <button class="button button-primary" type="submit" data-cloud-save disabled>Cloud nastaveni zamceno</button>
           </form>
@@ -601,6 +634,7 @@
     initialized = true;
     ensureStyles();
     patchSaveState();
+    bindSettingsCloudFlush();
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("[data-open-cloud-file]");
       if (trigger) openFile(trigger.dataset.openCloudFile);

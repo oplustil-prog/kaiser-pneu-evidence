@@ -288,36 +288,6 @@
     });
   }
 
-  function bindSettingsCloudSave() {
-    document.addEventListener("submit", (event) => {
-      if (event.target?.id !== "settingsForm") return;
-      const form = event.target;
-      const button = form.querySelector('button[type="submit"]');
-      const buttonLabel = button?.textContent || "";
-      const beforeUnload = (unloadEvent) => {
-        unloadEvent.preventDefault();
-        unloadEvent.returnValue = "Nastaveni se jeste uklada do cloudu.";
-        return unloadEvent.returnValue;
-      };
-      window.addEventListener("beforeunload", beforeUnload);
-      if (button) {
-        button.disabled = true;
-        button.textContent = "Ukladam do cloudu...";
-      }
-      window.setTimeout(async () => {
-        try {
-          await window.kaiserCloud?.pushState?.({ quiet: false, source: "Nastaveni" });
-        } finally {
-          window.removeEventListener("beforeunload", beforeUnload);
-          if (button) {
-            button.disabled = false;
-            button.textContent = buttonLabel;
-          }
-        }
-      }, 0);
-    });
-  }
-
   function showLogin() {
     const root = authRoot();
     root.classList.add("is-visible");
@@ -406,7 +376,6 @@
     document.querySelector("#kaiser-system-notice")?.remove();
     document.querySelector("#kaiser-system-notice-style")?.remove();
     authRoot();
-    bindSettingsCloudSave();
     stabilizeHeader();
 
     if (!hasConfig()) {
