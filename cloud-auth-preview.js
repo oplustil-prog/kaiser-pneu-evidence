@@ -288,6 +288,15 @@
     });
   }
 
+  function bindSettingsCloudSave() {
+    document.addEventListener("submit", (event) => {
+      if (event.target?.id !== "settingsForm") return;
+      window.setTimeout(() => {
+        window.kaiserCloud?.pushState?.({ quiet: false, source: "Nastaveni" });
+      }, 0);
+    });
+  }
+
   function showLogin() {
     const root = authRoot();
     root.classList.add("is-visible");
@@ -376,6 +385,7 @@
     document.querySelector("#kaiser-system-notice")?.remove();
     document.querySelector("#kaiser-system-notice-style")?.remove();
     authRoot();
+    bindSettingsCloudSave();
     stabilizeHeader();
 
     if (!hasConfig()) {
