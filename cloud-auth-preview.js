@@ -4,12 +4,14 @@
 
   const activeNotice = {
     id: "hotfix-public-page-20260618-1",
-    enabled: true,
+    enabled: false,
     kind: "update",
     title: "Stranka byla obnovena",
     message:
       "Nasazena oprava po zaseknuti verejne stranky. Pokud stale vidite starou verzi, pouzijte tvrdy refresh."
   };
+
+  const PUBLIC_APP_URL = "https://oplustil-prog.github.io/kaiser-pneu-evidence/";
 
   function getScriptBuild() {
     const script = document.currentScript || document.querySelector('script[src*="cloud-auth-preview"]');
@@ -51,6 +53,22 @@
     ["update", "notice", "reset"].forEach((key) => url.searchParams.delete(key));
     url.searchParams.set("fresh", `button-refresh-${Date.now()}`);
     return url.toString();
+  }
+
+  function redirectLegacyHotfixLink() {
+    const params = new URLSearchParams(window.location.search);
+    const fresh = String(params.get("fresh") || "");
+    if (!fresh.includes("hotfix-auth-preview")) return false;
+
+    try {
+      const url = new URL(PUBLIC_APP_URL);
+      url.searchParams.set("fresh", `auth-url-fixed-${Date.now()}`);
+      sessionStorage.setItem("kaiser-legacy-hotfix-redirect", new Date().toISOString());
+      window.location.replace(url.toString());
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async function hardRefreshFromNotice(noticeId, button) {
@@ -180,7 +198,7 @@
         message: "Aplikace nacetla vychozi stav. Zkontrolujte prosim, ze jsou cloudova data nactena."
       };
     }
-    if (params.has("update") || String(params.get("fresh") || "").includes("hotfix")) {
+    if (params.has("update")) {
       return {
         id: `update-${params.get("fresh") || getScriptBuild()}`,
         kind: "update",
@@ -214,6 +232,7 @@
   }
 
   function boot() {
+    if (redirectLegacyHotfixLink()) return;
     const dismissed = new Set(readDismissed());
     const notice = noticeFromUrl() || noticeFromBuildChange() || activeNotice;
     if (notice?.enabled === false || dismissed.has(notice?.id)) return;
@@ -318,7 +337,7 @@
     if (window.kaiserLoginGateRequested || document.querySelector('script[src*="login-2fa"]')) return;
     window.kaiserLoginGateRequested = true;
     const script = document.createElement("script");
-    script.src = "./login-2fa.js?v=20260619-53";
+    script.src = "./login-2fa.js?v=20260619-56";
     script.defer = true;
     script.onerror = () => {
       showNotice({
@@ -335,7 +354,7 @@
     if (window.kaiserUserInvitesRequested || document.querySelector('script[src*="user-invites"]')) return;
     window.kaiserUserInvitesRequested = true;
     const script = document.createElement("script");
-    script.src = "./user-invites.js?v=20260619-53";
+    script.src = "./user-invites.js?v=20260619-55";
     script.defer = true;
     script.onerror = () => {
       showNotice({
