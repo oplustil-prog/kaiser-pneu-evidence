@@ -4,7 +4,6 @@
   const gate = {
     client: null,
     clientKey: "",
-    factor: null,
     email: "",
     busy: false
   };
@@ -71,6 +70,13 @@
         detectSessionInUrl: true
       }
     });
+    gate.client.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_OUT" && event !== "USER_DELETED") return;
+      setAuthState(null);
+      show(true);
+      step("password");
+      status("Byli jste odhlaseni. Pro dalsi praci se znovu prihlaste.", "warn");
+    });
     gate.clientKey = key;
     return gate.client;
   }
@@ -133,142 +139,82 @@
         margin: 0 0 6px;
       }
       .kaiser-login-title p,
-      .kaiser-login-setup p {
+      .kaiser-login-help p {
         color: var(--muted, #61705e);
-        line-height: 1.45;
+        font-size: .98rem;
         margin: 0;
       }
       .kaiser-login-progress {
         display: grid;
-        gap: 8px;
+        gap: 10px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .kaiser-login-progress span {
-        background: rgba(30, 41, 36, .07);
+        background: #eef0ef;
         border-radius: 999px;
-        color: var(--muted, #61705e);
-        font-size: .72rem;
-        font-weight: 900;
-        padding: 7px 9px;
+        color: #61705e;
+        font-size: .8rem;
+        font-weight: 800;
+        padding: 9px 12px;
         text-align: center;
       }
       .kaiser-login-progress span.is-active {
-        background: rgba(117, 189, 37, .16);
-        color: var(--brand-strong, #579718);
+        background: #eaf6df;
+        color: #4f9418;
       }
       .kaiser-login-step,
       .kaiser-login-form {
         display: grid;
-        gap: 13px;
+        gap: 14px;
       }
       .kaiser-login-step[hidden] { display: none; }
       .kaiser-login-form label {
         color: var(--muted, #61705e);
         display: grid;
-        font-weight: 900;
+        font-weight: 800;
         gap: 7px;
       }
       .kaiser-login-form input {
-        border: 1px solid var(--line, #dce8d5);
+        border: 1px solid rgba(117, 189, 37, .35);
         border-radius: 8px;
         color: var(--ink, #19221c);
         font: inherit;
-        font-weight: 800;
-        min-height: 46px;
-        padding: 11px 13px;
-      }
-      .kaiser-login-code {
-        font-size: 1.35rem;
-        letter-spacing: .08em;
-        text-align: center;
+        font-weight: 700;
+        min-height: 48px;
+        padding: 0 14px;
       }
       .kaiser-login-help {
-        background: rgba(117, 189, 37, .09);
-        border: 1px solid rgba(117, 189, 37, .24);
+        background: #f5fbf0;
+        border: 1px solid rgba(117, 189, 37, .28);
         border-radius: 8px;
-        color: var(--ink, #19221c);
+        color: var(--muted, #61705e);
         display: grid;
         gap: 8px;
-        line-height: 1.38;
         padding: 13px;
       }
-      .kaiser-login-help strong {
-        color: var(--brand-strong, #579718);
-      }
+      .kaiser-login-help strong { color: var(--ink, #19221c); }
       .kaiser-login-help ol {
         margin: 0;
-        padding-left: 20px;
+        padding-left: 19px;
       }
-      .kaiser-login-help li + li {
-        margin-top: 4px;
-      }
-      .kaiser-login-help.is-warning {
-        background: #fff8e8;
-        border-color: rgba(198, 142, 22, .32);
-      }
-      .kaiser-login-help[hidden] {
-        display: none;
-      }
-      .kaiser-login-mini-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 2px;
-      }
-      .kaiser-login-mini-actions .button {
-        min-height: 38px;
-      }
+      .kaiser-login-help li + li { margin-top: 5px; }
       .kaiser-login-actions {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
       }
-      .kaiser-login-actions .button { flex: 1 1 150px; }
+      .kaiser-login-actions .button { flex: 1 1 170px; }
       .kaiser-login-status {
-        color: var(--muted, #61705e);
-        font-size: .9rem;
+        color: #4f9418;
+        font-size: .95rem;
         font-weight: 800;
-        min-height: 20px;
+        min-height: 1.2em;
       }
-      .kaiser-login-status.is-ok { color: var(--brand-strong, #579718); }
       .kaiser-login-status.is-warn { color: #9c6a08; }
       .kaiser-login-status.is-danger { color: #c73636; }
-      .kaiser-login-qr {
-        background: #fff;
-        border: 1px solid var(--line, #dce8d5);
-        border-radius: 8px;
-        display: grid;
-        justify-items: center;
-        min-height: 230px;
-        padding: 14px;
-      }
-      .kaiser-login-qr img {
-        display: block;
-        max-width: 210px;
-        width: 100%;
-      }
-      .kaiser-login-qr p {
-        color: var(--muted, #61705e);
-        font-weight: 800;
-        margin: 0;
-        text-align: center;
-      }
-      .kaiser-login-secret {
-        background: rgba(117, 189, 37, .08);
-        border: 1px solid rgba(117, 189, 37, .26);
-        border-radius: 8px;
-        color: var(--ink, #19221c);
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: .86rem;
-        font-weight: 800;
-        overflow-wrap: anywhere;
-        padding: 10px;
-      }
       .kaiser-login-secondary-note {
         color: var(--muted, #61705e);
         font-size: .86rem;
-        font-weight: 800;
-        line-height: 1.35;
       }
       @media (max-width: 620px) {
         .kaiser-login-gate { align-items: stretch; padding: 10px; }
@@ -290,11 +236,11 @@
             </div>
             <div class="kaiser-login-title">
               <h2 id="kaiserLoginTitle">Prihlaseni do aplikace</h2>
-              <p>Nejdrive zadejte firemni e-mail a heslo. Overovaci kod se zadava az v dalsim kroku.</p>
+              <p>Zadejte firemni e-mail a heslo. Overeni pres Authenticator je vypnute.</p>
             </div>
             <div class="kaiser-login-progress" aria-hidden="true">
               <span data-login-pill="password" class="is-active">1. Prihlaseni</span>
-              <span data-login-pill="verify">2. Overeni</span>
+              <span data-login-pill="done">2. Otevreno</span>
             </div>
             <section class="kaiser-login-step" data-login-step="password">
               <form class="kaiser-login-form" id="kaiserPasswordForm">
@@ -302,9 +248,9 @@
                 <label>Heslo <input name="password" type="password" autocomplete="current-password" placeholder="firemni heslo" required /></label>
                 <div class="kaiser-login-actions">
                   <button class="button button-primary" type="submit">Prihlasit</button>
-                  <button class="button button-soft" type="button" data-login-reset>Obnovit e-mailem</button>
+                  <button class="button button-soft" type="button" data-login-reset>Nastavit / obnovit heslo</button>
                 </div>
-                <div class="kaiser-login-secondary-note">Obnova hesla odejde pres Supabase. V Supabase musi byt nastaveny Twilio SendGrid SMTP.</div>
+                <div class="kaiser-login-secondary-note">Obnova hesla odejde e-mailem pres Supabase / Twilio SendGrid.</div>
               </form>
             </section>
             <section class="kaiser-login-step" data-login-step="new-password" hidden>
@@ -312,7 +258,7 @@
                 <strong>Nastaveni noveho hesla</strong>
                 <ol>
                   <li>Zadejte vlastni silne heslo.</li>
-                  <li>Po ulozeni budete pokracovat do overeni 2FA.</li>
+                  <li>Po ulozeni budete pokracovat rovnou do aplikace.</li>
                 </ol>
               </div>
               <form class="kaiser-login-form" id="kaiserNewPasswordForm">
@@ -322,53 +268,6 @@
                   <button class="button button-primary" type="submit">Ulozit heslo</button>
                 </div>
               </form>
-            </section>
-            <section class="kaiser-login-step" data-login-step="setup" hidden>
-              <div class="kaiser-login-help">
-                <strong>Prvni nastaveni dvoufaktoru</strong>
-                <ol>
-                  <li>Otevrite v telefonu Microsoft Authenticator, Google Authenticator nebo 1Password.</li>
-                  <li>Naskenujte QR kod nize.</li>
-                  <li>Do pole pod QR kodem napiste 6 cislic z telefonu. Nepiste rucni klic.</li>
-                </ol>
-              </div>
-              <div class="kaiser-login-setup">
-                <div class="kaiser-login-qr" data-login-qr></div>
-                <div class="kaiser-login-secret" data-login-secret hidden></div>
-              </div>
-              <form class="kaiser-login-form" id="kaiserSetupForm">
-                <label>6mistny kod z aplikace <input class="kaiser-login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required /></label>
-                <div class="kaiser-login-actions">
-                  <button class="button button-primary" type="submit">Aktivovat a pokracovat</button>
-                  <button class="button button-soft" type="button" data-login-back>Zpet na prihlaseni</button>
-                </div>
-                <div class="kaiser-login-secondary-note">Rucni klic slouzi jen jako zaloha, kdyz nejde naskenovat QR kod.</div>
-              </form>
-            </section>
-            <section class="kaiser-login-step" data-login-step="mfa" hidden>
-              <div class="kaiser-login-help">
-                <strong>Authenticator uz je pro tento e-mail nastaveny</strong>
-                <p>QR kod se zobrazuje jen pri prvnim nastaveni nebo po resetu 2FA. Ted zadejte 6 cislic z aplikace v telefonu.</p>
-              </div>
-              <form class="kaiser-login-form" id="kaiserMfaForm">
-                <label>6mistny kod z aplikace <input class="kaiser-login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456" required /></label>
-                <div class="kaiser-login-actions">
-                  <button class="button button-primary" type="submit">Overit a otevrit aplikaci</button>
-                  <button class="button button-soft" type="button" data-login-mfa-help>Nemam Authenticator</button>
-                  <button class="button button-soft" type="button" data-login-back>Zpet na prihlaseni</button>
-                </div>
-              </form>
-              <div class="kaiser-login-help is-warning" data-login-mfa-reset-help hidden>
-                <strong>Jak ziskat novy QR kod</strong>
-                <ol>
-                  <li>Spravce musi v Supabase otevrit Authentication / Users.</li>
-                  <li>U uzivatele <span data-login-factor-email>tohoto e-mailu</span> odebere TOTP / Authenticator faktor.</li>
-                  <li>Uzivatel se potom prihlasi znovu a aplikace zobrazi novy QR kod.</li>
-                </ol>
-                <div class="kaiser-login-mini-actions">
-                  <button class="button button-soft" type="button" data-login-open-supabase>Otevrit Supabase Auth</button>
-                </div>
-              </div>
             </section>
             <div class="kaiser-login-status" data-login-status role="status" aria-live="polite"></div>
           </article>
@@ -389,9 +288,8 @@
     document.querySelectorAll("[data-login-step]").forEach((section) => {
       section.hidden = section.dataset.loginStep !== name;
     });
-    const activePill = name === "setup" || name === "mfa" ? "verify" : "password";
     document.querySelectorAll("[data-login-pill]").forEach((pill) => {
-      pill.classList.toggle("is-active", pill.dataset.loginPill === activePill);
+      pill.classList.toggle("is-active", pill.dataset.loginPill === (name === "password" ? "password" : "done"));
     });
   }
 
@@ -402,28 +300,6 @@
     target.className = `kaiser-login-status${kind ? ` is-${kind}` : ""}`;
   }
 
-  function hideMfaResetHelp() {
-    const panel = document.querySelector("[data-login-mfa-reset-help]");
-    if (panel) panel.hidden = true;
-  }
-
-  function showMfaResetHelp() {
-    const panel = document.querySelector("[data-login-mfa-reset-help]");
-    const email = document.querySelector("[data-login-factor-email]");
-    if (email) email.textContent = gate.email || "tohoto e-mailu";
-    if (panel) panel.hidden = false;
-    status("QR kod nejde znovu zobrazit. Spravce musi odebrat 2FA faktor v Supabase, pak se ukaze novy QR kod.", "warn");
-  }
-
-  function supabaseAuthUsersUrl() {
-    const ref = String(config().url || "").match(/https:\/\/([^.]+)\.supabase\.co/i)?.[1];
-    return ref ? `https://supabase.com/dashboard/project/${ref}/auth/users` : "https://supabase.com/dashboard";
-  }
-
-  function openSupabaseAuthUsers() {
-    window.open(supabaseAuthUsersUrl(), "_blank", "noopener");
-  }
-
   function busy(value) {
     gate.busy = value;
     document.querySelectorAll("#kaiserLoginGate button, #kaiserLoginGate input").forEach((element) => {
@@ -431,119 +307,16 @@
     });
   }
 
-  function cleanCode(form) {
-    return String(form.elements.code.value || "").replace(/\D/g, "");
-  }
-
-  function verifiedFactors(data) {
-    const factors = [...(data?.totp || []), ...(data?.phone || []), ...(data?.all || [])];
-    const unique = new Map();
-    factors.forEach((factor) => {
-      if (factor?.id && factor.status === "verified") unique.set(factor.id, factor);
-    });
-    return [...unique.values()];
-  }
-
-  function qrSrc(value) {
-    const code = String(value || "");
-    if (!code) return "";
-    const trimmed = code.trim();
-    if (trimmed.startsWith("<svg")) return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmed)}`;
-    if (trimmed.startsWith("data:image/svg+xml")) {
-      const comma = trimmed.indexOf(",");
-      if (comma > -1 && trimmed.slice(comma + 1).trim().startsWith("<svg")) {
-        return `${trimmed.slice(0, comma)},${encodeURIComponent(trimmed.slice(comma + 1))}`;
-      }
-      return trimmed;
-    }
-    if (trimmed.startsWith("data:")) return trimmed;
-    return trimmed;
-  }
-
-  function renderQr(qr, rawQrCode) {
-    qr.replaceChildren();
-    const source = qrSrc(rawQrCode);
-    if (!source) {
-      const message = document.createElement("p");
-      message.textContent = "QR kod neni dostupny. Pouzijte rucni klic nize.";
-      qr.appendChild(message);
-      return;
-    }
-    const image = document.createElement("img");
-    image.alt = "QR kod pro dvoufaktorove overeni";
-    image.decoding = "async";
-    image.loading = "eager";
-    image.src = source;
-    image.addEventListener("error", () => {
-      qr.replaceChildren();
-      const message = document.createElement("p");
-      message.textContent = "QR kod se nepodarilo zobrazit. Pouzijte rucni klic nize.";
-      qr.appendChild(message);
-    }, { once: true });
-    qr.appendChild(image);
-  }
-
-  async function firstVerifiedFactor(supabase) {
-    const { data, error } = await supabase.auth.mfa.listFactors();
-    if (error) throw error;
-    return verifiedFactors(data)[0] || null;
-  }
-
-  async function aal(supabase) {
-    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (error) return null;
-    return data || null;
-  }
-
   async function unlock(user) {
-    gate.factor = null;
     gate.email = user?.email || gate.email;
     if (typeof window.kaiserSetLoginUser === "function") {
       window.kaiserSetLoginUser({ email: gate.email, name: user?.name || gate.email });
     }
     setAuthState(user || { email: gate.email });
+    step("done");
     show(false);
     window.dispatchEvent(new CustomEvent("kaiser-auth-ready", { detail: { user } }));
     if (window.kaiserCloud?.pullState) window.setTimeout(() => window.kaiserCloud.pullState(), 250);
-  }
-
-  async function startSetup(supabase) {
-    status("Pripravuji QR kod pro 2FA...");
-    const { data, error } = await supabase.auth.mfa.enroll({
-      factorType: "totp",
-      friendlyName: `Kaiser aplikace ${new Date().toISOString().replace(/[:.]/g, "-")}`
-    });
-    if (error) throw error;
-    gate.factor = data;
-    const qr = document.querySelector("[data-login-qr]");
-    const secret = document.querySelector("[data-login-secret]");
-    if (qr) renderQr(qr, data?.totp?.qr_code);
-    if (secret) {
-      secret.hidden = !data?.totp?.secret;
-      secret.textContent = data?.totp?.secret ? `Rucni klic pro zalozni zadani: ${data.totp.secret}` : "";
-    }
-    step("setup");
-    show(true);
-    status("Zadejte 6 cislic z Authenticatoru. Neopisujte rucni klic.", "ok");
-  }
-
-  async function afterPassword(supabase, user) {
-    gate.email = user?.email || gate.email;
-    const level = await aal(supabase);
-    if (level?.currentLevel === "aal2") {
-      await unlock(user);
-      return;
-    }
-    const factor = await firstVerifiedFactor(supabase);
-    if (!factor) {
-      await startSetup(supabase);
-      return;
-    }
-    gate.factor = factor;
-    hideMfaResetHelp();
-    step("mfa");
-    show(true);
-    status("Zadejte 6 cislic z Authenticatoru. QR kod se ukazuje jen pri prvnim nastaveni.", "ok");
   }
 
   async function submitPassword(event) {
@@ -563,12 +336,11 @@
       const { data, error } = await supabase.auth.signInWithPassword({ email: gate.email, password });
       form.elements.password.value = "";
       if (error) throw error;
-      await afterPassword(supabase, data?.user || { email: gate.email });
+      await unlock(data?.user || { email: gate.email });
+      status("Prihlaseni hotovo. Aplikace je otevrena.", "ok");
     } catch (error) {
       const message = String(error?.message || "");
-      if (message.includes("friendly name") && message.includes("already exists")) {
-        status("Rozpracovane 2FA uz existuje. Zkuste prihlaseni znovu, pripravi se novy QR kod.", "danger");
-      } else if (message.includes("Invalid login credentials")) {
+      if (message.includes("Invalid login credentials")) {
         status("E-mail nebo heslo nesedi. Zkuste obnovu hesla e-mailem.", "danger");
       } else {
         status(message || "Prihlaseni selhalo.", "danger");
@@ -590,15 +362,15 @@
       return;
     }
     busy(true);
-    status("Posilam e-mail pro nastaveni hesla pres Twilio SendGrid...");
+    status("Posilam e-mail pro nastaveni hesla...");
     try {
       const supabase = await client();
       const redirectTo = `${window.location.origin}${window.location.pathname}`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
-      status("E-mail pro nastaveni hesla je odeslany. Pokud neprijde, zkontrolujte Twilio SendGrid SMTP v Supabase.", "ok");
+      status("E-mail pro nastaveni hesla je odeslany.", "ok");
     } catch (error) {
-      status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat. Zkontrolujte Twilio SendGrid SMTP.", "danger");
+      status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat.", "danger");
     } finally {
       busy(false);
     }
@@ -628,62 +400,12 @@
       if (window.location.hash || window.location.search.includes("type=recovery")) {
         window.history.replaceState(null, "", window.location.pathname);
       }
-      status("Heslo je ulozene. Pokracujte overenim.", "ok");
-      await afterPassword(supabase, data?.user || { email: gate.email });
+      await unlock(data?.user || { email: gate.email });
+      status("Heslo je ulozene. Aplikace je otevrena.", "ok");
     } catch (error) {
       status(error?.message || "Heslo se nepodarilo ulozit.", "danger");
     } finally {
       busy(false);
-    }
-  }
-
-  async function verifyCurrentFactor(code, setupMode) {
-    if (!gate.factor?.id) throw new Error("2FA faktor neni pripraveny.");
-    const supabase = await client();
-    const { error } = await supabase.auth.mfa.challengeAndVerify({
-      factorId: gate.factor.id,
-      code
-    });
-    if (error) throw error;
-    const { data } = await supabase.auth.getSession();
-    await unlock(data?.session?.user || { email: gate.email });
-    status(setupMode ? "2FA je aktivni." : "Prihlaseni overeno.", "ok");
-  }
-
-  async function submitCode(event, setupMode) {
-    event.preventDefault();
-    if (gate.busy) return;
-    const form = event.currentTarget;
-    const code = cleanCode(form);
-    if (code.length !== 6) {
-      status("Kod musi mit 6 cislic.", "warn");
-      return;
-    }
-    busy(true);
-    status(setupMode ? "Aktivuji 2FA..." : "Overuji kod...");
-    try {
-      await verifyCurrentFactor(code, setupMode);
-    } catch (error) {
-      status(error?.message || "Overeni kodu selhalo.", "danger");
-      form.elements.code.value = "";
-    } finally {
-      busy(false);
-    }
-  }
-
-  async function backToPassword() {
-    busy(true);
-    try {
-      const supabase = await client();
-      await supabase.auth.signOut();
-    } catch {
-      // Login window remains active even if sign-out cleanup cannot reach Supabase.
-    } finally {
-      gate.factor = null;
-      busy(false);
-      step("password");
-      status("");
-      show(true);
     }
   }
 
@@ -692,21 +414,11 @@
     mount();
     setAuthState(null);
     document.querySelector("#kaiserPasswordForm")?.addEventListener("submit", submitPassword);
-    document.querySelector("#kaiserSetupForm")?.addEventListener("submit", (event) => submitCode(event, true));
-    document.querySelector("#kaiserMfaForm")?.addEventListener("submit", (event) => submitCode(event, false));
     document.querySelector("#kaiserNewPasswordForm")?.addEventListener("submit", submitNewPassword);
     document.querySelector("[data-login-reset]")?.addEventListener("click", sendPasswordReset);
-    document.querySelector("[data-login-mfa-help]")?.addEventListener("click", showMfaResetHelp);
-    document.querySelector("[data-login-open-supabase]")?.addEventListener("click", openSupabaseAuthUsers);
-    document.querySelectorAll(".kaiser-login-code").forEach((input) => {
-      input.addEventListener("input", () => {
-        input.value = String(input.value || "").replace(/\D/g, "").slice(0, 6);
-      });
-    });
-    document.querySelectorAll("[data-login-back]").forEach((button) => button.addEventListener("click", backToPassword));
 
-    show(true);
     step("password");
+    show(true);
     if (!isConfigured()) {
       status("Cloudove prihlaseni neni nastavene.", "danger");
       return;
@@ -729,7 +441,7 @@
         status("");
         return;
       }
-      await afterPassword(supabase, user);
+      await unlock(user);
     } catch (error) {
       status(error?.message || "Prihlaseni neni dostupne.", "danger");
       step("password");
