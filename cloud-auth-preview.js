@@ -318,7 +318,7 @@
     if (window.kaiserLoginGateRequested || document.querySelector('script[src*="login-2fa"]')) return;
     window.kaiserLoginGateRequested = true;
     const script = document.createElement("script");
-    script.src = "./login-2fa.js?v=20260618-48";
+    script.src = "./login-2fa.js?v=20260619-53";
     script.defer = true;
     script.onerror = () => {
       showNotice({
@@ -335,7 +335,7 @@
     if (window.kaiserUserInvitesRequested || document.querySelector('script[src*="user-invites"]')) return;
     window.kaiserUserInvitesRequested = true;
     const script = document.createElement("script");
-    script.src = "./user-invites.js?v=20260619-52";
+    script.src = "./user-invites.js?v=20260619-53";
     script.defer = true;
     script.onerror = () => {
       showNotice({
@@ -352,7 +352,7 @@
     if (window.kaiserPasswordResetRequested || document.querySelector('script[src*="password-reset"]')) return;
     window.kaiserPasswordResetRequested = true;
     const script = document.createElement("script");
-    script.src = "./password-reset.js?v=20260618-41";
+    script.src = "./password-reset.js?v=20260619-53";
     script.defer = true;
     script.onerror = () => {
       showNotice({
