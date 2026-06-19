@@ -290,7 +290,7 @@
             </div>
             <div class="kaiser-login-title">
               <h2 id="kaiserLoginTitle">Prihlaseni do aplikace</h2>
-              <p>Nejdrive zadejte firemni e-mail a heslo. U Supabase uctu se overovaci kod zadava az v dalsim kroku.</p>
+              <p>Nejdrive zadejte firemni e-mail a heslo. Overovaci kod se zadava az v dalsim kroku.</p>
             </div>
             <div class="kaiser-login-progress" aria-hidden="true">
               <span data-login-pill="password" class="is-active">1. Prihlaseni</span>
@@ -304,7 +304,7 @@
                   <button class="button button-primary" type="submit">Prihlasit</button>
                   <button class="button button-soft" type="button" data-login-reset>Obnovit e-mailem</button>
                 </div>
-                <div class="kaiser-login-secondary-note">Kdyz e-mail neprijde, spravce zkontroluje ucet v Supabase.</div>
+                <div class="kaiser-login-secondary-note">Obnova hesla odejde pres Supabase. V Supabase musi byt nastaveny Twilio SendGrid SMTP.</div>
               </form>
             </section>
             <section class="kaiser-login-step" data-login-step="new-password" hidden>
@@ -590,15 +590,15 @@
       return;
     }
     busy(true);
-    status("Posilam e-mail pro nastaveni hesla...");
+    status("Posilam e-mail pro nastaveni hesla pres Twilio SendGrid...");
     try {
       const supabase = await client();
       const redirectTo = `${window.location.origin}${window.location.pathname}`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       if (error) throw error;
-      status("E-mail pro nastaveni hesla je odeslany. Otevrete odkaz v dorucene poste.", "ok");
+      status("E-mail pro nastaveni hesla je odeslany. Pokud neprijde, zkontrolujte Twilio SendGrid SMTP v Supabase.", "ok");
     } catch (error) {
-      status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat.", "danger");
+      status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat. Zkontrolujte Twilio SendGrid SMTP.", "danger");
     } finally {
       busy(false);
     }
