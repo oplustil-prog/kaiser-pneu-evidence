@@ -151,7 +151,23 @@
         }
       }
       const actions = card.querySelector(".user-actions");
-      actions?.querySelectorAll("[data-user-mail-invite]").forEach((button) => button.remove());
+      if (!actions) return;
+      const appInvite = actions.querySelector("[data-user-invite]");
+      const mailInvites = [...actions.querySelectorAll("[data-user-mail-invite]")];
+      if (appInvite) {
+        mailInvites.forEach((button) => button.remove());
+        return;
+      }
+      const [existingInvite, ...duplicates] = mailInvites;
+      duplicates.forEach((button) => button.remove());
+      if (existingInvite) return;
+      const button = document.createElement("button");
+      button.className = "button button-soft";
+      button.type = "button";
+      button.dataset.userMailInvite = email;
+      button.textContent = "Poslat pozvanku";
+      button.addEventListener("click", () => openInviteEmail(user));
+      actions.insertBefore(button, actions.querySelector("[data-user-toggle]") || null);
     });
   }
 
