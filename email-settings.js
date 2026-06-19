@@ -17,7 +17,7 @@
     if (window.kaiserEmailTemplates || window.kaiserInviteTemplateRequested) return;
     window.kaiserInviteTemplateRequested = true;
     const script = document.createElement("script");
-    script.src = "./invite-template.js?v=20260619-56";
+    script.src = "./email-templates.js?v=20260619-58";
     script.async = false;
     script.onerror = () => {
       if (typeof window.showToast === "function") {
