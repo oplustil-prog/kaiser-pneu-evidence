@@ -4,23 +4,77 @@
   function clearOdometer(formElement) {
     const input = formElement?.elements?.odometer;
     if (!input) return;
+    if (input.dataset.userEdited === "true") return;
     input.value = "";
+    input.defaultValue = "";
     input.placeholder = "opsat aktualni km";
     input.autocomplete = "off";
+  }
+
+  function resetOdometer(formElement) {
+    const input = formElement?.elements?.odometer;
+    if (input) input.dataset.userEdited = "";
+    clearOdometer(formElement);
+  }
+
+  function clearAllOdometers() {
+    document.querySelectorAll("[data-measurement-form]").forEach((formElement) => clearOdometer(formElement));
+  }
+
+  function watchOdometer(formElement) {
+    const input = formElement?.elements?.odometer;
+    if (!input || input.dataset.odoWatchInstalled) return;
+    input.dataset.odoWatchInstalled = "true";
+    input.addEventListener("input", () => {
+      input.dataset.userEdited = input.value ? "true" : "";
+    });
+  }
+
+  function installGlobalOdometerGuard() {
+    if (window.kaiserOdometerGuardInstalled) return;
+    window.kaiserOdometerGuardInstalled = true;
+
+    const originalSync = window.syncMeasurementOdometer;
+    if (typeof originalSync === "function") {
+      window.syncMeasurementOdometer = function (...args) {
+        const result = originalSync.apply(this, args);
+        window.setTimeout(clearAllOdometers, 0);
+        return result;
+      };
+    }
+
+    const originalRenderAll = window.renderAll;
+    if (typeof originalRenderAll === "function") {
+      window.renderAll = function (...args) {
+        const result = originalRenderAll.apply(this, args);
+        window.setTimeout(clearAllOdometers, 0);
+        window.setTimeout(clearAllOdometers, 150);
+        return result;
+      };
+    }
+
+    window.setTimeout(clearAllOdometers, 0);
+    window.setTimeout(clearAllOdometers, 600);
+    window.setTimeout(clearAllOdometers, 1800);
   }
 
   function installMainMeasurementGuard() {
     const mainForm = document.querySelector("#measurementForm");
     if (!mainForm) return;
-    clearOdometer(mainForm);
+    watchOdometer(mainForm);
+    resetOdometer(mainForm);
     mainForm.elements.vehicle?.addEventListener("change", () => {
-      window.setTimeout(() => clearOdometer(mainForm), 0);
+      resetOdometer(mainForm);
+      window.setTimeout(() => resetOdometer(mainForm), 0);
+      window.setTimeout(() => resetOdometer(mainForm), 150);
     });
     mainForm.addEventListener("submit", () => {
-      window.setTimeout(() => clearOdometer(mainForm), 0);
+      window.setTimeout(() => resetOdometer(mainForm), 0);
+      window.setTimeout(() => resetOdometer(mainForm), 150);
     });
   }
 
+  installGlobalOdometerGuard();
   installMainMeasurementGuard();
 
   const dock = document.querySelector("#quickMeasureDock");
@@ -30,6 +84,7 @@
   const form = document.querySelector("#quickMeasurementForm");
 
   if (!dock || !panel || !toggle || !close || !form) return;
+  watchOdometer(form);
 
   function setOpen(open) {
     dock.classList.toggle("is-open", open);
@@ -38,6 +93,7 @@
     toggle.setAttribute("aria-expanded", String(open));
     if (open) {
       refreshQuickForm();
+      syncOdometer();
       requestAnimationFrame(() => form.elements.tread?.focus());
     }
   }
@@ -77,7 +133,7 @@
   }
 
   function syncOdometer() {
-    clearOdometer(form);
+    resetOdometer(form);
   }
 
   function refreshQuickForm(spz = form.elements.vehicle.value, position = form.elements.position.value) {
@@ -99,6 +155,7 @@
   form.elements.vehicle.addEventListener("change", (event) => {
     fillPositions(event.target.value);
     syncOdometer(event.target.value);
+    window.setTimeout(syncOdometer, 150);
   });
 
   form.addEventListener("submit", (event) => {
@@ -107,6 +164,7 @@
     if (typeof addMeasurement === "function") {
       addMeasurement(event);
       refreshQuickForm(vehicle, position);
+      syncOdometer();
       setOpen(true);
     }
   });
