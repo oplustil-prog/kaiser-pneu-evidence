@@ -48,6 +48,31 @@
     return !tire.vehicle || tire.state === "sklad";
   }
 
+  function pushCloudChange(source) {
+    window.setTimeout(() => {
+      if (window.location.protocol === "file:") {
+        showToast?.("Bezi lokalni soubor. Pro trvale ulozeni pouzijte verejnou cloudovou adresu.");
+        return;
+      }
+
+      if (!window.kaiserCloud?.isConfigured?.() || !window.kaiserCloud?.pushState) {
+        showToast?.("Zmena je zatim jen v tomto prohlizeci. Cloud neni pripojeny.");
+        return;
+      }
+
+      try {
+        const result = window.kaiserCloud.pushState({ quiet: false, source });
+        if (result?.then) {
+          result.catch((error) => {
+            showToast?.(error?.message || "Cloudove ulozeni selhalo. Zkontrolujte prihlaseni v Nastaveni.");
+          });
+        }
+      } catch (error) {
+        showToast?.(error?.message || "Cloudove ulozeni selhalo. Zkontrolujte prihlaseni v Nastaveni.");
+      }
+    }, 120);
+  }
+
   function score(tire, spz, currentTire) {
     let value = 0;
     if (tire.sourceVehicle === spz) value += 80;
@@ -137,6 +162,7 @@
     selectedVehicle = spz;
     selectedPosition = position;
     saveState?.();
+    pushCloudChange("Montaz pneu");
     renderAll?.();
     showToast?.(`Pneu ${tire.id} je namontovana na ${spz} / ${position}.`);
   }
@@ -155,6 +181,7 @@
     selectedVehicle = spz;
     selectedPosition = position;
     saveState?.();
+    pushCloudChange("Sundani pneu");
     renderAll?.();
     showToast?.(`Pneu ${tire.id} je sundana na sklad.`);
   }
