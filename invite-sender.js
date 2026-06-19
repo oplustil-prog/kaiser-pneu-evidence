@@ -4,6 +4,7 @@
   const SUPABASE_MODULE_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
   const INVITE_STATUS = "pozvanka";
   const PUBLIC_APP_URL = "https://oplustil-prog.github.io/kaiser-pneu-evidence/";
+  const INVITE_TIMEOUT_MS = 18000;
 
   let client = null;
   let clientKey = "";
@@ -93,14 +94,19 @@
     if (!next.url || !next.anonKey) throw new Error("Cloud neni nastaveny.");
     const key = `${next.url}|${next.anonKey}`;
     if (client && clientKey === key) return client;
-    const module = await import(SUPABASE_MODULE_URL);
-    client = module.createClient(next.url.trim(), next.anonKey.trim(), {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    });
+    client = window.kaiserGetSupabaseClient
+      ? await window.kaiserGetSupabaseClient(next)
+      : null;
+    if (!client) {
+      const module = await import(SUPABASE_MODULE_URL);
+      client = module.createClient(next.url.trim(), next.anonKey.trim(), {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true
+        }
+      });
+    }
     clientKey = key;
     return client;
   }
@@ -132,6 +138,8 @@
   async function callInviteFunction(user) {
     const next = config();
     const session = await activeSession();
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), INVITE_TIMEOUT_MS);
     const response = await fetch(inviteEndpoint(), {
       method: "POST",
       headers: {
@@ -139,6 +147,7 @@
         apikey: next.anonKey,
         Authorization: `Bearer ${session.access_token}`
       },
+      signal: controller.signal,
       body: JSON.stringify({
         appUrl: appUrl(),
         user: {
@@ -148,7 +157,7 @@
           depot: user.depot || ""
         }
       })
-    });
+    }).finally(() => window.clearTimeout(timeout));
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -168,6 +177,14 @@
     });
   }
 
+  function unlockInviteButtons() {
+    pendingEmail = "";
+    document.querySelectorAll("#inviteUserButton, [data-user-invite], [data-user-mail-invite]").forEach((button) => {
+      button.disabled = false;
+      button.textContent = "Poslat pozvanku";
+    });
+  }
+
   async function saveCloudAfterInvite() {
     if (typeof window.kaiserSaveCloudNow === "function") {
       await window.kaiserSaveCloudNow({ visible: false });
@@ -184,13 +201,15 @@
       await saveCloudAfterInvite();
       toast(`Pozvanka byla odeslana na ${email}.`);
     } catch (error) {
-      const message = error?.message || "Pozvanku se nepodarilo odeslat.";
+      const message = error?.name === "AbortError"
+        ? "Odeslani pozvanky trva moc dlouho. Aplikace je odemcena, zkuste to prosim znovu za chvili."
+        : error?.message || "Pozvanku se nepodarilo odeslat.";
       toast(message);
       if (window.kaiserEmailTemplates?.prepareOutgoingInvite) {
         window.kaiserEmailTemplates.prepareOutgoingInvite(user, { preview: true, mailto: false });
       }
     } finally {
-      setButtonBusy(email, false);
+      unlockInviteButtons();
     }
   }
 
@@ -204,7 +223,10 @@
   function handleClick(event) {
     const trigger = event.target.closest("#inviteUserButton, [data-user-invite], [data-user-mail-invite]");
     if (!trigger) return;
-    if (pendingEmail) return;
+    if (pendingEmail) {
+      toast("Pozvanka se jeste odesila. Pokud to trva dele nez par sekund, obnovte stranku a zkuste to znovu.");
+      return;
+    }
     if (window.kaiserRequireAuth && !window.kaiserRequireAuth("odeslani pozvanky")) return;
     const user = userFromTrigger(trigger);
     if (!user?.email) return;
@@ -232,7 +254,8 @@
   }
 
   window.kaiserInviteSender = {
-    sendInvite
+    sendInvite,
+    unlockInviteButtons
   };
 
   if (document.readyState === "loading") {
