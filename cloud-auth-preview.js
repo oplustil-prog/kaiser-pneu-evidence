@@ -71,7 +71,7 @@
     }
   }
 
-  async function hardRefreshFromNotice(noticeId, button) {
+  function hardRefreshFromNotice(noticeId, button) {
     rememberDismissed(noticeId);
     if (button) {
       button.disabled = true;
@@ -82,7 +82,7 @@
     } catch {
       // Session storage can be blocked in strict browser modes.
     }
-    await clearBrowserCaches();
+    clearBrowserCaches();
     try {
       window.location.replace(buildFreshUrl());
     } catch {
@@ -367,23 +367,6 @@
     document.head.appendChild(script);
   }
 
-  function loadPasswordReset() {
-    if (window.kaiserPasswordResetRequested || document.querySelector('script[src*="password-reset"]')) return;
-    window.kaiserPasswordResetRequested = true;
-    const script = document.createElement("script");
-    script.src = "./password-reset.js?v=20260619-53";
-    script.defer = true;
-    script.onerror = () => {
-      showNotice({
-        id: `password-reset-load-error-${Date.now()}`,
-        kind: "reset",
-        title: "Nastaveni hesla se nenacetlo",
-        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
-      });
-    };
-    document.head.appendChild(script);
-  }
-
   window.kaiserShowSystemNotice = function (message, options = {}) {
     showNotice({
       id: options.id || `manual-${Date.now()}`,
@@ -410,14 +393,12 @@
       boot();
       installCloudSaveGuard();
       loadLoginGate();
-      loadPasswordReset();
       loadUserInvites();
     }, { once: true });
   } else {
     boot();
     installCloudSaveGuard();
     loadLoginGate();
-    loadPasswordReset();
     loadUserInvites();
   }
 })();
