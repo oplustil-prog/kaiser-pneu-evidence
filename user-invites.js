@@ -29,15 +29,13 @@
       `Prihlasovaci e-mail: ${user.email}`,
       user.role ? `Role: ${user.role}` : "",
       "",
-      "Postup pro prvni prihlaseni:",
+      "Postup pro prihlaseni:",
       "1. Otevrete odkaz do aplikace.",
       "2. Do pole E-mail zadejte svuj prihlasovaci e-mail.",
-      "3. Kliknete na Nastavit / obnovit heslo.",
-      "4. V dorucene poste otevrete odkaz a nastavte si vlastni heslo.",
-      "5. Pri prvnim vstupu aktivujte dvoufaktorove overeni pres QR kod.",
+      "3. Pokud heslo jeste nemate, kliknete na Obnovit e-mailem a nastavte si vlastni heslo.",
+      "4. Pri prvnim vstupu nastavte dvoufaktorove overeni podle pokynu na obrazovce.",
       "",
-      "Heslo vam nikdo neposila. Nastavujete si vlastni.",
-      "Pokud e-mail pro nastaveni hesla neprijde, pozadejte spravce o aktivaci uctu."
+      "Pokud e-mail neprijde, pozadejte spravce o kontrolu uctu v Supabase."
     ].filter(Boolean).join("\n");
   }
 
@@ -153,14 +151,7 @@
         }
       }
       const actions = card.querySelector(".user-actions");
-      if (!actions || actions.querySelector("[data-user-mail-invite]")) return;
-      const button = document.createElement("button");
-      button.className = "button button-soft";
-      button.type = "button";
-      button.dataset.userMailInvite = email;
-      button.textContent = "Poslat pozvanku";
-      button.addEventListener("click", () => openInviteEmail(user));
-      actions.insertBefore(button, actions.children[1] || null);
+      actions?.querySelectorAll("[data-user-mail-invite]").forEach((button) => button.remove());
     });
   }
 
