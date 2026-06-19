@@ -79,56 +79,6 @@
     meta.textContent = detail || lastSyncLabel();
   }
 
-  function updateTopCloudStatus(user) {
-    const box = document.querySelector("#loginStatusBox");
-    if (!box) return;
-
-    const states = {
-      ok: { color: "var(--green)", shadow: "rgba(117, 189, 37, 0.18)" },
-      warn: { color: "#f3b53f", shadow: "rgba(243, 181, 63, 0.2)" },
-      danger: { color: "#e05252", shadow: "rgba(224, 82, 82, 0.18)" }
-    };
-    let kind = "warn";
-    let title = "Cloud se overuje";
-    let detail = "cekam na stav pripojeni";
-
-    if (window.location.protocol === "file:") {
-      kind = "danger";
-      title = "Lokalni soubor";
-      detail = "otevrete verejnou cloudovou adresu";
-      box.title = "Tato zalozka bezi z lokalniho souboru, zmeny se nemusi propsat do cloudu.";
-    } else if (!hasConnection()) {
-      kind = "warn";
-      title = "Cloud nenastaven";
-      detail = "data jsou jen v prohlizeci";
-      box.title = "Supabase pripojeni neni dostupne.";
-    } else if (user?.email) {
-      kind = "ok";
-      title = "Cloud prihlasen";
-      detail = user.email;
-      box.title = "Zmeny se ukladaji do Supabase cloudu.";
-    } else {
-      kind = "warn";
-      title = "Cloud neprihlasen";
-      detail = "prihlaste se v Nastaveni";
-      box.title = "Cloud je nastaveny, ale uzivatel neni prihlaseny.";
-    }
-
-    const palette = states[kind];
-    box.innerHTML = `
-      <span class="login-status-dot" aria-hidden="true"></span>
-      <span>
-        <strong>${text(title)}</strong>
-        <small>${text(detail)}</small>
-      </span>
-    `;
-    const dot = box.querySelector(".login-status-dot");
-    if (dot) {
-      dot.style.background = palette.color;
-      dot.style.boxShadow = `0 0 0 5px ${palette.shadow}`;
-    }
-  }
-
   function lastSyncLabel() {
     const meta = getMeta();
     if (!meta.lastSyncAt) return "Zatim bez cloud synchronizace.";
@@ -211,9 +161,9 @@
 
   async function refreshAuthStatus() {
     const target = document.querySelector("[data-cloud-auth]");
+    if (!target) return null;
     if (!hasConnection()) {
-      if (target) target.textContent = "bez cloudu";
-      updateTopCloudStatus(null);
+      target.textContent = "bez cloudu";
       return null;
     }
 
@@ -221,12 +171,10 @@
       const supabase = await getClient();
       const { data } = await supabase.auth.getSession();
       const user = data?.session?.user || null;
-      if (target) target.textContent = user?.email || "neprihlaseno";
-      updateTopCloudStatus(user);
+      target.textContent = user?.email || "neprihlaseno";
       return user;
     } catch {
-      if (target) target.textContent = "neprihlaseno";
-      updateTopCloudStatus(null);
+      target.textContent = "neprihlaseno";
       return null;
     }
   }
@@ -674,15 +622,11 @@
     initialized = true;
     ensureStyles();
     patchSaveState();
-    updateTopCloudStatus(null);
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("[data-open-cloud-file]");
       if (trigger) openFile(trigger.dataset.openCloudFile);
     });
-    if (!ensurePanel()) {
-      refreshAuthStatus();
-      return;
-    }
+    if (!ensurePanel()) return;
 
     const config = readConfig();
     if (hasConnection(config)) {
@@ -696,11 +640,7 @@
       });
     } else {
       setStatus("warn", "Lokalni rezim", "Data jsou zatim jen v tomto prohlizeci.");
-      updateTopCloudStatus(null);
     }
-
-    window.setTimeout(refreshAuthStatus, 800);
-    window.setTimeout(refreshAuthStatus, 2200);
   }
 
   window.kaiserCloud = {

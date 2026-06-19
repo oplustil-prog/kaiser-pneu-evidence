@@ -4,15 +4,12 @@
 
   const activeNotice = {
     id: "hotfix-public-page-20260618-1",
-    enabled: false,
+    enabled: true,
     kind: "update",
     title: "Stranka byla obnovena",
     message:
       "Nasazena oprava po zaseknuti verejne stranky. Pokud stale vidite starou verzi, pouzijte tvrdy refresh."
   };
-
-  const PUBLIC_APP_URL = "https://oplustil-prog.github.io/kaiser-pneu-evidence/";
-  window.kaiserAuthPersistenceRequested = true;
 
   function getScriptBuild() {
     const script = document.currentScript || document.querySelector('script[src*="cloud-auth-preview"]');
@@ -39,27 +36,6 @@
     localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify([...dismissed].slice(-20)));
   }
 
-  function redirectLegacyHotfixLink() {
-    const params = new URLSearchParams(window.location.search);
-    const fresh = String(params.get("fresh") || "");
-    if (!fresh.includes("hotfix-auth-preview")) return false;
-
-    try {
-      const url = new URL(PUBLIC_APP_URL);
-      url.searchParams.set("fresh", `auth-url-fixed-${Date.now()}`);
-      sessionStorage.setItem("kaiser-legacy-hotfix-redirect", new Date().toISOString());
-      window.location.replace(url.toString());
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  function dismissNotice(noticeId) {
-    rememberDismissed(noticeId);
-    document.getElementById("kaiser-system-notice")?.remove();
-  }
-
   function injectStyles() {
     if (document.getElementById("kaiser-system-notice-style")) return;
     const style = document.createElement("style");
@@ -68,7 +44,7 @@
       .kaiser-system-notice {
         position: sticky;
         top: 0;
-        z-index: 3000;
+        z-index: 100;
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 14px;
@@ -139,17 +115,18 @@
     }
 
     banner.className = `kaiser-system-notice kaiser-system-notice--${data.kind}`;
-    banner.dataset.noticeId = data.id;
     banner.innerHTML = `
       <div>
         <strong>${escapeHtml(data.title)}</strong>
         <p>${escapeHtml(data.message)}</p>
       </div>
-      <button type="button" data-system-notice-dismiss>Rozumim</button>
+      <button type="button">Rozumim</button>
     `;
     banner.hidden = false;
-    const button = banner.querySelector("button");
-    button.onclick = () => dismissNotice(data.id);
+    banner.querySelector("button").addEventListener("click", () => {
+      rememberDismissed(data.id);
+      banner.hidden = true;
+    });
   }
 
   function escapeHtml(value) {
@@ -169,7 +146,7 @@
         message: "Aplikace nacetla vychozi stav. Zkontrolujte prosim, ze jsou cloudova data nactena."
       };
     }
-    if (params.has("update")) {
+    if (params.has("update") || String(params.get("fresh") || "").includes("hotfix")) {
       return {
         id: `update-${params.get("fresh") || getScriptBuild()}`,
         kind: "update",
@@ -203,7 +180,6 @@
   }
 
   function boot() {
-    if (redirectLegacyHotfixLink()) return;
     const dismissed = new Set(readDismissed());
     const notice = noticeFromUrl() || noticeFromBuildChange() || activeNotice;
     if (notice?.enabled === false || dismissed.has(notice?.id)) return;
@@ -265,8 +241,6 @@
     }
   }
 
-  window.kaiserSaveCloudNow = saveCloudNow;
-
   function scheduleCloudSave() {
     window.clearTimeout(cloudSaveTimer);
     cloudSaveTimer = window.setTimeout(() => saveCloudNow({ visible: false }), 450);
@@ -304,74 +278,6 @@
     });
   }
 
-  function loadLoginGate() {
-    if (window.kaiserLoginGateRequested || document.querySelector('script[src*="login-gate"]')) return;
-    window.kaiserLoginGateRequested = true;
-    const script = document.createElement("script");
-    script.src = "./login-gate.js?v=20260619-57";
-    script.defer = true;
-    script.onerror = () => {
-      showNotice({
-        id: `login-load-error-${Date.now()}`,
-        kind: "reset",
-        title: "Prihlaseni se nenacetlo",
-        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
-      });
-    };
-    document.head.appendChild(script);
-  }
-
-  function loadUserInvites() {
-    if (window.kaiserUserInvitesRequested || document.querySelector('script[src*="user-invites"]')) return;
-    window.kaiserUserInvitesRequested = true;
-    const script = document.createElement("script");
-    script.src = "./user-invites.js?v=20260619-55";
-    script.defer = true;
-    script.onerror = () => {
-      showNotice({
-        id: `invites-load-error-${Date.now()}`,
-        kind: "reset",
-        title: "Pozvanky se nenacetly",
-        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
-      });
-    };
-    document.head.appendChild(script);
-  }
-
-  function loadInviteSenderHotfix() {
-    if (window.kaiserInviteSenderRequested || document.querySelector('script[src*="invite-sender"]')) return;
-    window.kaiserInviteSenderRequested = true;
-    const script = document.createElement("script");
-    script.src = "./invite-sender.js?v=20260619-59";
-    script.defer = true;
-    script.onerror = () => {
-      showNotice({
-        id: `invite-sender-load-error-${Date.now()}`,
-        kind: "reset",
-        title: "Odesilani pozvanek se nenacetlo",
-        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
-      });
-    };
-    document.head.appendChild(script);
-  }
-
-  function loadCloudLiveHotfix() {
-    if (window.kaiserCloudLiveHotfixRequested || document.querySelector('script[src*="cloud-live-hotfix"]')) return;
-    window.kaiserCloudLiveHotfixRequested = true;
-    const script = document.createElement("script");
-    script.src = `./cloud-live-hotfix.js?v=20260619-58-${Date.now()}`;
-    script.defer = true;
-    script.onerror = () => {
-      showNotice({
-        id: `cloud-live-hotfix-load-error-${Date.now()}`,
-        kind: "reset",
-        title: "Cloudove ukladani se nenacetlo",
-        message: "Zkuste tvrdy refresh prohlizece. Pokud problem trva, kontaktujte spravce aplikace."
-      });
-    };
-    document.head.appendChild(script);
-  }
-
   window.kaiserShowSystemNotice = function (message, options = {}) {
     showNotice({
       id: options.id || `manual-${Date.now()}`,
@@ -382,15 +288,6 @@
   };
 
   document.addEventListener("click", (event) => {
-    const dismissButton = event.target.closest("[data-system-notice-dismiss]");
-    if (dismissButton) {
-      const noticeId = dismissButton.closest("#kaiser-system-notice")?.dataset.noticeId || "";
-      dismissNotice(noticeId);
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
     if (!event.target.closest("#resetDemoData")) return;
     window.setTimeout(() => {
       showNotice({
@@ -406,17 +303,9 @@
     document.addEventListener("DOMContentLoaded", () => {
       boot();
       installCloudSaveGuard();
-      loadLoginGate();
-      loadUserInvites();
-      loadInviteSenderHotfix();
-      loadCloudLiveHotfix();
     }, { once: true });
   } else {
     boot();
     installCloudSaveGuard();
-    loadLoginGate();
-    loadUserInvites();
-    loadInviteSenderHotfix();
-    loadCloudLiveHotfix();
   }
 })();
