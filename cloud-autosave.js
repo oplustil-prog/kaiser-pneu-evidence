@@ -37,7 +37,6 @@
     saveState = function () {
       originalSaveState();
       if (!window.kaiserCloud?.isConfigured?.() || !window.kaiserCloud?.pushState) return;
-      if (!window.kaiserAuthState?.authenticated) return;
       window.clearTimeout(pushTimer);
       pushTimer = window.setTimeout(() => window.kaiserCloud.pushState({ quiet: true }), 250);
     };
