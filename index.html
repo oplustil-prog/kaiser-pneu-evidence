@@ -4,6 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kaiser Servis | Evidence pneumatik</title>
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var fresh = String(params.get("fresh") || "");
+        if (fresh.indexOf("hotfix-auth-preview") === -1) return;
+        var url = new URL("https://oplustil-prog.github.io/kaiser-pneu-evidence/");
+        url.searchParams.set("fresh", "auth-url-fixed-" + Date.now());
+        window.location.replace(url.toString());
+      })();
+    </script>
     <meta
       name="description"
       content="Responzivni aplikace pro evidenci pneumatik, vozidel, mereni, servisu a nakladu."
@@ -14,11 +24,11 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260618-33" />
+    <link rel="stylesheet" href="./styles.css?v=20260619-57" />
     <link rel="stylesheet" href="./service-card.css?v=20260618-15" />
     <link rel="stylesheet" href="./vehicle-photos.css?v=20260618-16" />
   </head>
-  <body>
+  <body class="kaiser-auth-locked">
     <div class="app-shell">
       <aside class="sidebar" aria-label="Hlavni navigace">
         <button class="brand brand-home" type="button" data-section="dashboard" aria-label="Zpet na dashboard">
@@ -78,14 +88,17 @@
             <div class="login-status-card" id="loginStatusBox" role="status" aria-live="polite">
               <span class="login-status-dot" aria-hidden="true"></span>
               <span>
-                <strong>Cloud se overuje</strong>
-                <small>cekam na stav pripojeni</small>
+                <strong>Jste prihlasen</strong>
+                <small>jako Radim Oplustil</small>
               </span>
             </div>
-            <label class="search-control">
-              <span class="sr-only">Hledat pneu, SPZ nebo dodavatele</span>
-              <input id="globalSearch" type="search" placeholder="Hledat ID pneu, SPZ, dodavatele..." />
-            </label>
+            <div class="global-search-wrap">
+              <label class="search-control">
+                <span class="sr-only">Hledat pneu, SPZ nebo dodavatele</span>
+                <input id="globalSearch" type="search" placeholder="Hledat pneu, SPZ, servis, ridice..." autocomplete="off" />
+              </label>
+              <div class="global-search-panel" id="globalSearchPanel" hidden></div>
+            </div>
             <button class="button button-soft" id="qrFocusButton" type="button">
               <span aria-hidden="true">QR</span>
               Zadat kod
@@ -127,7 +140,7 @@
                   <h3>SPZ podle nakladu YTD</h3>
                 </div>
                 <button class="icon-button" type="button" data-section-jump="reports" aria-label="Otevrit reporty">
-                  <span aria-hidden="true">-></span>
+                  <span aria-hidden="true">-&gt;</span>
                 </button>
               </div>
               <div class="bar-list" id="vehicleCostBars"></div>
@@ -160,7 +173,7 @@
                 </label>
                 <label class="measure-odometer">
                   Stav km
-                  <input name="odometer" inputmode="numeric" type="number" step="1" min="0" required />
+                  <input name="odometer" inputmode="numeric" type="number" step="1" min="0" placeholder="opsat aktualni km" required />
                 </label>
                 <label class="wide-input">
                   Poznamka
@@ -610,6 +623,7 @@
                   Stav
                   <select name="status" required>
                     <option value="aktivni">Aktivni</option>
+                    <option value="pozvanka">Ceka na pozvanku</option>
                     <option value="pozastaveno">Pozastaveno</option>
                   </select>
                 </label>
@@ -617,7 +631,10 @@
                   Telefon
                   <input name="phone" type="tel" placeholder="+420 ..." />
                 </label>
-                <button class="button button-primary" type="submit">Ulozit uzivatele</button>
+                <div class="user-form-actions">
+                  <button class="button button-primary" type="submit">Ulozit uzivatele</button>
+                  <button class="button button-soft" id="inviteUserButton" type="button">Pripravit pozvanku</button>
+                </div>
               </form>
             </article>
 
@@ -632,6 +649,7 @@
                   <select id="userStatusFilter" aria-label="Filtrovat podle stavu">
                     <option value="all">Vsechny stavy</option>
                     <option value="aktivni">Aktivni</option>
+                    <option value="pozvanka">Ceka na pozvanku</option>
                     <option value="pozastaveno">Pozastaveno</option>
                   </select>
                 </div>
@@ -768,7 +786,7 @@
           </label>
           <label class="measure-odometer">
             Stav km
-            <input name="odometer" inputmode="numeric" type="number" step="1" min="0" required />
+            <input name="odometer" inputmode="numeric" type="number" step="1" min="0" placeholder="opsat aktualni km" required />
           </label>
           <label class="wide-input">
             Poznamka
@@ -782,16 +800,19 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./measurement-reminders.js?v=20260618-23" defer></script>
     <script src="./supabase-config.js?v=20260618-32" defer></script>
-    <script src="./cloud-autosave.js?v=20260618-32" defer></script>
-    <script src="./supabase-sync.js?v=20260619-cloud2" defer></script>
-    <script src="./cloud-auth-preview.js?v=20260619-password1" defer></script>
+    <script src="./cloud-autosave.js?v=20260619-57" defer></script>
+    <script src="./supabase-sync.js?v=20260619-57" defer></script>
+    <script src="./cloud-auth-preview.js?v=20260619-57" defer></script>
+    <script src="./auth-persistence.js?v=20260619-57" defer></script>
     <script src="./invoice-data.js?v=20260618-14" defer></script>
     <script src="./vehicle-photo-assets.js?v=20260618-16" defer></script>
-    <script src="./app.js?v=20260618-36" defer></script>
-    <script src="./global-search.js?v=20260619-search1" defer></script>
-    <script src="./tire-assignment.js?v=20260619-cloud1" defer></script>
-    <script src="./quick-measure.js?v=20260619-odo1" defer></script>
-    <script src="./service-card.js?v=20260618-15" defer></script>
+    <script src="./app.js?v=20260619-57" defer></script>
+    <script src="./email-templates.js?v=20260619-password1" defer></script>
+    <script src="./email-settings.js?v=20260619-password1" defer></script>
+    <script src="./global-search.js?v=20260619-57" defer></script>
+    <script src="./tire-assignment.js?v=20260619-57" defer></script>
+    <script src="./quick-measure.js?v=20260619-57" defer></script>
+    <script src="./service-card.js?v=20260618-47" defer></script>
     <script src="./vehicle-photos.js?v=20260618-16" defer></script>
   </body>
 </html>
