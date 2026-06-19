@@ -125,7 +125,7 @@
     banner.hidden = false;
     banner.querySelector("button").addEventListener("click", () => {
       rememberDismissed(data.id);
-      banner.hidden = true;
+      banner.remove();
     });
   }
 
