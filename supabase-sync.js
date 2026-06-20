@@ -26,6 +26,7 @@
   let pendingPush = false;
   let saveGuardActive = false;
   let storagePatched = false;
+  let cloudBaselineReady = false;
 
   function saveGuard(event) {
     event.preventDefault();
@@ -226,6 +227,14 @@
   }
 
   function destructiveDrops(nextProfile, currentProfile) {
+    return profileDrops(nextProfile, currentProfile, true);
+  }
+
+  function anyProfileDrops(nextProfile, currentProfile) {
+    return profileDrops(nextProfile, currentProfile, false);
+  }
+
+  function profileDrops(nextProfile, currentProfile, severeOnly) {
     const labels = {
       vehicles: "vozidla",
       vehicleSlots: "pozice vozidel",
@@ -237,7 +246,13 @@
       measurements: "mereni"
     };
     return Object.keys(labels)
-      .filter((key) => isSevereDrop(key, Number(nextProfile[key] || 0), Number(currentProfile[key] || 0)))
+      .filter((key) => {
+        const nextValue = Number(nextProfile[key] || 0);
+        const currentValue = Number(currentProfile[key] || 0);
+        return severeOnly
+          ? isSevereDrop(key, nextValue, currentValue)
+          : currentValue > 0 && nextValue < currentValue;
+      })
       .map((key) => `${labels[key]} ${currentProfile[key]} -> ${nextProfile[key]}`);
   }
 
@@ -464,6 +479,16 @@
       if (current.error) throw current.error;
       if (current.data?.state) {
         const cloudProfile = stateProfile(current.data.state);
+        const anyDrops = anyProfileDrops(nextProfile, cloudProfile);
+        if (anyDrops.length && !cloudBaselineReady) {
+          if (!manual) {
+            setStatus("work", "Nacitam aktualni cloudova data...", `Cloud ma vice dat: ${anyDrops.join("; ")}.`);
+            await pullState({ reason: "pre-upload-baseline" });
+            return false;
+          }
+          setStatus("danger", "Cloud chranen - nejdrive stahnete data", guardMessage("Nahrani", anyDrops, nextProfile, cloudProfile));
+          return false;
+        }
         const drops = destructiveDrops(nextProfile, cloudProfile);
         if (drops.length) {
           setStatus("danger", "Cloud chranen - nahrani zablokovano", guardMessage("Nahrani", drops, nextProfile, cloudProfile));
@@ -489,6 +514,7 @@
       setMeta({ lastSyncAt: now, lastPushAt: now, counts });
       setStatus("ok", "Data jsou ulozena v cloudu", lastSyncLabel());
       pendingPush = false;
+      cloudBaselineReady = true;
       return true;
     } catch (error) {
       setStatus("danger", "Ulozeni do cloudu selhalo", error.message || "Zkontrolujte Supabase nastaveni.");
@@ -496,7 +522,7 @@
     }
   }
 
-  async function pullState() {
+  async function pullState(options = {}) {
     const config = readConfig();
     if (!hasConnection(config)) {
       setStatus("warn", "Cloud neni nastaveny", "Data nejsou pripojena ke cloudu.");
@@ -543,6 +569,7 @@
       if (typeof renderAll === "function") renderAll();
       window.kaiserAuthSimple?.renderHeader?.();
       setMeta({ lastSyncAt: new Date().toISOString(), lastPullAt: new Date().toISOString(), counts: data.counts || stateCounts() });
+      cloudBaselineReady = true;
       setStatus("ok", "Cloudova data jsou nactena", lastSyncLabel());
     } catch (error) {
       setStatus("danger", "Stazeni z cloudu selhalo", error.message || "Zkontrolujte Supabase nastaveni.");
