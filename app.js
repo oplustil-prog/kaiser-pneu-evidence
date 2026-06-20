@@ -1,14 +1,14 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-22",
+  build: "20260620-23",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
     "Uzivatele z cloudu se spojuji se zakladnim seznamem ridicu, aby nikdo nezmizel mezi prohlizeci.",
-    "V detailu vozidla se zobrazuji namontovane pneu z faktur pro vybranou SPZ bez primichani cizich rucnich pozic.",
-    "Vracena dashboardova karta Namontovane pneu.",
+    "V detailu vozidla se zobrazuji koupene pneu z faktur pro vybranou SPZ bez primichani cizich rucnich pozic.",
+    "Dashboardova karta je prejmenovana na Koupene pneu.",
     "Zpresneny stav cloudoveho ulozeni v horni liste.",
     "Prehled uzivatelu sjednocuje role Manager a Spravce.",
     "Supabase cloud, verejna GitHub Pages aplikace a zaloha produkcnich dat.",
@@ -1355,7 +1355,7 @@ function calculateKpis() {
     { label: "Naklad posledni mesic", value: formatCurrency(serviceMonth), hint: formatMonthLabel(period.month) },
     { label: "Naklad YTD", value: formatCurrency(ytd), hint: `${yearServices.length} servisnich karet v roce ${period.year}` },
     { label: "Vozidla v evidenci", value: `${state.vehicles.length} ks`, hint: `${vehiclesWithCost} vozidel s nakladem v importu` },
-    { label: "Namontovane pneu", value: `${mountedTires} ks`, hint: `${vehiclesWithMountedTires} vozidel s osazenim` },
+    { label: "Koupené pneu", value: `${mountedTires} ks`, hint: `${vehiclesWithMountedTires} vozidel s osazenim` },
     { label: "Faktury import", value: `${invoiceCount()} ks`, hint: `${importedRows} radku, ${unmatched} bez SPZ` },
     { label: "Prumer / vozidlo YTD", value: formatCurrency(avgVehicleCost), hint: "naklad z faktur / vozovy park" }
   ];
@@ -1759,7 +1759,7 @@ function renderVehicleTireEvidence(spz) {
       <div class="vehicle-tire-evidence">
         <div class="vehicle-tire-evidence-head">
           <div>
-            <p class="eyebrow">Namontovane pneu</p>
+            <p class="eyebrow">Koupené pneu</p>
             <strong>Bez pneumatik v evidenci</strong>
           </div>
           <span class="badge badge-warning">0 ks</span>
@@ -1773,7 +1773,7 @@ function renderVehicleTireEvidence(spz) {
     <div class="vehicle-tire-evidence">
       <div class="vehicle-tire-evidence-head">
         <div>
-          <p class="eyebrow">Namontovane pneu</p>
+          <p class="eyebrow">Koupené pneu</p>
           <strong>${total} ks v evidenci vozidla</strong>
         </div>
         <span class="badge badge-ok">${total} ks</span>
@@ -1827,7 +1827,7 @@ function renderVehicles() {
     <div class="vehicle-metric-grid">
       <div class="vehicle-metric"><span>Tachometr</span><strong>${formatNumber(vehicle.odometer)} km</strong></div>
       <div class="vehicle-metric"><span>Osazene pozice</span><strong>${vehicleTires.length}/${vehicle.configuration.length}</strong></div>
-      <div class="vehicle-metric"><span>Namontovane pneu</span><strong>${vehicleEvidenceTires.length} ks</strong></div>
+      <div class="vehicle-metric"><span>Koupené pneu</span><strong>${vehicleEvidenceTires.length} ks</strong></div>
       <div class="vehicle-metric"><span>Prumerny dezen</span><strong>${formatNumber(avgTread, 1)} mm</strong></div>
       <div class="vehicle-metric"><span>Naklady servis</span><strong>${formatCurrency(vehicleServiceCost)}</strong></div>
     </div>
