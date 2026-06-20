@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-28",
+  build: "20260620-29",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Prehled uzivatelu ma vlastni vyhledavani a skryva odebrane obecne ucty dilny a managementu.",
     "Prehled uzivatelu skryva duplicitni realne pristupy se stejnym jmenem.",
     "Zabraneno duplicitam realnych pristupu pri shodnem jmenu v cloudu a vychozim adresari.",
     "Doplneny realne pristupy Milan Gazi, Tomas Gazi a Martin Konecek do vychoziho adresare.",
@@ -701,26 +702,6 @@ const initialState = {
       lastActive: "2026-06-18"
     },
     {
-      id: "USR-002",
-      name: "Vedouci dilny",
-      email: "dilna@kaiserservis.cz",
-      role: "Dilna",
-      depot: "Brno",
-      status: "aktivni",
-      phone: "",
-      lastActive: "2026-06-17"
-    },
-    {
-      id: "USR-003",
-      name: "Management",
-      email: "management@kaiserservis.cz",
-      role: "Management",
-      depot: "Slapanice",
-      status: "aktivni",
-      phone: "",
-      lastActive: "2026-06-16"
-    },
-    {
       id: "USR-004",
       name: "Milan Gaží",
       email: "milan.gazi@kaiserservis.cz",
@@ -805,6 +786,8 @@ const userRoleLabels = {
   "Externi servis": "Externi servis"
 };
 
+const removedUserEmails = new Set(["dilna@kaiserservis.cz", "management@kaiserservis.cz"]);
+
 function roleKey(value) {
   return String(value || "")
     .trim()
@@ -843,6 +826,10 @@ function userMergeKey(user) {
   return String(user.email || user.id || user.name || "").trim().toLowerCase();
 }
 
+function isRemovedUserRecord(user) {
+  return removedUserEmails.has(String(user.email || "").trim().toLowerCase());
+}
+
 function userNameMergeKey(user) {
   return String(user.name || "")
     .trim()
@@ -855,7 +842,7 @@ function userNameMergeKey(user) {
 function mergeDefaultUsers(existing = []) {
   const existingByName = new Map();
   const existingByKey = new Map();
-  (existing || []).forEach((user) => {
+  (existing || []).filter((user) => !isRemovedUserRecord(user)).forEach((user) => {
     const nameKey = userNameMergeKey(user);
     const key = userMergeKey(user);
     if (nameKey) existingByName.set(nameKey, true);
@@ -869,7 +856,7 @@ function mergeDefaultUsers(existing = []) {
     if (nameKey && existingByName.has(nameKey) && !existingByKey.has(key)) return;
     if (key) users.set(key, structuredClone(user));
   });
-  (existing || []).forEach((user) => {
+  (existing || []).filter((user) => !isRemovedUserRecord(user)).forEach((user) => {
     const key = userMergeKey(user);
     if (!key) return;
     users.set(key, {
@@ -908,7 +895,7 @@ function userRecordPriority(user) {
 function dedupeUsersForDisplay(users = []) {
   const byName = new Map();
   const withoutName = [];
-  (users || []).forEach((user) => {
+  (users || []).filter((user) => !isRemovedUserRecord(user)).forEach((user) => {
     const nameKey = userNameMergeKey(user);
     if (!nameKey) {
       withoutName.push(user);
@@ -920,6 +907,27 @@ function dedupeUsersForDisplay(users = []) {
     }
   });
   return [...withoutName, ...byName.values()];
+}
+
+function userMatchesSearch(user, term) {
+  if (!term) return true;
+  const haystack = [
+    user.name,
+    user.email,
+    userRoleLabel(user.role),
+    user.depot,
+    userPermissions[normalizeUserRole(user.role)],
+    user.lastActive
+  ]
+    .join(" ")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const needle = String(term || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  return haystack.includes(needle);
 }
 
 const formatCurrency = (value) =>
@@ -2250,10 +2258,12 @@ function renderUsers() {
 
   const roleFilter = query("#userRoleFilter")?.value || "all";
   const statusFilter = query("#userStatusFilter")?.value || "all";
+  const searchTerm = query("#userSearch")?.value || "";
   const filteredUsers = sortUsersForDisplay(users.filter((user) => {
     const matchesRole = roleFilter === "all" || normalizeUserRole(user.role) === normalizeUserRole(roleFilter);
     const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-    return matchesRole && matchesStatus;
+    const matchesSearch = userMatchesSearch(user, searchTerm);
+    return matchesRole && matchesStatus && matchesSearch;
   }));
 
   const activeCount = users.filter((user) => user.status === "aktivni").length;
@@ -2769,6 +2779,7 @@ function bindEvents() {
   query("#userForm").addEventListener("submit", addUser);
   query("#userRoleFilter").addEventListener("change", renderUsers);
   query("#userStatusFilter").addEventListener("change", renderUsers);
+  query("#userSearch")?.addEventListener("input", renderUsers);
   query("#settingsForm").addEventListener("submit", saveSettings);
 
   query("#loadSampleImport").addEventListener("click", () => {

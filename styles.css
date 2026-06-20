@@ -424,6 +424,33 @@ textarea:focus,
   min-width: min(390px, 42vw);
 }
 
+.user-search-control {
+  display: grid;
+  gap: 5px;
+  min-width: min(300px, 34vw);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.user-search-control input {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  min-height: 42px;
+  padding: 10px 12px;
+  outline: none;
+  text-transform: none;
+}
+
+.user-search-control input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(117, 189, 37, 0.16);
+}
+
 .button,
 .icon-button {
   border: 1px solid transparent;
