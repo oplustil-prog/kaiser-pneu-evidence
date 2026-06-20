@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-36",
+  build: "20260620-37",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Rychle mereni zobrazuje vzdy jen jeden rezim, aby se jedna pozice a vsechny pozice nemichaly dohromady.",
     "Prihlaseni zobrazuje jen jeden formular: prihlaseni nebo nastaveni noveho hesla.",
     "Rychle mereni umi vyplnit vice pozic vybraneho vozidla a ulozit je najednou.",
     "Mereni kontroluje, ze novy stav km neni nizsi nez aktualni tachometr vozidla.",

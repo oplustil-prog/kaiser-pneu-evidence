@@ -1172,6 +1172,11 @@ label {
   min-height: 46px;
 }
 
+.quick-form-dock[hidden],
+.quick-bulk-form[hidden] {
+  display: none !important;
+}
+
 .quick-bulk-form {
   display: grid;
   gap: 12px;
@@ -1239,7 +1244,7 @@ label {
 
 .quick-bulk-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 1fr;
   gap: 8px;
 }
 

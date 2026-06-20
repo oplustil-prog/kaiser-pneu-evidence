@@ -131,7 +131,6 @@
           <div class="quick-bulk-rows" id="quickBulkRows"></div>
           <div class="quick-bulk-actions">
             <button class="button button-primary" type="submit">Ulozit vyplnene pozice</button>
-            <button class="button button-soft" type="button" data-quick-mode="single">Jedna pozice</button>
           </div>
         </form>
       `
@@ -167,6 +166,8 @@
     quickMode = mode === "bulk" ? "bulk" : "single";
     form.hidden = quickMode !== "single";
     bulkForm.hidden = quickMode !== "bulk";
+    form.setAttribute("aria-hidden", String(quickMode !== "single"));
+    bulkForm.setAttribute("aria-hidden", String(quickMode !== "bulk"));
     panel.querySelectorAll("[data-quick-mode]").forEach((button) => {
       const active = button.dataset.quickMode === quickMode;
       button.classList.toggle("button-primary", active);
