@@ -22,6 +22,15 @@
   let localSaveState = null;
   let initialized = false;
   let cloudSessionReady = false;
+  let pushInFlight = false;
+  let pendingPush = false;
+  let saveGuardActive = false;
+
+  function saveGuard(event) {
+    event.preventDefault();
+    event.returnValue = "Zmeny se jeste ukladaji do cloudu.";
+    return event.returnValue;
+  }
 
   function text(value) {
     return String(value || "").replace(/[&<>"']/g, (char) =>
@@ -141,7 +150,7 @@
     localSaveState = saveState;
     saveState = function () {
       localSaveState();
-      if (!syncPaused) schedulePush();
+      if (!syncPaused) schedulePush({ delay: 250, source: "Auto" });
     };
     window.kaiserCloudSavePatched = true;
   }
@@ -313,42 +322,40 @@
     }
   }
 
-  function schedulePush() {
-    const config = readConfig();
-    if (!config.autoSync || !hasConnection(config) || !hasAuthenticatedSession()) return;
-    window.clearTimeout(pushTimer);
-    pushTimer = window.setTimeout(() => pushState({ quiet: true }), 1200);
+  function setSaveGuard(active) {
+    if (active === saveGuardActive) return;
+    saveGuardActive = active;
+    if (active) {
+      window.addEventListener("beforeunload", saveGuard);
+    } else {
+      window.removeEventListener("beforeunload", saveGuard);
+    }
   }
 
-  function bindSettingsCloudFlush() {
-    document.addEventListener("submit", (event) => {
-      if (event.target?.id !== "settingsForm") return;
-      const form = event.target;
-      const button = form.querySelector('button[type="submit"]');
-      const buttonLabel = button?.textContent || "";
-      const beforeUnload = (unloadEvent) => {
-        unloadEvent.preventDefault();
-        unloadEvent.returnValue = "Nastaveni se jeste uklada do cloudu.";
-        return unloadEvent.returnValue;
-      };
-      window.addEventListener("beforeunload", beforeUnload);
-      if (button) {
-        button.disabled = true;
-        button.textContent = "Ukladam do cloudu...";
-      }
-      window.setTimeout(async () => {
-        window.clearTimeout(pushTimer);
-        try {
-          await pushState({ quiet: false, source: "Nastaveni" });
-        } finally {
-          window.removeEventListener("beforeunload", beforeUnload);
-          if (button) {
-            button.disabled = false;
-            button.textContent = buttonLabel;
-          }
-        }
-      }, 0);
-    });
+  async function flushQueuedPush(source = "Auto") {
+    if (pushInFlight) {
+      pendingPush = true;
+      return;
+    }
+    pushInFlight = true;
+    setSaveGuard(true);
+    try {
+      do {
+        pendingPush = false;
+        await pushState({ quiet: true, source });
+      } while (pendingPush);
+    } finally {
+      pushInFlight = false;
+      setSaveGuard(false);
+    }
+  }
+
+  function schedulePush(options = {}) {
+    const config = readConfig();
+    if (!config.autoSync || !hasConnection(config) || !hasAuthenticatedSession()) return;
+    setSaveGuard(true);
+    window.clearTimeout(pushTimer);
+    pushTimer = window.setTimeout(() => flushQueuedPush(options.source || "Auto"), options.delay ?? 250);
   }
 
   async function uploadFile(file, folder = "documents") {
@@ -634,7 +641,6 @@
     initialized = true;
     ensureStyles();
     patchSaveState();
-    bindSettingsCloudFlush();
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("[data-open-cloud-file]");
       if (trigger) openFile(trigger.dataset.openCloudFile);
