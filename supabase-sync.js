@@ -452,13 +452,7 @@
       if (!options.quiet) setStatus("warn", "Cloud ceka na prihlaseni", "Nejdrive se prihlaste.");
       return false;
     }
-    if (!manual) {
-      pendingPush = true;
-      setStatus("warn", "Cloud nebyl automaticky prepsan", "Zmena ceka na rucni cloudovou kontrolu.");
-      return false;
-    }
-
-    setStatus("work", "Kontroluji data pred nahranim...");
+    setStatus("work", manual ? "Kontroluji data pred nahranim..." : "Ukladam zmenu do cloudu...");
     try {
       const supabase = await getClient();
       const nextState = snapshotState();
@@ -580,18 +574,25 @@
   }
 
   async function flushQueuedPush(source = "Auto") {
-    pendingPush = true;
-    setSaveGuard(false);
-    setStatus("warn", "Cloud nebyl automaticky prepsan", "Pouzijte rucni nahrani dat po cloudove kontrole.");
+    return pushState({ source });
   }
 
   function schedulePush(options = {}) {
     pendingPush = true;
     const config = readConfig();
     if (!hasConnection(config)) return;
-    setStatus("warn", "Cloud ceka na kontrolu", "Pouzijte rucni nahrani dat po cloudove kontrole.");
-    setSaveGuard(false);
+    if (!hasAuthenticatedSession()) {
+      setStatus("warn", "Cloud ceka na prihlaseni", "Nejdrive se prihlaste.");
+      return;
+    }
+    setStatus("work", "Ukladam zmenu do cloudu...", "Po ulozeni bude zmena drzet i po obnoveni stranky.");
+    setSaveGuard(true);
     window.clearTimeout(pushTimer);
+    pushTimer = window.setTimeout(() => {
+      pushState({ source: options.source || "Auto" }).finally(() => {
+        if (!pendingPush) setSaveGuard(false);
+      });
+    }, options.delay || 250);
   }
 
   async function uploadFile(file, folder = "documents") {
@@ -889,10 +890,10 @@
 
   window.addEventListener("kaiser-auth-ready", () => {
     cloudSessionReady = true;
-    setStatus("work", "Cloudove prihlaseni overeno", pendingPush ? "Zmeny cekaji na rucni cloudovou kontrolu." : "Stahuji produkcni data...");
+    setStatus("work", "Cloudove prihlaseni overeno", pendingPush ? "Ukladam cekajici zmeny do cloudu..." : "Stahuji produkcni data...");
     refreshAuthStatus();
     if (pendingPush) {
-      setStatus("warn", "Cloud nebyl automaticky prepsan", "Zmeny cekaji na rucni cloudovou kontrolu.");
+      window.setTimeout(() => pushState({ source: "Auth ready" }), 100);
     } else if (readConfig().autoLoad) {
       window.setTimeout(() => pullState(), 300);
     }
