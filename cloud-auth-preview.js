@@ -271,6 +271,9 @@
                 <button class="button button-primary" type="submit">Ulozit nove heslo</button>
                 <button class="button button-soft" type="button" data-auth-back-login>Zpet na prihlaseni</button>
               </div>
+              <small class="kaiser-auth-simple-help">
+                Tato obrazovka funguje jen po otevreni platneho odkazu z e-mailu pro nastaveni hesla.
+              </small>
             </form>
             <p class="kaiser-auth-simple-status" data-auth-simple-status role="status" aria-live="polite"></p>
           </main>
@@ -288,9 +291,68 @@
     return `${window.location.origin}${window.location.pathname}`;
   }
 
+  function authUrlParams() {
+    const params = new URLSearchParams(window.location.search || "");
+    const hash = String(window.location.hash || "").replace(/^#/, "");
+    const hashQuery = hash.includes("?") ? hash.slice(hash.indexOf("?") + 1) : hash;
+    new URLSearchParams(hashQuery).forEach((value, key) => {
+      if (!params.has(key)) params.set(key, value);
+    });
+    return params;
+  }
+
   function hasRecoveryIntent() {
-    const marker = `${window.location.search || ""} ${window.location.hash || ""}`;
-    return /type=recovery|access_token=|code=/.test(marker);
+    const params = authUrlParams();
+    return (
+      params.get("type") === "recovery" ||
+      params.has("access_token") ||
+      params.has("refresh_token") ||
+      params.has("code") ||
+      params.has("error") ||
+      params.has("error_code")
+    );
+  }
+
+  function recoveryLinkMessage(error) {
+    const message = String(error?.message || error || "");
+    if (/Auth session missing|session.*missing|invalid.*session|expired/i.test(message)) {
+      return "Odkaz pro nastaveni hesla neni platny nebo uz vyprsel. Na prihlasovaci obrazovce zadejte e-mail a poslete si novy odkaz.";
+    }
+    return message || "Odkaz pro nastaveni hesla neni platny. Poslete si prosim novy odkaz z prihlasovaci obrazovky.";
+  }
+
+  async function hydrateRecoverySession(supabase) {
+    const params = authUrlParams();
+    const linkError = params.get("error_description") || params.get("error") || params.get("error_code");
+    if (linkError) throw new Error(recoveryLinkMessage(linkError));
+
+    const code = params.get("code");
+    if (code && typeof supabase.auth.exchangeCodeForSession === "function") {
+      const { data, error } = await withTimeout(
+        supabase.auth.exchangeCodeForSession(code),
+        "Overeni odkazu pro heslo trva moc dlouho. Otevrete odkaz z e-mailu znovu."
+      );
+      if (error) throw error;
+      return data?.session?.user || data?.user || null;
+    }
+
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    if (accessToken && refreshToken && typeof supabase.auth.setSession === "function") {
+      const { data, error } = await withTimeout(
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken }),
+        "Overeni odkazu pro heslo trva moc dlouho. Otevrete odkaz z e-mailu znovu."
+      );
+      if (error) throw error;
+      return data?.session?.user || data?.user || null;
+    }
+
+    const { data, error } = await withTimeout(
+      supabase.auth.getSession(),
+      "Kontrola odkazu pro heslo trva moc dlouho. Otevrete odkaz z e-mailu znovu."
+    );
+    if (error) throw error;
+    return data?.session?.user || null;
   }
 
   function clearRecoveryMode() {
@@ -519,6 +581,13 @@
     status("Ukladam nove heslo...");
     try {
       const supabase = await supabaseClient();
+      const sessionCheck = await withTimeout(
+        supabase.auth.getSession(),
+        "Kontrola odkazu pro heslo trva moc dlouho. Otevrete odkaz z e-mailu znovu."
+      );
+      if (!sessionCheck?.data?.session?.user) {
+        throw new Error("Auth session missing");
+      }
       const { data, error } = await withTimeout(
         supabase.auth.updateUser({ password }),
         "Ulozeni hesla trva moc dlouho. Zkuste to prosim znovu."
@@ -532,7 +601,7 @@
       hideLogin();
       status("Heslo je nastavene. Jste prihlasen.", "ok");
     } catch (error) {
-      status(error?.message || "Heslo se nepodarilo nastavit. Otevrete prosim odkaz z e-mailu znovu.", "danger");
+      status(recoveryLinkMessage(error), "danger");
       showPasswordReset();
     } finally {
       setBusy(false);
@@ -583,7 +652,7 @@
       if (event === "PASSWORD_RECOVERY") {
         setRecoveryAuth(user);
         showPasswordReset();
-        status("Zadejte a ulozte nove heslo.", "warn");
+        status(user ? "Odkaz je overeny. Zadejte a ulozte nove heslo." : "Odkaz pro heslo neni platny. Poslete si prosim novy odkaz.", user ? "warn" : "danger");
         return;
       }
       if (event === "SIGNED_OUT") {
@@ -613,18 +682,25 @@
     try {
       const supabase = await supabaseClient();
       installAuthListener(supabase);
+      if (hasRecoveryIntent()) {
+        try {
+          const user = await hydrateRecoverySession(supabase);
+          setRecoveryAuth(user);
+          showPasswordReset();
+          status(user ? "Odkaz je overeny. Zadejte a ulozte nove heslo." : recoveryLinkMessage("Auth session missing"), user ? "warn" : "danger");
+        } catch (error) {
+          setRecoveryAuth(null);
+          showPasswordReset();
+          status(recoveryLinkMessage(error), "danger");
+        }
+        return;
+      }
       const { data, error } = await withTimeout(
         supabase.auth.getSession(),
         "Kontrola prihlaseni trva moc dlouho. Zkuste to prosim znovu."
       );
       if (error) throw error;
       const user = data?.session?.user || null;
-      if (hasRecoveryIntent()) {
-        setRecoveryAuth(user);
-        showPasswordReset();
-        status(user ? "Zadejte a ulozte nove heslo." : "Otevrete odkaz pro nastaveni hesla z e-mailu znovu.", "warn");
-        return;
-      }
       if (user) {
         setAuth(user);
         hideLogin();
