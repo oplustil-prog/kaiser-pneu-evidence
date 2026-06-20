@@ -2,6 +2,7 @@
   const CONFIG_KEY = "kaiser-pneu-supabase-config-v1";
   const META_KEY = "kaiser-pneu-supabase-meta-v1";
   const BACKUP_KEY = "kaiser-pneu-local-backup-before-cloud-pull";
+  const APP_STORAGE_KEY = "kaiser-pneu-evidence-v5";
   const SUPABASE_MODULE_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const defaults = {
@@ -25,6 +26,7 @@
   let pushInFlight = false;
   let pendingPush = false;
   let saveGuardActive = false;
+  let storagePatched = false;
 
   function saveGuard(event) {
     event.preventDefault();
@@ -153,6 +155,19 @@
       if (!syncPaused) schedulePush({ delay: 250, source: "Auto" });
     };
     window.kaiserCloudSavePatched = true;
+  }
+
+  function patchLocalStorageWrites() {
+    if (storagePatched) return;
+    const originalSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      const result = originalSetItem.call(this, key, value);
+      if (this === localStorage && key === APP_STORAGE_KEY && !syncPaused) {
+        schedulePush({ delay: 250, source: "Auto" });
+      }
+      return result;
+    };
+    storagePatched = true;
   }
 
   async function getClient() {
@@ -352,7 +367,11 @@
 
   function schedulePush(options = {}) {
     const config = readConfig();
-    if (!config.autoSync || !hasConnection(config) || !hasAuthenticatedSession()) return;
+    if (!config.autoSync || !hasConnection(config)) return;
+    if (!hasAuthenticatedSession()) {
+      pendingPush = true;
+      return;
+    }
     setSaveGuard(true);
     window.clearTimeout(pushTimer);
     pushTimer = window.setTimeout(() => flushQueuedPush(options.source || "Auto"), options.delay ?? 250);
@@ -640,6 +659,7 @@
     if (initialized) return;
     initialized = true;
     ensureStyles();
+    patchLocalStorageWrites();
     patchSaveState();
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest("[data-open-cloud-file]");
@@ -674,9 +694,13 @@
 
   window.addEventListener("kaiser-auth-ready", () => {
     cloudSessionReady = true;
-    setStatus("work", "Cloudove prihlaseni overeno", "Stahuji produkcni data...");
+    setStatus("work", "Cloudove prihlaseni overeno", pendingPush ? "Ukladam cekajici zmeny..." : "Stahuji produkcni data...");
     refreshAuthStatus();
-    if (readConfig().autoLoad) window.setTimeout(() => pullState(), 300);
+    if (pendingPush) {
+      schedulePush({ delay: 250, source: "Auto" });
+    } else if (readConfig().autoLoad) {
+      window.setTimeout(() => pullState(), 300);
+    }
   });
 
   window.addEventListener("kaiser-auth-signed-out", () => {
