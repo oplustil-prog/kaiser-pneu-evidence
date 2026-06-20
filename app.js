@@ -756,6 +756,48 @@ const userPermissions = {
   "Externi servis": "Servisni zakazky a vlastni zasahy"
 };
 
+const userRoleLabels = {
+  Management: "Manager",
+  Dilna: "Dilna",
+  Ridic: "Ridic",
+  "Spravce vozoveho parku": "Spravce",
+  "Externi servis": "Externi servis"
+};
+
+function roleKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function normalizeUserRole(value) {
+  const key = roleKey(value);
+  if (!key) return "Ridic";
+  if (["manager", "management", "manazer"].includes(key)) return "Management";
+  if (key === "spravce" || key.includes("spravce vozoveho parku")) return "Spravce vozoveho parku";
+  if (key === "dilna") return "Dilna";
+  if (key === "ridic") return "Ridic";
+  if (key.includes("externi")) return "Externi servis";
+  return String(value || "").trim();
+}
+
+function userRoleLabel(value) {
+  const role = normalizeUserRole(value);
+  return userRoleLabels[role] || role;
+}
+
+function availableUserRoles() {
+  const roles = new Map();
+  [...userRoles, ...(state.users || []).map((user) => user.role)].forEach((role) => {
+    const normalized = normalizeUserRole(role);
+    roles.set(normalized, userRoleLabel(normalized));
+  });
+  return [...roles.keys()];
+}
+
 const formatCurrency = (value) =>
   new Intl.NumberFormat("cs-CZ", {
     style: "currency",
@@ -1949,15 +1991,23 @@ function userInitials(name) {
 }
 
 function fillUserControls() {
-  const roleOptions = userRoles.map((role) => `<option value="${role}">${role}</option>`).join("");
+  const roles = availableUserRoles();
+  const roleOptions = roles
+    .map((role) => `<option value="${escapeHtml(role)}">${escapeHtml(userRoleLabel(role))}</option>`)
+    .join("");
   const roleSelect = query('#userForm select[name="role"]');
-  if (roleSelect && !roleSelect.innerHTML) roleSelect.innerHTML = roleOptions;
+  if (roleSelect) {
+    const current = normalizeUserRole(roleSelect.value || "Ridic");
+    roleSelect.innerHTML = roleOptions;
+    roleSelect.value = roles.includes(current) ? current : "Ridic";
+  }
 
   const roleFilter = query("#userRoleFilter");
   if (roleFilter) {
     const current = roleFilter.value || "all";
     roleFilter.innerHTML = `<option value="all">Vsechny role</option>${roleOptions}`;
-    roleFilter.value = userRoles.includes(current) ? current : "all";
+    const normalizedCurrent = normalizeUserRole(current);
+    roleFilter.value = current === "all" || !roles.includes(normalizedCurrent) ? "all" : normalizedCurrent;
   }
 }
 
@@ -1968,20 +2018,22 @@ function renderUsers() {
   const roleFilter = query("#userRoleFilter")?.value || "all";
   const statusFilter = query("#userStatusFilter")?.value || "all";
   const filteredUsers = users.filter((user) => {
-    const matchesRole = roleFilter === "all" || user.role === roleFilter;
+    const matchesRole = roleFilter === "all" || normalizeUserRole(user.role) === normalizeUserRole(roleFilter);
     const matchesStatus = statusFilter === "all" || user.status === statusFilter;
     return matchesRole && matchesStatus;
   });
 
   const activeCount = users.filter((user) => user.status === "aktivni").length;
-  const driverCount = users.filter((user) => user.role === "Ridic").length;
-  const adminCount = users.filter((user) => user.role === "Spravce vozoveho parku").length;
+  const managerCount = users.filter((user) => normalizeUserRole(user.role) === "Management").length;
+  const adminCount = users.filter((user) => normalizeUserRole(user.role) === "Spravce vozoveho parku").length;
+  const driverCount = users.filter((user) => normalizeUserRole(user.role) === "Ridic").length;
   query("#userCountBadge").textContent = `${activeCount} aktivnich / ${users.length} celkem`;
 
   query("#userMetrics").innerHTML = `
     <div class="user-metric"><span>Aktivni</span><strong>${activeCount}</strong></div>
-    <div class="user-metric"><span>Ridici</span><strong>${driverCount}</strong></div>
+    <div class="user-metric"><span>Manageri</span><strong>${managerCount}</strong></div>
     <div class="user-metric"><span>Spravci</span><strong>${adminCount}</strong></div>
+    <div class="user-metric"><span>Ridici</span><strong>${driverCount}</strong></div>
     <div class="user-metric"><span>Ve filtru</span><strong>${filteredUsers.length}</strong></div>
   `;
 
@@ -2001,9 +2053,9 @@ function renderUsers() {
                 <span class="badge ${isActive ? "badge-ok" : "badge-danger"}">${isActive ? "aktivni" : "pozastaveno"}</span>
               </div>
               <dl class="user-detail-grid">
-                <div><dt>Role</dt><dd>${escapeHtml(user.role)}</dd></div>
+                <div><dt>Role</dt><dd>${escapeHtml(userRoleLabel(user.role))}</dd></div>
                 <div><dt>Stredisko</dt><dd>${escapeHtml(user.depot)}</dd></div>
-                <div><dt>Prava</dt><dd>${escapeHtml(userPermissions[user.role] || "Vlastni pristup")}</dd></div>
+                <div><dt>Prava</dt><dd>${escapeHtml(userPermissions[normalizeUserRole(user.role)] || "Vlastni pristup")}</dd></div>
                 <div><dt>Posledni aktivita</dt><dd>${escapeHtml(user.lastActive || "-")}</dd></div>
               </dl>
               <div class="user-actions">
@@ -2028,7 +2080,7 @@ function addUser(event) {
   const userData = {
     name: String(data.name || "").trim(),
     email,
-    role: data.role,
+    role: normalizeUserRole(data.role),
     depot: data.depot,
     status: data.status,
     phone: String(data.phone || "").trim(),
@@ -2057,7 +2109,7 @@ function fillUserForm(userId) {
   if (!user || !form) return;
   form.elements.name.value = user.name;
   form.elements.email.value = user.email;
-  form.elements.role.value = user.role;
+  form.elements.role.value = normalizeUserRole(user.role);
   form.elements.depot.value = user.depot;
   form.elements.status.value = user.status;
   form.elements.phone.value = user.phone || "";
