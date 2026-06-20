@@ -183,12 +183,13 @@
     const data = Object.fromEntries(new FormData(form).entries());
     const tireIds = list(data.tireIds);
     const tirePositions = list(data.tirePositions);
-    const requestedCount = Number(data.tireCount) || tirePositions.length || tireIds.length || 0;
-    const createCount = form.elements.createTires.checked ? Math.max(requestedCount, 1) : requestedCount;
+    const tireCountRaw = String(data.tireCount ?? "").trim();
+    const requestedCount = tireCountRaw === "" ? Math.max(tirePositions.length, tireIds.length, 0) : Math.max(0, Number(tireCountRaw) || 0);
+    const createCount = form.elements.createTires.checked && requestedCount > 0 ? requestedCount : 0;
     const tireCreation = createNewTires(data, tirePositions, createCount);
     const createdTires = tireCreation.created;
     const allTireIds = [...tireIds, ...createdTires.map((tire) => tire.id)];
-    const tireCount = Math.max(createCount, allTireIds.length, tirePositions.length);
+    const tireCount = requestedCount;
     const photo = photoInput?.files?.[0];
     let uploadedPhoto = null;
 

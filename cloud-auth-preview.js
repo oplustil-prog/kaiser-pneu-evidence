@@ -35,16 +35,31 @@
     return Boolean(String(next.url || "").trim() && String(next.anonKey || "").trim());
   }
 
+  function sharedClientCache() {
+    if (!window.kaiserSupabaseClientCache) {
+      window.kaiserSupabaseClientCache = { key: "", client: null, promise: null };
+    }
+    return window.kaiserSupabaseClientCache;
+  }
+
   async function supabaseClient() {
     const next = config();
     if (!hasConfig(next)) throw new Error("Cloudove prihlaseni neni nastavene.");
 
     const key = `${next.url}|${next.anonKey}`;
+    const shared = sharedClientCache();
+    if (shared.client && shared.key === key) {
+      client = shared.client;
+      clientKey = key;
+      return shared.client;
+    }
+    if (shared.promise && shared.key === key) return shared.promise;
     if (client && clientKey === key) return client;
     if (clientPromise && clientKey === key) return clientPromise;
 
     clientKey = key;
-    clientPromise = import(SUPABASE_MODULE_URL)
+    shared.key = key;
+    clientPromise = shared.promise = import(SUPABASE_MODULE_URL)
       .then((module) => {
         client = module.createClient(next.url.trim(), next.anonKey.trim(), {
           auth: {
@@ -53,10 +68,12 @@
             detectSessionInUrl: true
           }
         });
+        shared.client = client;
         return client;
       })
       .finally(() => {
         clientPromise = null;
+        if (shared.key === key) shared.promise = null;
       });
     return clientPromise;
   }
@@ -84,7 +101,7 @@
 
       body.kaiser-auth-simple-locked .app-shell,
       body.kaiser-auth-simple-locked .quick-measure-dock {
-        filter: blur(2px);
+        display: none !important;
         pointer-events: none;
         user-select: none;
       }

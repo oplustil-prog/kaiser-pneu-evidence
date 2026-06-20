@@ -28,6 +28,13 @@
   let storagePatched = false;
   let cloudBaselineReady = false;
 
+  function sharedClientCache() {
+    if (!window.kaiserSupabaseClientCache) {
+      window.kaiserSupabaseClientCache = { key: "", client: null, promise: null };
+    }
+    return window.kaiserSupabaseClientCache;
+  }
+
   function saveGuard(event) {
     event.preventDefault();
     event.returnValue = "Zmeny se jeste ukladaji do cloudu.";
@@ -372,10 +379,20 @@
     if (!hasConnection(config)) throw new Error("Supabase neni nastaveny.");
 
     const key = `${config.url}|${config.anonKey}`;
+    const shared = sharedClientCache();
+    if (shared.client && shared.key === key) {
+      client = shared.client;
+      clientKey = key;
+      return shared.client;
+    }
+    if (shared.promise && shared.key === key) return shared.promise;
+
     if (window.kaiserAuthSimple?.getClient) {
       const sharedClient = await window.kaiserAuthSimple.getClient();
       client = sharedClient;
       clientKey = key;
+      shared.key = key;
+      shared.client = sharedClient;
       return sharedClient;
     }
 
@@ -383,7 +400,8 @@
     if (clientPromise && clientKey === key) return clientPromise;
 
     clientKey = key;
-    clientPromise = import(SUPABASE_MODULE_URL)
+    shared.key = key;
+    clientPromise = shared.promise = import(SUPABASE_MODULE_URL)
       .then((module) => {
         client = module.createClient(config.url.trim(), config.anonKey.trim(), {
           auth: {
@@ -392,10 +410,12 @@
             detectSessionInUrl: false
           }
         });
+        shared.client = client;
         return client;
       })
       .finally(() => {
         clientPromise = null;
+        if (shared.key === key) shared.promise = null;
       });
     return clientPromise;
   }

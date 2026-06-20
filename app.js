@@ -1,10 +1,15 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-48",
+  build: "20260620-49",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Tabletova navigace uz zobrazuje vsech osm sekci bez orezu.",
+    "Odhlasena aplikace je skutecne uzamcena za prihlasovacim dialogem.",
+    "Supabase klient se sdili mezi auth a sync modulem, aby nevznikaly duplicitni auth instance.",
+    "Servisni karta respektuje zadany pocet pneu vcetne hodnoty 0.",
+    "Obnova importovanych dat ma potvrzeni a jasne rika, ceho se netyka.",
     "Mobilni navigace je bez vodorovneho posouvani a zobrazuje vsechny sekce najednou.",
     "Ukazkovy import je jen nahled a neuklada se do cloudu.",
     "Obnova importovanych dat uz nesaha na vozidla, uzivatele, mereni ani osazene pozice.",
@@ -2892,12 +2897,16 @@ function bindEvents() {
   query("#saveVehicleImport").addEventListener("click", saveVehicleImport);
 
   query("#resetDemoData").addEventListener("click", () => {
+    const confirmed = window.confirm(
+      "Obnovit jen importovane faktury a nahled importu? Vozidla, uzivatele, mereni ani osazene pozice se tim nemení."
+    );
+    if (!confirmed) return;
     state.imports = structuredClone(initialState.imports || []);
     state.vehicleImports = structuredClone(initialState.vehicleImports || []);
     importSamplePreviewOnly = false;
     saveState();
     renderAll();
-    showToast("Importovana vychozi data byla obnovena.");
+    showToast("Importovana data byla obnovena. Vozidla, uzivatele, mereni a osazeni zustaly beze zmen.");
   });
 }
 
