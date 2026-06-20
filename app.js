@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-18",
+  build: "20260620-19",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Zkracen horni cloudovy stav, aby se v liste nerezal.",
     "Vracena dashboardova karta Namontovane pneu.",
     "Zpresneny stav cloudoveho ulozeni v horni liste.",
     "Prehled uzivatelu sjednocuje role Manager a Spravce.",

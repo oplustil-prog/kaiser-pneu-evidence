@@ -124,8 +124,18 @@
     if (!hasAuthenticatedSession()) return "zmeny zustanou jen v tomto prohlizeci";
     if (kind === "danger") return detail || "ulozeni se nepodarilo";
     if (kind === "work") return normalized.includes("stahuji") ? "cekam na data" : "zmena se odesila";
-    if (normalized.includes("ulozena") || normalized.includes("nactena")) return detail || lastSyncLabel();
+    if (normalized.includes("ulozena") || normalized.includes("nactena")) return compactSyncLabel(detail);
     return name;
+  }
+
+  function compactSyncLabel(detail = "") {
+    const meta = getMeta();
+    const syncDate = meta.lastSyncAt ? new Date(meta.lastSyncAt) : null;
+    if (syncDate && Number.isFinite(syncDate.getTime())) {
+      return `Sync ${syncDate.toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" })}`;
+    }
+    const match = String(detail || "").match(/(\d{1,2}:\d{2})/);
+    return match ? `Sync ${match[1]}` : "Sync hotovo";
   }
 
   function updateHeaderStatus(kind, message, detail = "") {

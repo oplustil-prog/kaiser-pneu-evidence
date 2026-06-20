@@ -186,7 +186,7 @@
       .login-status-card .auth-logout-button {
         margin-left: 4px;
         min-height: 30px;
-        padding: 6px 10px;
+        padding: 6px 9px;
       }
 
       @media (max-width: 620px) {

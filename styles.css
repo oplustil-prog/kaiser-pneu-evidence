@@ -310,11 +310,11 @@ textarea {
 
 .login-status-card {
   display: grid;
-  grid-template-columns: 10px minmax(132px, 1fr) auto;
+  grid-template-columns: 10px minmax(150px, 1fr) auto;
   align-items: center;
   gap: 9px;
-  max-width: 290px;
-  min-width: 250px;
+  max-width: min(520px, 100%);
+  min-width: 330px;
   min-height: 42px;
   padding: 8px 12px;
   border: 1px solid rgba(117, 189, 37, 0.34);
