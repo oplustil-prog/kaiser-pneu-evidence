@@ -718,7 +718,7 @@ const initialState = {
     pressureMin: 8.2,
     dotAgeLimit: 5,
     replacementDays: 30,
-    publicDemoMode: true,
+    publicDemoMode: false,
     workshopMobileMode: true
   }
 };
@@ -1895,7 +1895,9 @@ function renderSettings() {
     form.elements.pressureMin.value = settings.pressureMin;
     form.elements.dotAgeLimit.value = settings.dotAgeLimit;
     form.elements.replacementDays.value = settings.replacementDays;
-    form.elements.publicDemoMode.checked = Boolean(settings.publicDemoMode);
+    if (form.elements.publicDemoMode) {
+      form.elements.publicDemoMode.checked = Boolean(settings.publicDemoMode);
+    }
     form.elements.workshopMobileMode.checked = Boolean(settings.workshopMobileMode);
   }
 
@@ -1912,7 +1914,7 @@ function renderSettings() {
     </div>
     <div class="settings-summary-card">
       <span>Rezimy</span>
-      <strong>${settings.publicDemoMode ? "Verejny demo rezim" : "Interni rezim"}</strong>
+      <strong>${settings.workshopMobileMode ? "Mobilni rezim pro dilnu" : "Standardni provoz"}</strong>
       <p>${settings.workshopMobileMode ? "Dilna ma prioritu mobilniho zadani." : "Mobilni rezim neni vychozi."}</p>
     </div>
     <div class="settings-summary-card app-version-card">
@@ -2077,7 +2079,7 @@ function saveSettings(event) {
     pressureMin: Number(form.elements.pressureMin.value) || initialState.settings.pressureMin,
     dotAgeLimit: Number(form.elements.dotAgeLimit.value) || initialState.settings.dotAgeLimit,
     replacementDays: Number(form.elements.replacementDays.value) || initialState.settings.replacementDays,
-    publicDemoMode: form.elements.publicDemoMode.checked,
+    publicDemoMode: false,
     workshopMobileMode: form.elements.workshopMobileMode.checked
   };
   applySettings();
