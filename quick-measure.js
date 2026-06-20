@@ -1,11 +1,14 @@
 (function () {
   if (typeof setQuickMeasureOpen === "function") return;
 
+  const MAX_REASONABLE_ODOMETER = 5000000;
+
   function currentOdometerFor(formElement) {
     const spz = formElement?.elements?.vehicle?.value;
     if (!spz || typeof state === "undefined" || !Array.isArray(state.vehicles)) return 0;
     const vehicle = state.vehicles.find((item) => item.spz === spz);
-    return Math.max(0, Math.round(Number(vehicle?.odometer) || 0));
+    const odometer = Math.max(0, Math.round(Number(vehicle?.odometer) || 0));
+    return odometer > MAX_REASONABLE_ODOMETER ? 0 : odometer;
   }
 
   function formatOdometer(value) {
@@ -48,7 +51,7 @@
     if (!input || input.dataset.odoWatchInstalled) return;
     input.dataset.odoWatchInstalled = "true";
     input.addEventListener("input", () => {
-      input.dataset.userEdited = input.value ? "true" : "";
+      input.dataset.userEdited = "true";
     });
   }
 

@@ -1,10 +1,12 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
+const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-52",
+  build: "20260620-53",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Mereni odmita nerealne vysoky tachometr a umi opravit zjevne chybne ulozeny stav km.",
     "Rychle mereni predvyplni aktualni stav km a pri prazdnem km ukaze jasnou chybu.",
     "Prehled uzivatelu uz jasne rika, ze zaznam v evidenci neni Supabase ucet a heslo se nastavuje e-mailovou obnovou.",
     "Odstraneno nacitani neexistujiciho souboru vehicle-photo-assets.js.",
@@ -2472,6 +2474,10 @@ function parseOdometerValue(value) {
 function applyVehicleOdometer(vehicle, odometer) {
   if (!vehicle || odometer <= 0) return false;
   const current = Number(vehicle.odometer) || 0;
+  if (current > ODOMETER_HARD_LIMIT && odometer <= ODOMETER_HARD_LIMIT) {
+    vehicle.odometer = odometer;
+    return true;
+  }
   if (odometer <= current) return false;
   vehicle.odometer = odometer;
   return true;
@@ -2685,8 +2691,16 @@ function saveMeasurementData(data) {
   if (odometer <= 0) {
     return { ok: false, field: "odometer", message: "Zadejte aktualni stav km." };
   }
+  if (odometer > ODOMETER_HARD_LIMIT) {
+    return {
+      ok: false,
+      field: "odometer",
+      message: `Stav km ${formatNumber(odometer)} km je nerealne vysoky. Zkontrolujte preklep.`
+    };
+  }
   const currentOdometer = Number(vehicle?.odometer) || 0;
-  if (vehicle && currentOdometer > 0 && odometer < currentOdometer) {
+  const currentOdometerLooksInvalid = currentOdometer > ODOMETER_HARD_LIMIT;
+  if (vehicle && currentOdometer > 0 && !currentOdometerLooksInvalid && odometer < currentOdometer) {
     return {
       ok: false,
       field: "odometer",
