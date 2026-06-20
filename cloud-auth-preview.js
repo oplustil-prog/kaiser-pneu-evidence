@@ -144,6 +144,10 @@
         gap: 13px;
       }
 
+      .kaiser-auth-simple-form[hidden] {
+        display: none !important;
+      }
+
       .kaiser-auth-simple-actions {
         display: grid;
         gap: 9px;
@@ -238,7 +242,7 @@
                 <button class="button button-soft" type="button" data-auth-reset-request>Nastavit / obnovit heslo</button>
               </div>
               <small class="kaiser-auth-simple-help">
-                Heslo se nastavuje pres e-mail ze Supabase. Heslo vyplnene v prehledu uzivatelu neni prihlasovaci heslo.
+                Pro prvni prihlaseni nebo zapomenute heslo posleme odkaz na e-mail.
               </small>
             </form>
             <form class="kaiser-auth-simple-form" id="kaiserPasswordResetForm" hidden>
@@ -447,7 +451,7 @@
         "Odeslani e-mailu trva moc dlouho. Zkuste to prosim znovu."
       );
       if (error) throw error;
-      status("Pokud ucet v Supabase existuje, prisel e-mail pro nastaveni hesla.", "ok");
+      status("Pokud e-mail patri k uctu, poslali jsme odkaz pro nastaveni hesla.", "ok");
     } catch (error) {
       status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat.", "danger");
     } finally {
