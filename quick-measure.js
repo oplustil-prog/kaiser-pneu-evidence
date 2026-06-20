@@ -1,14 +1,32 @@
 (function () {
   if (typeof setQuickMeasureOpen === "function") return;
 
+  function currentOdometerFor(formElement) {
+    const spz = formElement?.elements?.vehicle?.value;
+    if (!spz || typeof state === "undefined" || !Array.isArray(state.vehicles)) return 0;
+    const vehicle = state.vehicles.find((item) => item.spz === spz);
+    return Math.max(0, Math.round(Number(vehicle?.odometer) || 0));
+  }
+
+  function formatOdometer(value) {
+    if (typeof formatNumber === "function") return formatNumber(value);
+    return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  }
+
   function clearOdometer(formElement) {
     const input = formElement?.elements?.odometer;
     if (!input) return;
     if (input.dataset.userEdited === "true") return;
-    input.value = "";
-    input.defaultValue = "";
-    input.removeAttribute("value");
-    input.placeholder = "opsat aktualni km";
+    const odometer = currentOdometerFor(formElement);
+    const value = odometer > 0 ? String(odometer) : "";
+    input.value = value;
+    input.defaultValue = value;
+    if (value) {
+      input.setAttribute("value", value);
+    } else {
+      input.removeAttribute("value");
+    }
+    input.placeholder = odometer > 0 ? `aktualni ${formatOdometer(odometer)} km` : "opsat aktualni km";
     input.autocomplete = "off";
     input.setAttribute("autocomplete", "off");
     input.setAttribute("data-lpignore", "true");
@@ -32,6 +50,35 @@
     input.addEventListener("input", () => {
       input.dataset.userEdited = input.value ? "true" : "";
     });
+  }
+
+  function installValidationMessages(formElement) {
+    if (!formElement || formElement.dataset.measureValidationInstalled) return;
+    formElement.dataset.measureValidationInstalled = "true";
+    formElement.addEventListener(
+      "invalid",
+      (event) => {
+        const field = event.target;
+        if (!field?.name) return;
+        if (field.name === "odometer") {
+          const odometer = currentOdometerFor(formElement);
+          toast(
+            odometer > 0
+              ? `Doplnte stav km alespon ${formatOdometer(odometer)} km.`
+              : "Doplnte aktualni stav km."
+          );
+          return;
+        }
+        if (field.name === "tread" || field.name.startsWith("tread-")) {
+          toast("Doplnte hloubku dezenu v mm.");
+          return;
+        }
+        if (field.name === "pressure" || field.name.startsWith("pressure-")) {
+          toast("Doplnte tlak v barech.");
+        }
+      },
+      true
+    );
   }
 
   function installGlobalOdometerGuard() {
@@ -67,6 +114,7 @@
     const mainForm = document.querySelector("#measurementForm");
     if (!mainForm) return;
     watchOdometer(mainForm);
+    installValidationMessages(mainForm);
     resetOdometer(mainForm);
     mainForm.elements.vehicle?.addEventListener("change", () => {
       resetOdometer(mainForm);
@@ -90,6 +138,7 @@
 
   if (!dock || !panel || !toggle || !close || !form) return;
   watchOdometer(form);
+  installValidationMessages(form);
 
   let quickMode = "single";
   let bulkForm = null;
@@ -140,6 +189,7 @@
     bulkVehicle = bulkForm.elements.vehicle;
     bulkOdometer = bulkForm.elements.odometer;
     watchOdometer(bulkForm);
+    installValidationMessages(bulkForm);
     bulkVehicle.addEventListener("change", () => {
       renderBulkRows(bulkVehicle.value);
       resetOdometer(bulkForm);
