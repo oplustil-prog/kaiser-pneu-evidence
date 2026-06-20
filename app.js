@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-26",
+  build: "20260620-27",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Zabraneno duplicitam realnych pristupu pri shodnem jmenu v cloudu a vychozim adresari.",
     "Doplneny realne pristupy Milan Gazi, Tomas Gazi a Martin Konecek do vychoziho adresare.",
     "Vynuceno nove nacteni hlavniho skriptu po cache problemu v prohlizeci.",
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
@@ -841,10 +842,30 @@ function userMergeKey(user) {
   return String(user.email || user.id || user.name || "").trim().toLowerCase();
 }
 
+function userNameMergeKey(user) {
+  return String(user.name || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+}
+
 function mergeDefaultUsers(existing = []) {
+  const existingByName = new Map();
+  const existingByKey = new Map();
+  (existing || []).forEach((user) => {
+    const nameKey = userNameMergeKey(user);
+    const key = userMergeKey(user);
+    if (nameKey) existingByName.set(nameKey, true);
+    if (key) existingByKey.set(key, true);
+  });
+
   const users = new Map();
   (initialState.users || []).forEach((user) => {
     const key = userMergeKey(user);
+    const nameKey = userNameMergeKey(user);
+    if (nameKey && existingByName.has(nameKey) && !existingByKey.has(key)) return;
     if (key) users.set(key, structuredClone(user));
   });
   (existing || []).forEach((user) => {
