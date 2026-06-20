@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-31",
+  build: "20260620-32",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Vynuceno nove nacteni stylu mapy osazeni.",
     "Mapa osazeni zvyraznuje problemove pozice pulzem a potlacuje neosazene pozice.",
     "Opraveno poradi nacitani odebranych uzivatelu pred inicializaci stavu.",
     "Prehled uzivatelu ma vlastni vyhledavani a skryva odebrane obecne ucty dilny a managementu.",
