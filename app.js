@@ -1,10 +1,12 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-46",
+  build: "20260620-47",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Ukazkovy import je jen nahled a neuklada se do cloudu.",
+    "Obnova importovanych dat uz nesaha na vozidla, uzivatele, mereni ani osazene pozice.",
     "Automaticke ulozeni s ubytkem dat nejdriv nacita cloud, aby neprepsalo novejsi produkcni stav.",
     "Cloudova ochrana uz neblokuje bezne male zmeny v osazenych pozicich a uzivatelich.",
     "Modul prirazovani pneu uz neprepisuje hlavni build aplikace na starou verzi.",
@@ -769,6 +771,7 @@ saveState();
 let activeSection = "dashboard";
 let selectedVehicle = state.vehicles[0]?.spz || "";
 let selectedPosition = "";
+let importSamplePreviewOnly = false;
 
 const titles = {
   dashboard: "Dashboard provozu",
@@ -2852,6 +2855,10 @@ function bindEvents() {
       "2026-06-13;Pneuservis A;PA-260613;Hankook AH31 315/80 R22,5;1;9456;2BD 8835\n" +
       "2026-06-13;Pneuservis A;PA-260613;montaz a demontaz;1;1200;2BD 8835\n" +
       "2026-06-13;Pneuservis A;PA-260613;ventil a zavazi;1;300;2BD 8835";
+    importSamplePreviewOnly = true;
+  });
+  query("#invoiceImport").addEventListener("input", () => {
+    importSamplePreviewOnly = false;
   });
 
   query("#loadSampleVehicles").addEventListener("click", () => {
@@ -2862,9 +2869,15 @@ function bindEvents() {
   });
 
   query("#parseImport").addEventListener("click", () => {
-    state.imports = parseImportRows(query("#invoiceImport").value);
+    const rows = parseImportRows(query("#invoiceImport").value);
+    if (importSamplePreviewOnly) {
+      renderImportPreview(rows);
+      showToast("Ukazka je rozpoznana jen jako nahled. Cloud se nezmenil.");
+      return;
+    }
+    state.imports = rows;
     saveState();
-    renderImportPreview();
+    renderAll();
     showToast("Polozky jsou rozpoznane a pripravene ke kontrole.");
   });
 
@@ -2878,10 +2891,10 @@ function bindEvents() {
   query("#saveVehicleImport").addEventListener("click", saveVehicleImport);
 
   query("#resetDemoData").addEventListener("click", () => {
-    state = structuredClone(initialState);
+    state.imports = structuredClone(initialState.imports || []);
+    state.vehicleImports = structuredClone(initialState.vehicleImports || []);
+    importSamplePreviewOnly = false;
     saveState();
-    selectedVehicle = state.vehicles[0]?.spz || "";
-    selectedPosition = "";
     renderAll();
     showToast("Importovana vychozi data byla obnovena.");
   });
