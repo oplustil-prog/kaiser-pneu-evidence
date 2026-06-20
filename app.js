@@ -1,11 +1,12 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-19",
+  build: "20260620-20",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
+    "V detailu vozidla se zobrazuji namontovane pneu z faktur pro vybranou SPZ.",
     "Vracena dashboardova karta Namontovane pneu.",
     "Zpresneny stav cloudoveho ulozeni v horni liste.",
     "Prehled uzivatelu sjednocuje role Manager a Spravce.",
@@ -1681,6 +1682,95 @@ function tireForPosition(spz, position) {
   return state.tires.find((tire) => tire.vehicle === spz && tire.position === position);
 }
 
+function vehicleTireEvidence(spz) {
+  const rows = new Map();
+  (state.tires || []).forEach((tire) => {
+    if (tire.vehicle === spz || tire.sourceVehicle === spz) rows.set(tire.id, tire);
+  });
+  return [...rows.values()].sort((a, b) => {
+    const dateDiff = String(b.purchaseDate || "").localeCompare(String(a.purchaseDate || ""));
+    if (dateDiff) return dateDiff;
+    return String(a.id || "").localeCompare(String(b.id || ""), "cs");
+  });
+}
+
+function groupVehicleTireEvidence(spz) {
+  const groups = new Map();
+  vehicleTireEvidence(spz).forEach((tire) => {
+    const isPositioned = tire.vehicle === spz && tire.position;
+    const status = isPositioned ? `pozice ${tire.position}` : "z faktury pro vozidlo";
+    const key = [
+      tire.invoice || "",
+      tire.sourceLabel || "",
+      tire.manufacturer || "",
+      tire.model || "",
+      tire.size || "",
+      status
+    ].join("|");
+    const existing = groups.get(key) || {
+      count: 0,
+      manufacturer: tire.manufacturer || "",
+      model: tire.model || "",
+      size: tire.size || "",
+      invoice: tire.invoice || "",
+      purchaseDate: tire.purchaseDate || "",
+      status,
+      treadTotal: 0
+    };
+    existing.count += 1;
+    existing.treadTotal += Number(tire.currentTread) || 0;
+    if (!existing.purchaseDate && tire.purchaseDate) existing.purchaseDate = tire.purchaseDate;
+    groups.set(key, existing);
+  });
+  return [...groups.values()];
+}
+
+function renderVehicleTireEvidence(spz) {
+  const groups = groupVehicleTireEvidence(spz);
+  const total = groups.reduce((sum, item) => sum + item.count, 0);
+  if (!total) {
+    return `
+      <div class="vehicle-tire-evidence">
+        <div class="vehicle-tire-evidence-head">
+          <div>
+            <p class="eyebrow">Namontovane pneu</p>
+            <strong>Bez pneumatik v evidenci</strong>
+          </div>
+          <span class="badge badge-warning">0 ks</span>
+        </div>
+        <p class="meta">Pro tuto SPZ zatim neni v evidenci zadna pneumatika ani faktura s pneu.</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="vehicle-tire-evidence">
+      <div class="vehicle-tire-evidence-head">
+        <div>
+          <p class="eyebrow">Namontovane pneu</p>
+          <strong>${total} ks v evidenci vozidla</strong>
+        </div>
+        <span class="badge badge-ok">${total} ks</span>
+      </div>
+      <div class="vehicle-tire-evidence-list">
+        ${groups
+          .map((item) => {
+            const title = `${item.count} ks ${item.manufacturer} ${item.model}`.trim();
+            const tread = item.treadTotal ? ` / dezen ${formatNumber(item.treadTotal / item.count, 1)} mm` : "";
+            return `
+              <div class="vehicle-tire-evidence-row">
+                <strong>${escapeHtml(title)}</strong>
+                <span>${escapeHtml(item.size || "rozmer nezjisten")}${tread}</span>
+                <p>${escapeHtml(item.invoice ? `FA ${item.invoice}` : "bez FA")} / ${escapeHtml(item.purchaseDate || "-")} / ${escapeHtml(item.status)}</p>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
 function renderVehicles() {
   const vehicle = state.vehicles.find((item) => item.spz === selectedVehicle) || state.vehicles[0];
   if (!vehicle) return;
@@ -1688,11 +1778,19 @@ function renderVehicles() {
   query("#vehicleSelect").value = selectedVehicle;
 
   const vehicleTires = state.tires.filter((tire) => tire.vehicle === vehicle.spz);
+  const vehicleEvidenceTires = vehicleTireEvidence(vehicle.spz);
   const avgTread =
     vehicleTires.reduce((sum, tire) => sum + tire.currentTread, 0) / Math.max(vehicleTires.length, 1);
   const vehicleServiceCost = state.services
     .filter((item) => item.vehicle === vehicle.spz)
     .reduce((sum, item) => sum + item.labor + item.material + item.tireCost, 0);
+  const recommendation = vehicleTires.length
+    ? avgTread < 5
+      ? "Zaridit planovanou vymenu pro nejvice sjete pozice."
+      : "Pokracovat v tydenni kontrole tlaku a dezenu."
+    : vehicleEvidenceTires.length
+      ? "Pneu jsou v evidenci z faktur. Doplnte jejich presne pozice na mape vozidla."
+      : "Pro vozidlo zatim nejsou v evidenci zadne pneumatiky.";
 
   query("#vehicleDetail").innerHTML = `
     <div>
@@ -1703,14 +1801,16 @@ function renderVehicles() {
     <div class="vehicle-metric-grid">
       <div class="vehicle-metric"><span>Tachometr</span><strong>${formatNumber(vehicle.odometer)} km</strong></div>
       <div class="vehicle-metric"><span>Osazene pozice</span><strong>${vehicleTires.length}/${vehicle.configuration.length}</strong></div>
+      <div class="vehicle-metric"><span>Namontovane pneu</span><strong>${vehicleEvidenceTires.length} ks</strong></div>
       <div class="vehicle-metric"><span>Prumerny dezen</span><strong>${formatNumber(avgTread, 1)} mm</strong></div>
       <div class="vehicle-metric"><span>Naklady servis</span><strong>${formatCurrency(vehicleServiceCost)}</strong></div>
     </div>
+    ${renderVehicleTireEvidence(vehicle.spz)}
     <div class="alert-item">
       <span class="alert-marker" aria-hidden="true"></span>
       <div>
         <strong>Doporuceni</strong>
-        <p>${avgTread < 5 ? "Zaridit planovanou vymenu pro nejvice sjete pozice." : "Pokračovat v tydenni kontrole tlaku a dezenu."}</p>
+        <p>${recommendation}</p>
       </div>
     </div>
   `;

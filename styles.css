@@ -1239,6 +1239,58 @@ label {
   font-size: 1.1rem;
 }
 
+.vehicle-tire-evidence {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(117, 189, 37, 0.24);
+  border-radius: 8px;
+  padding: 13px;
+  background: rgba(117, 189, 37, 0.06);
+}
+
+.vehicle-tire-evidence-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vehicle-tire-evidence-head strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 1rem;
+}
+
+.vehicle-tire-evidence-list {
+  display: grid;
+  gap: 8px;
+}
+
+.vehicle-tire-evidence-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 11px;
+  background: var(--surface-strong);
+}
+
+.vehicle-tire-evidence-row strong,
+.vehicle-tire-evidence-row span {
+  display: block;
+}
+
+.vehicle-tire-evidence-row span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.vehicle-tire-evidence-row p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
 .vehicle-map {
   --wheel-width: 62px;
   --wheel-height: 84px;
