@@ -250,40 +250,6 @@
     return problems;
   }
 
-  function withCloudBackupHistory(counts = {}, reason, backupState = state) {
-    const backup = JSON.parse(JSON.stringify(backupState || {}));
-    const entry = {
-      createdAt: new Date().toISOString(),
-      reason: reason || "snapshot",
-      counts: stateProfile(backup),
-      state: backup
-    };
-    const previous = Array.isArray(counts?.cloudBackups) ? counts.cloudBackups : [];
-    return {
-      ...(counts || {}),
-      cloudBackups: [entry, ...previous].slice(0, 3)
-    };
-  }
-
-  async function saveCloudBackup(supabase, config, reason, backupState = state, baseRow = null) {
-    try {
-      if (!baseRow?.state) return false;
-      const counts = withCloudBackupHistory(baseRow.counts || {}, reason, backupState);
-      const { error } = await supabase.from(config.table).update(
-        {
-          state: baseRow.state,
-          app_version: baseRow.app_version || STORAGE_KEY,
-          counts,
-          updated_at: baseRow.updated_at || new Date().toISOString(),
-          updated_by: baseRow.updated_by || "github-pages"
-        }
-      ).eq("id", config.rowId);
-      return !error;
-    } catch {
-      return false;
-    }
-  }
-
   function guardMessage(action, drops, fromProfile, toProfile) {
     return `${action} zablokovano: ${drops.join("; ")}. Zdroj: ${profileText(fromProfile)}. Cil: ${profileText(toProfile)}.`;
   }
@@ -481,21 +447,13 @@
         const cloudProfile = stateProfile(current.data.state);
         const drops = destructiveDrops(nextProfile, cloudProfile);
         if (drops.length) {
-          await saveCloudBackup(supabase, config, "blocked-upload-app-state", nextState, current.data);
           setStatus("danger", "Cloud chranen - nahrani zablokovano", guardMessage("Nahrani", drops, nextProfile, cloudProfile));
           return false;
         }
       }
 
       const now = new Date().toISOString();
-      let counts = nextProfile;
-      if (current.data?.state) {
-        counts = withCloudBackupHistory(
-          { ...nextProfile, cloudBackups: current.data.counts?.cloudBackups || [] },
-          "before-upload-cloud-state",
-          current.data.state
-        );
-      }
+      const counts = nextProfile;
       const payload = {
         state: nextState,
         app_version: STORAGE_KEY,
@@ -555,12 +513,9 @@
       }
       const drops = destructiveDrops(cloudProfile, localProfile);
       if (drops.length) {
-        await saveCloudBackup(supabase, config, "blocked-download-app-state", localBefore, data);
         setStatus("danger", "Data v aplikaci chranena - stazeni zablokovano", guardMessage("Stazeni", drops, cloudProfile, localProfile));
         return;
       }
-
-      await saveCloudBackup(supabase, config, "before-download-app-state", localBefore, data);
 
       state = normalizeState(data.state);
       selectedVehicle = state.vehicles[0]?.spz || "";

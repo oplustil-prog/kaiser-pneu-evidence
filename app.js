@@ -1,13 +1,13 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-42",
+  build: "20260620-43",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
-    "Cloudova historie uz nezaklada nove Supabase radky, aby ji nezastavila RLS pravidla.",
+    "Ukladani do cloudu uz nepridava velkou historii do zaznamu, aby nenarazilo na Supabase limit.",
+    "Ochrana proti destruktivnim zapisum blokuje rizikovou zmenu bez dalsiho zapisu do Supabase.",
     "Tlacitko Ulozit znovu uklada bezne zmeny do Supabase cloudu; destruktivni prepisy zustavaji blokovane.",
-    "Bezpecnostni kopie pred cloudovymi operacemi se ukladaji do Supabase cloud historie.",
     "Prihlaseni uz nezustava zasekle v nastaveni noveho hesla po dokoncene nebo zrusene obnove.",
     "Cloud uz se nikdy automaticky neprepisuje a synchronizace blokuje ztratu vozidel, uzivatelu, pneu i osazenych pozic.",
     "Rychle mereni zobrazuje vzdy jen jeden rezim, aby se jedna pozice a vsechny pozice nemichaly dohromady.",
