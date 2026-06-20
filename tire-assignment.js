@@ -1,6 +1,7 @@
 (function () {
-  const BUILD = "20260618-43";
+  const BUILD = "20260620-18";
   const NOTE = "Jednoduche prirazovani pneu primo z mapy osazeni vozidla.";
+  const VERSION = "v0.9.12";
 
   function safe(value) {
     return String(value || "").replace(/[&<>"']/g, (char) =>
@@ -254,7 +255,7 @@
   function updateVersion() {
     try {
       if (typeof APP_VERSION !== "undefined") {
-        APP_VERSION.number = "v0.9.11";
+        APP_VERSION.number = VERSION;
         APP_VERSION.build = BUILD;
         if (Array.isArray(APP_VERSION.notes) && !APP_VERSION.notes.includes(NOTE)) {
           APP_VERSION.notes.push(NOTE);
