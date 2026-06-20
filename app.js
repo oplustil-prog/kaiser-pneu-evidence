@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-25",
+  build: "20260620-26",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Doplneny realne pristupy Milan Gazi, Tomas Gazi a Martin Konecek do vychoziho adresare.",
     "Vynuceno nove nacteni hlavniho skriptu po cache problemu v prohlizeci.",
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
     "Realne uzivatelske pristupy jsou v seznamu nahore pred automatickymi ridici.",
@@ -716,6 +717,36 @@ const initialState = {
       status: "aktivni",
       phone: "",
       lastActive: "2026-06-16"
+    },
+    {
+      id: "USR-004",
+      name: "Milan Gaží",
+      email: "milan.gazi@kaiserservis.cz",
+      role: "Ridic",
+      depot: "Kaiser Servis",
+      status: "aktivni",
+      phone: "",
+      lastActive: "2026-06-20"
+    },
+    {
+      id: "USR-005",
+      name: "Tomáš Gaží",
+      email: "tomas.gazi@kaiserservis.cz",
+      role: "Ridic",
+      depot: "Kaiser Servis",
+      status: "aktivni",
+      phone: "",
+      lastActive: "2026-06-20"
+    },
+    {
+      id: "USR-006",
+      name: "Martin Koneček",
+      email: "martin.konecek@kaiserservis.cz",
+      role: "Ridic",
+      depot: "Kaiser Servis",
+      status: "aktivni",
+      phone: "",
+      lastActive: "2026-06-20"
     },
     ...kaiserDriverUsers
   ],
