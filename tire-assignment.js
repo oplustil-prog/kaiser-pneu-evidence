@@ -1,5 +1,5 @@
 (function () {
-  const BUILD = "20260620-30";
+  const BUILD = "20260620-31";
   const NOTE = "Jednoduche prirazovani pneu primo z mapy osazeni vozidla.";
   const VERSION = "v0.9.12";
 

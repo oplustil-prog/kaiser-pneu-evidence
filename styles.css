@@ -1521,6 +1521,15 @@ label {
   box-shadow: inset 0 0 0 3px #414c44, 0 12px 24px rgba(29, 36, 32, 0.16);
 }
 
+.position-button::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 28px;
+  pointer-events: none;
+  opacity: 0;
+}
+
 .position-button::before {
   content: "";
   position: absolute;
@@ -1549,9 +1558,69 @@ label {
   color: #ffffff;
 }
 
+.position-button.low {
+  animation: positionIssuePulse 1.35s ease-in-out infinite;
+}
+
+.position-button.low::after {
+  border: 3px solid rgba(200, 73, 63, 0.58);
+  animation: positionIssueRing 1.35s ease-out infinite;
+}
+
 .position-button.warn span {
   background: var(--yellow-soft);
   color: #7a5200;
+}
+
+.position-button.empty {
+  opacity: 0.38;
+  filter: grayscale(0.75);
+  border-color: rgba(31, 41, 35, 0.42);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 3px, transparent 3px 100%),
+    repeating-linear-gradient(0deg, rgba(21, 26, 23, 0.58) 0 8px, rgba(48, 58, 52, 0.5) 8px 14px);
+  box-shadow: inset 0 0 0 3px rgba(65, 76, 68, 0.45);
+}
+
+.position-button.empty::before {
+  border-color: rgba(255, 255, 255, 0.1);
+  border-style: dashed;
+}
+
+.position-button.empty span {
+  background: #eef2ec;
+  color: rgba(97, 112, 94, 0.72);
+  border: 1px dashed rgba(97, 112, 94, 0.45);
+}
+
+@keyframes positionIssuePulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 3px #414c44, 0 12px 24px rgba(29, 36, 32, 0.16);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: inset 0 0 0 3px #414c44, 0 0 0 8px rgba(200, 73, 63, 0.14), 0 18px 32px rgba(200, 73, 63, 0.3);
+    transform: scale(1.035);
+  }
+}
+
+@keyframes positionIssueRing {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.82);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.22);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .position-button.low,
+  .position-button.low::after {
+    animation: none;
+  }
 }
 
 .position-detail {
