@@ -7,12 +7,14 @@
   let clientKey = "";
   let clientPromise = null;
   let busy = false;
+  let passwordRecoveryMode = false;
 
   window.kaiserAuthState = {
     authenticated: false,
     email: "",
     user: null,
-    authVersion: "simple"
+    authVersion: "simple",
+    passwordRecoveryRequired: false
   };
 
   function readJson(key, fallback) {
@@ -26,7 +28,7 @@
 
   function config() {
     const defaults = window.kaiserSupabaseDefaults || window.kaiserSupabaseConfig || {};
-    return { ...defaults, ...readJson(CONFIG_KEY, {}), autoLoad: true, autoSync: true };
+    return { ...defaults, ...readJson(CONFIG_KEY, {}), autoLoad: true, autoSync: false };
   }
 
   function hasConfig(next = config()) {
@@ -274,6 +276,10 @@
     return /type=recovery|access_token=|code=/.test(marker);
   }
 
+  function clearRecoveryMode() {
+    passwordRecoveryMode = false;
+  }
+
   function cleanAuthUrl() {
     if (!window.history?.replaceState) return;
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -322,11 +328,12 @@
     if (!state.authenticated) {
       box.classList.add("is-logged-out");
       box.classList.remove("is-syncing");
+      const recovery = Boolean(state.passwordRecoveryRequired);
       box.innerHTML = `
         <span class="login-status-dot" aria-hidden="true"></span>
         <span>
-          <strong data-login-status-title>Cloud neni prihlasen</strong>
-          <small data-login-status-subtitle>zmeny se neulozi do cloudu</small>
+          <strong data-login-status-title>${recovery ? "Nastavte nove heslo" : "Cloud neni prihlasen"}</strong>
+          <small data-login-status-subtitle>${recovery ? "aplikace je do ulozeni hesla zamcena" : "zmeny se neulozi do cloudu"}</small>
         </span>
       `;
       box.title = "";
@@ -378,23 +385,38 @@
     document.body.classList.remove("kaiser-auth-simple-locked");
   }
 
+  function publishAuthState(eventName) {
+    renderHeader();
+    stabilizeHeader();
+    window.dispatchEvent(new CustomEvent("kaiser-auth-state", { detail: window.kaiserAuthState }));
+    window.dispatchEvent(new CustomEvent(eventName, { detail: window.kaiserAuthState }));
+  }
+
   function setAuth(user) {
     const email = String(user?.email || "").trim();
     const authenticated = Boolean(email);
+    if (authenticated) clearRecoveryMode();
     window.kaiserAuthState = {
       authenticated,
       email,
       user: user || null,
-      authVersion: "simple"
+      authVersion: "simple",
+      passwordRecoveryRequired: false
     };
-    renderHeader();
-    stabilizeHeader();
-    window.dispatchEvent(new CustomEvent("kaiser-auth-state", { detail: window.kaiserAuthState }));
-    window.dispatchEvent(
-      new CustomEvent(authenticated ? "kaiser-auth-ready" : "kaiser-auth-locked", {
-        detail: window.kaiserAuthState
-      })
-    );
+    publishAuthState(authenticated ? "kaiser-auth-ready" : "kaiser-auth-locked");
+  }
+
+  function setRecoveryAuth(user = null) {
+    passwordRecoveryMode = true;
+    const email = String(user?.email || "").trim();
+    window.kaiserAuthState = {
+      authenticated: false,
+      email,
+      user: user || null,
+      authVersion: "simple",
+      passwordRecoveryRequired: true
+    };
+    publishAuthState("kaiser-auth-locked");
   }
 
   async function signIn(event) {
@@ -419,6 +441,7 @@
       );
       form.elements.password.value = "";
       if (error) throw error;
+      clearRecoveryMode();
       setAuth(data?.user || { email });
       status("Prihlaseno.", "ok");
       hideLogin();
@@ -485,6 +508,7 @@
       );
       if (error) throw error;
       form.reset();
+      clearRecoveryMode();
       cleanAuthUrl();
       const session = await supabase.auth.getSession();
       setAuth(data?.user || session?.data?.session?.user || null);
@@ -507,12 +531,50 @@
     } catch {
       // The local lock is still safer if remote sign-out cannot finish.
     } finally {
+      clearRecoveryMode();
       setAuth(null);
       window.dispatchEvent(new CustomEvent("kaiser-auth-signed-out", { detail: window.kaiserAuthState }));
       showLogin();
       status("Odhlaseno.", "ok");
       setBusy(false);
     }
+  }
+
+  async function cancelRecovery() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const supabase = await supabaseClient();
+      await withTimeout(supabase.auth.signOut(), "Odhlaseni trva moc dlouho.");
+    } catch {
+      // Local lock is enough to escape a stale recovery screen.
+    } finally {
+      clearRecoveryMode();
+      cleanAuthUrl();
+      setAuth(null);
+      showLogin();
+      status("Pro vstup se prihlaste e-mailem a heslem.", "warn");
+      setBusy(false);
+    }
+  }
+
+  function installAuthListener(supabase) {
+    if (installAuthListener.installed) return;
+    installAuthListener.installed = true;
+    supabase.auth.onAuthStateChange((event, session) => {
+      const user = session?.user || null;
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryAuth(user);
+        showPasswordReset();
+        status("Zadejte a ulozte nove heslo.", "warn");
+        return;
+      }
+      if (event === "SIGNED_OUT") {
+        clearRecoveryMode();
+        setAuth(null);
+        showLogin();
+      }
+    });
   }
 
   async function boot() {
@@ -533,6 +595,7 @@
     status("Kontroluji prihlaseni...");
     try {
       const supabase = await supabaseClient();
+      installAuthListener(supabase);
       const { data, error } = await withTimeout(
         supabase.auth.getSession(),
         "Kontrola prihlaseni trva moc dlouho. Zkuste to prosim znovu."
@@ -540,9 +603,9 @@
       if (error) throw error;
       const user = data?.session?.user || null;
       if (hasRecoveryIntent()) {
-        setAuth(user);
+        setRecoveryAuth(user);
         showPasswordReset();
-        status(user ? "Zadejte nove heslo." : "Otevrete odkaz pro nastaveni hesla z e-mailu znovu.", user ? "ok" : "warn");
+        status(user ? "Zadejte a ulozte nove heslo." : "Otevrete odkaz pro nastaveni hesla z e-mailu znovu.", "warn");
         return;
       }
       if (user) {
@@ -571,6 +634,10 @@
     if (event.target.closest("[data-auth-simple-logout]")) signOut();
     if (event.target.closest("[data-auth-reset-request]")) requestPasswordReset();
     if (event.target.closest("[data-auth-back-login]")) {
+      if (passwordRecoveryMode) {
+        cancelRecovery();
+        return;
+      }
       setAuthMode("login");
       status("");
     }
