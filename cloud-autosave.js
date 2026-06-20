@@ -14,17 +14,17 @@
     window.kaiserSupabaseDefaults = {
       ...defaults,
       autoLoad: true,
-      autoSync: true
+      autoSync: false
     };
 
     const stored = readStoredConfig();
-    if (stored.autoSync === true && stored.autoLoad !== false) return;
+    if (stored.autoSync === false && stored.autoLoad !== false) return;
     localStorage.setItem(
       CONFIG_KEY,
       JSON.stringify({
         ...stored,
         autoLoad: true,
-        autoSync: true
+        autoSync: false
       })
     );
   }
@@ -36,9 +36,7 @@
 
     saveState = function () {
       originalSaveState();
-      if (!window.kaiserCloud?.isConfigured?.() || !window.kaiserCloud?.pushState) return;
       window.clearTimeout(pushTimer);
-      pushTimer = window.setTimeout(() => window.kaiserCloud.pushState({ quiet: true }), 250);
     };
 
     window.kaiserFastCloudAutosaveInstalled = true;
