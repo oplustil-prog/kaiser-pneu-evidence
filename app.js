@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-49",
+  build: "20260620-50",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Odstraneno nacitani neexistujiciho souboru vehicle-photo-assets.js.",
     "Tabletova navigace uz zobrazuje vsech osm sekci bez orezu.",
     "Odhlasena aplikace je skutecne uzamcena za prihlasovacim dialogem.",
     "Supabase klient se sdili mezi auth a sync modulem, aby nevznikaly duplicitni auth instance.",
