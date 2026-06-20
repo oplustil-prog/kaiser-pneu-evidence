@@ -2,11 +2,11 @@ const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-53",
+  build: "20260620-54",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
-    "Obnova hesla overuje recovery session z e-mailoveho odkazu a misto Auth session missing ukaze jasny postup pro novy odkaz.",
+    "Obnova hesla ma samostatnou obrazovku jen s e-mailem a pouziva recovery odkaz vhodny pro statickou aplikaci.",
     "Mereni odmita nerealne vysoky tachometr a umi opravit zjevne chybne ulozeny stav km.",
     "Rychle mereni predvyplni aktualni stav km a pri prazdnem km ukaze jasnou chybu.",
     "Prehled uzivatelu uz jasne rika, ze zaznam v evidenci neni Supabase ucet a heslo se nastavuje e-mailovou obnovou.",

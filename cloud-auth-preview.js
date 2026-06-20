@@ -65,7 +65,8 @@
           auth: {
             autoRefreshToken: true,
             persistSession: true,
-            detectSessionInUrl: true
+            detectSessionInUrl: true,
+            flowType: "implicit"
           }
         });
         shared.client = client;
@@ -264,6 +265,16 @@
                 Administrace heslo nevytvari ani neukazuje. Odkaz prijde jen na e-mail existujiciho Supabase uctu.
               </small>
             </form>
+            <form class="kaiser-auth-simple-form" id="kaiserPasswordRequestForm" hidden>
+              <label>E-mail <input name="email" type="email" autocomplete="email" required /></label>
+              <div class="kaiser-auth-simple-actions">
+                <button class="button button-primary" type="submit">Poslat odkaz pro nastaveni hesla</button>
+                <button class="button button-soft" type="button" data-auth-back-login>Zpet na prihlaseni</button>
+              </div>
+              <small class="kaiser-auth-simple-help">
+                Odkaz prijde jen na e-mail, ktery ma vytvoreny ucet v Supabase Auth.
+              </small>
+            </form>
             <form class="kaiser-auth-simple-form" id="kaiserPasswordResetForm" hidden>
               <label>Nove heslo <input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
               <label>Zopakovat heslo <input name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" required /></label>
@@ -283,6 +294,7 @@
 
     root = document.querySelector("#kaiserAuthSimple");
     root.querySelector("#kaiserAuthSimpleForm")?.addEventListener("submit", signIn);
+    root.querySelector("#kaiserPasswordRequestForm")?.addEventListener("submit", requestPasswordReset);
     root.querySelector("#kaiserPasswordResetForm")?.addEventListener("submit", updatePassword);
     return root;
   }
@@ -315,7 +327,7 @@
 
   function recoveryLinkMessage(error) {
     const message = String(error?.message || error || "");
-    if (/Auth session missing|session.*missing|invalid.*session|expired/i.test(message)) {
+    if (/Auth session missing|session.*missing|invalid.*session|expired|code verifier|invalid request|invalid.*flow/i.test(message)) {
       return "Odkaz pro nastaveni hesla neni platny nebo uz vyprsel. Na prihlasovaci obrazovce zadejte e-mail a poslete si novy odkaz.";
     }
     return message || "Odkaz pro nastaveni hesla neni platny. Poslete si prosim novy odkaz z prihlasovaci obrazovky.";
@@ -369,18 +381,27 @@
     const title = root.querySelector("#kaiserAuthSimpleTitle");
     const copy = root.querySelector("[data-auth-simple-copy]");
     const loginForm = root.querySelector("#kaiserAuthSimpleForm");
+    const requestForm = root.querySelector("#kaiserPasswordRequestForm");
     const resetForm = root.querySelector("#kaiserPasswordResetForm");
+    const request = mode === "request";
     const reset = mode === "reset";
-    if (title) title.textContent = reset ? "Nastaveni noveho hesla" : "Prihlaseni do aplikace";
+    if (title) title.textContent = reset ? "Nastaveni noveho hesla" : request ? "Nastavit / obnovit heslo" : "Prihlaseni do aplikace";
     if (copy) {
       copy.textContent = reset
         ? "Zadejte nove heslo pro svuj pristup."
+        : request
+          ? "Zadejte e-mail. Pokud k nemu existuje Supabase ucet, prijde odkaz pro nastaveni hesla."
         : "Prihlaste se e-mailem a vlastnim heslem. Pri prvnim pristupu si heslo nastavite odkazem z e-mailu.";
     }
-    if (loginForm) loginForm.hidden = reset;
+    if (loginForm) loginForm.hidden = reset || request;
+    if (requestForm) requestForm.hidden = !request;
     if (resetForm) resetForm.hidden = !reset;
     window.setTimeout(() => {
-      const selector = reset ? "#kaiserPasswordResetForm input[name='password']" : "#kaiserAuthSimpleForm input[name='email']";
+      const selector = reset
+        ? "#kaiserPasswordResetForm input[name='password']"
+        : request
+          ? "#kaiserPasswordRequestForm input[name='email']"
+          : "#kaiserAuthSimpleForm input[name='email']";
       root.querySelector(selector)?.focus();
     }, 40);
   }
@@ -459,6 +480,17 @@
     document.body.classList.add("kaiser-auth-simple-locked");
   }
 
+  function showPasswordRequest() {
+    const root = authRoot();
+    const loginEmail = root.querySelector("#kaiserAuthSimpleForm input[name='email']")?.value || "";
+    const requestEmail = root.querySelector("#kaiserPasswordRequestForm input[name='email']");
+    if (requestEmail && loginEmail && !requestEmail.value) requestEmail.value = loginEmail;
+    setAuthMode("request");
+    root.classList.add("is-visible");
+    document.body.classList.add("kaiser-auth-simple-locked");
+    status("");
+  }
+
   function hideLogin() {
     document.querySelector("#kaiserAuthSimple")?.classList.remove("is-visible");
     document.body.classList.remove("kaiser-auth-simple-locked");
@@ -534,9 +566,10 @@
     }
   }
 
-  async function requestPasswordReset() {
+  async function requestPasswordReset(event) {
+    event?.preventDefault();
     if (busy) return;
-    const form = document.querySelector("#kaiserAuthSimpleForm");
+    const form = event?.currentTarget || document.querySelector("#kaiserPasswordRequestForm");
     const email = String(form?.elements.email?.value || "").trim();
     if (!email) {
       status("Nejdrive vyplnte e-mail.", "warn");
@@ -725,7 +758,7 @@
 
   document.addEventListener("click", (event) => {
     if (event.target.closest("[data-auth-simple-logout]")) signOut();
-    if (event.target.closest("[data-auth-reset-request]")) requestPasswordReset();
+    if (event.target.closest("[data-auth-reset-request]")) showPasswordRequest();
     if (event.target.closest("[data-auth-back-login]")) {
       if (passwordRecoveryMode) {
         cancelRecovery();
