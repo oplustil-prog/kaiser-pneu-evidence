@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-27",
+  build: "20260620-28",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Prehled uzivatelu skryva duplicitni realne pristupy se stejnym jmenem.",
     "Zabraneno duplicitam realnych pristupu pri shodnem jmenu v cloudu a vychozim adresari.",
     "Doplneny realne pristupy Milan Gazi, Tomas Gazi a Martin Konecek do vychoziho adresare.",
     "Vynuceno nove nacteni hlavniho skriptu po cache problemu v prohlizeci.",
@@ -894,6 +895,31 @@ function sortUsersForDisplay(users = []) {
     if (roleDiff) return roleDiff;
     return String(a.name || "").localeCompare(String(b.name || ""), "cs");
   });
+}
+
+function userRecordPriority(user) {
+  const id = String(user.id || "");
+  const email = String(user.email || "").toLowerCase();
+  if (/^USR-00[456]$/.test(id)) return 2;
+  if (email.endsWith("@kaiser.local")) return 3;
+  return 0;
+}
+
+function dedupeUsersForDisplay(users = []) {
+  const byName = new Map();
+  const withoutName = [];
+  (users || []).forEach((user) => {
+    const nameKey = userNameMergeKey(user);
+    if (!nameKey) {
+      withoutName.push(user);
+      return;
+    }
+    const current = byName.get(nameKey);
+    if (!current || userRecordPriority(user) < userRecordPriority(current)) {
+      byName.set(nameKey, user);
+    }
+  });
+  return [...withoutName, ...byName.values()];
 }
 
 const formatCurrency = (value) =>
@@ -2219,7 +2245,7 @@ function fillUserControls() {
 }
 
 function renderUsers() {
-  const users = state.users || [];
+  const users = dedupeUsersForDisplay(state.users || []);
   fillUserControls();
 
   const roleFilter = query("#userRoleFilter")?.value || "all";
