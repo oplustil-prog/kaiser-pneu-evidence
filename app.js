@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-32",
+  build: "20260620-33",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Mereni spolehlive propisuje aktualni stav km do tachometru vozidla.",
     "Vynuceno nove nacteni stylu mapy osazeni.",
     "Mapa osazeni zvyraznuje problemove pozice pulzem a potlacuje neosazene pozice.",
     "Opraveno poradi nacitani odebranych uzivatelu pred inicializaci stavu.",
@@ -2426,6 +2427,27 @@ function parseLocalizedNumber(value) {
   return Number(String(value || "0").replace(/\s+/g, "").replace(",", ".")) || 0;
 }
 
+function parseOdometerValue(value) {
+  const cleaned = String(value || "")
+    .trim()
+    .replace(/[\s\u00a0]+/g, "")
+    .replace(/[^\d,.-]/g, "");
+  if (!cleaned) return 0;
+
+  const grouped = /^-?\d{1,3}([,.]\d{3})+$/.test(cleaned);
+  const normalized = grouped ? cleaned.replace(/[,.]/g, "") : cleaned.replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0;
+}
+
+function applyVehicleOdometer(vehicle, odometer) {
+  if (!vehicle || odometer <= 0) return false;
+  const current = Number(vehicle.odometer) || 0;
+  if (odometer <= current) return false;
+  vehicle.odometer = odometer;
+  return true;
+}
+
 function parseVehicleImportRows(raw) {
   return raw
     .split(/\r?\n/)
@@ -2633,21 +2655,24 @@ function addMeasurement(event) {
   const data = Object.fromEntries(new FormData(form).entries());
   const tire = tireForPosition(data.vehicle, data.position);
   const vehicle = state.vehicles.find((item) => item.spz === data.vehicle);
-  const odometer = Number(data.odometer) || 0;
+  const odometer = parseOdometerValue(data.odometer);
+  if (odometer <= 0) {
+    showToast("Zadejte aktualni stav km.");
+    form.elements.odometer?.focus();
+    return;
+  }
   const measurement = {
     date: todayIso(),
     vehicle: data.vehicle,
     position: data.position,
     odometer,
-    tread: Number(data.tread) || 0,
-    pressure: Number(data.pressure) || 0,
+    tread: parseLocalizedNumber(data.tread),
+    pressure: parseLocalizedNumber(data.pressure),
     person: "dilna",
     note: data.note || ""
   };
   state.measurements.unshift(measurement);
-  if (vehicle && odometer > 0) {
-    vehicle.odometer = Math.max(vehicle.odometer || 0, odometer);
-  }
+  applyVehicleOdometer(vehicle, odometer);
   if (tire) {
     tire.currentTread = measurement.tread;
     tire.pressure = measurement.pressure;
@@ -2660,6 +2685,8 @@ function addMeasurement(event) {
   form.elements.vehicle.value = data.vehicle;
   fillPositionOptions(data.vehicle);
   form.elements.position.value = data.position;
+  selectedVehicle = data.vehicle;
+  selectedPosition = data.position;
   renderAll();
   form.elements.position.value = data.position;
   syncMeasurementOdometer(data.vehicle);
