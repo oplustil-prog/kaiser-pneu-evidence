@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-29",
+  build: "20260620-30",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Opraveno poradi nacitani odebranych uzivatelu pred inicializaci stavu.",
     "Prehled uzivatelu ma vlastni vyhledavani a skryva odebrane obecne ucty dilny a managementu.",
     "Prehled uzivatelu skryva duplicitni realne pristupy se stejnym jmenem.",
     "Zabraneno duplicitam realnych pristupu pri shodnem jmenu v cloudu a vychozim adresari.",
@@ -745,6 +746,8 @@ const initialState = {
   }
 };
 
+const removedUserEmails = new Set(["dilna@kaiserservis.cz", "management@kaiserservis.cz"]);
+
 let state = loadState();
 saveState();
 let activeSection = "dashboard";
@@ -785,8 +788,6 @@ const userRoleLabels = {
   "Spravce vozoveho parku": "Spravce",
   "Externi servis": "Externi servis"
 };
-
-const removedUserEmails = new Set(["dilna@kaiserservis.cz", "management@kaiserservis.cz"]);
 
 function roleKey(value) {
   return String(value || "")
