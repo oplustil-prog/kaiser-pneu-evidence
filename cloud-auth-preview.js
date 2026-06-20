@@ -251,17 +251,17 @@
             <div class="kaiser-auth-simple-logo" aria-label="Kaiser Servis">kaiser.</div>
             <div>
               <h2 id="kaiserAuthSimpleTitle">Prihlaseni do aplikace</h2>
-              <p data-auth-simple-copy>Evidence je dostupna po prihlaseni e-mailem a heslem.</p>
+              <p data-auth-simple-copy>Prihlaste se e-mailem a vlastnim heslem. Pri prvnim pristupu si heslo nastavite odkazem z e-mailu.</p>
             </div>
             <form class="kaiser-auth-simple-form" id="kaiserAuthSimpleForm">
               <label>E-mail <input name="email" type="email" autocomplete="email" required /></label>
               <label>Heslo <input name="password" type="password" autocomplete="current-password" required /></label>
               <div class="kaiser-auth-simple-actions">
                 <button class="button button-primary" type="submit">Prihlasit</button>
-                <button class="button button-soft" type="button" data-auth-reset-request>Nastavit / obnovit heslo</button>
+                <button class="button button-soft" type="button" data-auth-reset-request>Nastavit / obnovit heslo e-mailem</button>
               </div>
               <small class="kaiser-auth-simple-help">
-                Pro prvni prihlaseni nebo zapomenute heslo posleme odkaz na e-mail.
+                Administrace heslo nevytvari ani neukazuje. Odkaz prijde jen na e-mail existujiciho Supabase uctu.
               </small>
             </form>
             <form class="kaiser-auth-simple-form" id="kaiserPasswordResetForm" hidden>
@@ -313,7 +313,7 @@
     if (copy) {
       copy.textContent = reset
         ? "Zadejte nove heslo pro svuj pristup."
-        : "Evidence je dostupna po prihlaseni e-mailem a heslem.";
+        : "Prihlaste se e-mailem a vlastnim heslem. Pri prvnim pristupu si heslo nastavite odkazem z e-mailu.";
     }
     if (loginForm) loginForm.hidden = reset;
     if (resetForm) resetForm.hidden = !reset;
@@ -491,7 +491,7 @@
         "Odeslani e-mailu trva moc dlouho. Zkuste to prosim znovu."
       );
       if (error) throw error;
-      status("Pokud e-mail patri k uctu, poslali jsme odkaz pro nastaveni hesla.", "ok");
+      status("Pokud tento e-mail ma Supabase ucet, poslali jsme odkaz pro nastaveni hesla.", "ok");
     } catch (error) {
       status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat.", "danger");
     } finally {

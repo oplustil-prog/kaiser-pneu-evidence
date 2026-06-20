@@ -1933,6 +1933,34 @@ label {
   font-weight: 800;
 }
 
+.user-access-note {
+  align-items: flex-start;
+  background: rgba(48, 111, 153, 0.08);
+  border: 1px solid rgba(48, 111, 153, 0.2);
+  border-radius: 8px;
+  color: var(--muted);
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
+.user-access-note strong {
+  color: var(--ink);
+  font-size: 0.82rem;
+}
+
+.user-access-note span {
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.38;
+}
+
+.user-access-form-note {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
 .user-actions {
   display: flex;
   justify-content: flex-end;

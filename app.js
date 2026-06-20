@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-50",
+  build: "20260620-51",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Prehled uzivatelu uz nezobrazuje matouci docasnou poznamku k heslu; prvni prihlaseni je popsane pres e-mailovou obnovu hesla.",
     "Odstraneno nacitani neexistujiciho souboru vehicle-photo-assets.js.",
     "Tabletova navigace uz zobrazuje vsech osm sekci bez orezu.",
     "Odhlasena aplikace je skutecne uzamcena za prihlasovacim dialogem.",
@@ -26,7 +27,7 @@ const APP_VERSION = {
     "Prihlaseni zobrazuje jen jeden formular: prihlaseni nebo nastaveni noveho hesla.",
     "Rychle mereni umi vyplnit vice pozic vybraneho vozidla a ulozit je najednou.",
     "Mereni kontroluje, ze novy stav km neni nizsi nez aktualni tachometr vozidla.",
-    "Prihlaseni ma obnovu hesla pres Supabase a prehled uzivatelu jasne oddeluje poznamku od skutecneho prihlasovaciho hesla.",
+    "Prihlaseni ma obnovu hesla pres Supabase.",
     "Mereni spolehlive propisuje aktualni stav km do tachometru vozidla.",
     "Vynuceno nove nacteni stylu mapy osazeni.",
     "Mapa osazeni zvyraznuje problemove pozice pulzem a potlacuje neosazene pozice.",
@@ -2328,6 +2329,10 @@ function renderUsers() {
                 <div><dt>Prava</dt><dd>${escapeHtml(userPermissions[normalizeUserRole(user.role)] || "Vlastni pristup")}</dd></div>
                 <div><dt>Posledni aktivita</dt><dd>${escapeHtml(user.lastActive || "-")}</dd></div>
               </dl>
+              <div class="user-access-note">
+                <strong>Prihlaseni</strong>
+                <span>Uzivatel zada tento e-mail na prihlasovaci obrazovce a klikne na Nastavit / obnovit heslo e-mailem.</span>
+              </div>
               <div class="user-actions">
                 <button class="button button-soft" type="button" data-user-fill="${escapeHtml(user.id)}">Upravit</button>
                 <button class="button ${isActive ? "button-soft" : "button-primary"}" type="button" data-user-toggle="${escapeHtml(user.id)}">
