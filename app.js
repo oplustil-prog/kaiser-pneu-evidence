@@ -1,11 +1,12 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-21",
+  build: "20260620-22",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
+    "Uzivatele z cloudu se spojuji se zakladnim seznamem ridicu, aby nikdo nezmizel mezi prohlizeci.",
     "V detailu vozidla se zobrazuji namontovane pneu z faktur pro vybranou SPZ bez primichani cizich rucnich pozic.",
     "Vracena dashboardova karta Namontovane pneu.",
     "Zpresneny stav cloudoveho ulozeni v horni liste.",
@@ -803,6 +804,28 @@ function availableUserRoles() {
   return [...roles.keys()];
 }
 
+function userMergeKey(user) {
+  return String(user.email || user.id || user.name || "").trim().toLowerCase();
+}
+
+function mergeDefaultUsers(existing = []) {
+  const users = new Map();
+  (initialState.users || []).forEach((user) => {
+    const key = userMergeKey(user);
+    if (key) users.set(key, structuredClone(user));
+  });
+  (existing || []).forEach((user) => {
+    const key = userMergeKey(user);
+    if (!key) return;
+    users.set(key, {
+      ...(users.get(key) || {}),
+      ...user,
+      role: normalizeUserRole(user.role)
+    });
+  });
+  return [...users.values()];
+}
+
 const formatCurrency = (value) =>
   new Intl.NumberFormat("cs-CZ", {
     style: "currency",
@@ -867,6 +890,7 @@ function hydrateProductionData(nextState) {
   nextState.services = mergeImportedServices(nextState.services);
   nextState.imports = mergeImportedRows(nextState.imports);
   nextState.tires = mergeImportedTires(nextState.tires, nextState.services);
+  nextState.users = mergeDefaultUsers(nextState.users);
   return nextState;
 }
 

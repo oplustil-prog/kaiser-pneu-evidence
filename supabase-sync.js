@@ -204,8 +204,33 @@
     return JSON.parse(JSON.stringify(state || {}));
   }
 
+  function userMergeKey(user) {
+    return String(user?.email || user?.id || user?.name || "").trim().toLowerCase();
+  }
+
+  function mergeUserRows(baseUsers = [], incomingUsers = []) {
+    const users = new Map();
+    (baseUsers || []).forEach((user) => {
+      const key = userMergeKey(user);
+      if (key) users.set(key, structuredClone(user));
+    });
+    (incomingUsers || []).forEach((user) => {
+      const key = userMergeKey(user);
+      if (!key) return;
+      users.set(key, {
+        ...(users.get(key) || {}),
+        ...user
+      });
+    });
+    return [...users.values()];
+  }
+
   function normalizeState(nextState) {
     const base = typeof initialState !== "undefined" ? structuredClone(initialState) : {};
+    const mergedUsers =
+      typeof mergeDefaultUsers === "function"
+        ? mergeDefaultUsers(nextState?.users || base.users || [])
+        : mergeUserRows(base.users || [], nextState?.users || []);
     return {
       ...base,
       ...(nextState || {}),
@@ -216,7 +241,7 @@
       priceRefs: nextState?.priceRefs || base.priceRefs || [],
       imports: nextState?.imports || base.imports || [],
       vehicleImports: nextState?.vehicleImports || base.vehicleImports || [],
-      users: nextState?.users || base.users || [],
+      users: mergedUsers,
       settings: {
         ...(base.settings || {}),
         ...(nextState?.settings || {})
