@@ -82,13 +82,38 @@
     localStorage.setItem(META_KEY, JSON.stringify({ ...getMeta(), ...meta }));
   }
 
+  function settingsStatusText(kind, message) {
+    const normalized = String(message || "").toLowerCase();
+    if (kind === "danger") return "chyba cloudu";
+    if (kind === "work") {
+      if (normalized.includes("stahuji")) return "nacitam z cloudu";
+      return "ukladam do cloudu";
+    }
+    if (kind === "warn") {
+      if (normalized.includes("prihlaseni")) return "cekam na prihlaseni";
+      if (normalized.includes("lokalni")) return "lokalni rezim";
+      return "cloud ceka";
+    }
+    if (normalized.includes("ulozena")) return "ulozeno v cloudu";
+    if (normalized.includes("nactena")) return "nacteno z cloudu";
+    if (hasAuthenticatedSession()) return "cloud aktivni";
+    return "cloud pripraven";
+  }
+
   function setStatus(kind, message, detail = "") {
     const panel = document.querySelector("#cloudPanel");
+    const badgeClass = kind === "ok" ? "badge-ok" : kind === "danger" ? "badge-danger" : "badge-warning";
+    const settingsBadge = document.querySelector("[data-settings-sync-status]");
+    if (settingsBadge) {
+      settingsBadge.className = `badge ${badgeClass}`;
+      settingsBadge.textContent = settingsStatusText(kind, message);
+      settingsBadge.title = detail || message || "";
+    }
+
     if (!panel) return;
     const dot = panel.querySelector("[data-cloud-dot]");
     const status = panel.querySelector("[data-cloud-status]");
     const meta = panel.querySelector("[data-cloud-meta]");
-    const badgeClass = kind === "ok" ? "badge-ok" : kind === "danger" ? "badge-danger" : "badge-warning";
 
     dot.className = `cloud-dot is-${kind}`;
     status.className = `badge ${badgeClass}`;

@@ -173,13 +173,14 @@
       .kaiser-auth-simple-status.is-danger { color: #c73636; }
 
       .login-status-card.is-logged-out {
-        border-color: rgba(243, 181, 63, .44);
-        background: rgba(243, 181, 63, .13);
+        border-color: rgba(224, 82, 82, .42);
+        background: rgba(224, 82, 82, .10);
       }
 
       .login-status-card.is-logged-out .login-status-dot {
-        background: #f3b53f;
-        box-shadow: 0 0 0 5px rgba(243, 181, 63, .18);
+        animation-name: cloudPulseRed;
+        background: #e05252;
+        box-shadow: 0 0 0 0 rgba(224, 82, 82, .36);
       }
 
       .login-status-card .auth-logout-button {

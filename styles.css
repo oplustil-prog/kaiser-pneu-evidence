@@ -310,9 +310,11 @@ textarea {
 
 .login-status-card {
   display: grid;
-  grid-template-columns: 10px max-content;
+  grid-template-columns: 10px minmax(132px, 1fr) auto;
   align-items: center;
   gap: 9px;
+  max-width: 290px;
+  min-width: 250px;
   min-height: 42px;
   padding: 8px 12px;
   border: 1px solid rgba(117, 189, 37, 0.34);
@@ -322,18 +324,60 @@ textarea {
   white-space: nowrap;
 }
 
+.login-status-card > span:not(.login-status-dot) {
+  min-width: 0;
+}
+
 .login-status-dot {
+  animation: cloudPulseGreen 1.45s ease-in-out infinite;
   width: 10px;
   height: 10px;
   border-radius: 999px;
   background: var(--green);
-  box-shadow: 0 0 0 5px rgba(117, 189, 37, 0.18);
+  box-shadow: 0 0 0 0 rgba(117, 189, 37, 0.36);
+}
+
+.login-status-card.is-logged-out {
+  border-color: rgba(224, 82, 82, 0.42);
+  background: rgba(224, 82, 82, 0.1);
+}
+
+.login-status-card.is-logged-out .login-status-dot {
+  animation-name: cloudPulseRed;
+  background: #e05252;
+  box-shadow: 0 0 0 0 rgba(224, 82, 82, 0.36);
+}
+
+@keyframes cloudPulseGreen {
+  0% {
+    box-shadow: 0 0 0 0 rgba(117, 189, 37, 0.38);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(117, 189, 37, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(117, 189, 37, 0);
+  }
+}
+
+@keyframes cloudPulseRed {
+  0% {
+    box-shadow: 0 0 0 0 rgba(224, 82, 82, 0.38);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(224, 82, 82, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(224, 82, 82, 0);
+  }
 }
 
 .login-status-card strong,
 .login-status-card small {
   display: block;
   line-height: 1.12;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .login-status-card strong {
@@ -1828,6 +1872,8 @@ label {
 
   .login-status-card {
     justify-content: start;
+    max-width: none;
+    min-width: 0;
     width: 100%;
   }
 
