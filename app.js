@@ -1,11 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-51",
+  build: "20260620-52",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
-    "Prehled uzivatelu uz nezobrazuje matouci docasnou poznamku k heslu; prvni prihlaseni je popsane pres e-mailovou obnovu hesla.",
+    "Prehled uzivatelu uz jasne rika, ze zaznam v evidenci neni Supabase ucet a heslo se nastavuje e-mailovou obnovou.",
     "Odstraneno nacitani neexistujiciho souboru vehicle-photo-assets.js.",
     "Tabletova navigace uz zobrazuje vsech osm sekci bez orezu.",
     "Odhlasena aplikace je skutecne uzamcena za prihlasovacim dialogem.",
@@ -2331,7 +2331,7 @@ function renderUsers() {
               </dl>
               <div class="user-access-note">
                 <strong>Prihlaseni</strong>
-                <span>Uzivatel zada tento e-mail na prihlasovaci obrazovce a klikne na Nastavit / obnovit heslo e-mailem.</span>
+                <span>Tento zaznam nastavuje roli v evidenci. Skutecny ucet musi existovat v Supabase Auth; potom si uzivatel nastavi heslo odkazem z e-mailu.</span>
               </div>
               <div class="user-actions">
                 <button class="button button-soft" type="button" data-user-fill="${escapeHtml(user.id)}">Upravit</button>
