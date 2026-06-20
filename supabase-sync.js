@@ -1,10 +1,8 @@
 (function () {
   const CONFIG_KEY = "kaiser-pneu-supabase-config-v1";
   const META_KEY = "kaiser-pneu-supabase-meta-v1";
-  const BACKUP_KEY = "kaiser-pneu-local-backup-before-cloud-pull";
-  const BACKUP_INDEX_KEY = "kaiser-pneu-cloud-backup-index-v1";
-  const BACKUP_PREFIX = "kaiser-pneu-cloud-backup-v1:";
   const APP_STORAGE_KEY = "kaiser-pneu-evidence-v5";
+  const CLOUD_BACKUP_PREFIX = "backup";
   const SUPABASE_MODULE_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const defaults = {
@@ -123,7 +121,7 @@
     const knownUser = users.find((item) => item.email === email);
     const name = knownUser?.name || email || "prihlaseny uzivatel";
 
-    if (!hasAuthenticatedSession()) return "zmeny zustanou jen v tomto prohlizeci";
+    if (!hasAuthenticatedSession()) return "ceka na cloudove prihlaseni";
     if (kind === "danger") return detail || "ulozeni se nepodarilo";
     if (kind === "work") return normalized.includes("stahuji") ? "cekam na data" : "zmena se odesila";
     if (normalized.includes("ulozena") || normalized.includes("nactena")) return compactSyncLabel(detail);
@@ -253,27 +251,29 @@
     return problems;
   }
 
-  function rememberBackup(reason, backupState = state) {
-    try {
-      const createdAt = new Date().toISOString();
-      const payload = {
-        createdAt,
-        reason,
-        counts: stateProfile(backupState),
-        state: JSON.parse(JSON.stringify(backupState || {}))
-      };
-      localStorage.setItem(BACKUP_KEY, JSON.stringify(payload));
-      const key = `${BACKUP_PREFIX}${createdAt}`;
-      localStorage.setItem(key, JSON.stringify(payload));
-      const index = readJson(BACKUP_INDEX_KEY, []);
-      const nextIndex = [key, ...index.filter((item) => item !== key)].slice(0, 20);
-      localStorage.setItem(BACKUP_INDEX_KEY, JSON.stringify(nextIndex));
-      index.slice(19).forEach((oldKey) => {
-        if (!nextIndex.includes(oldKey)) localStorage.removeItem(oldKey);
-      });
-    } catch {
-      // Backup failure must never hide the destructive-write guard.
-    }
+  function backupRowId(config, reason) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const safeReason = String(reason || "snapshot").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "");
+    return `${config.rowId}-${CLOUD_BACKUP_PREFIX}-${stamp}-${safeReason || "snapshot"}`;
+  }
+
+  async function saveCloudBackup(supabase, config, reason, backupState = state) {
+    const backup = JSON.parse(JSON.stringify(backupState || {}));
+    const counts = stateProfile(backup);
+    const now = new Date().toISOString();
+    const { error } = await supabase.from(config.table).upsert(
+      {
+        id: backupRowId(config, reason),
+        state: backup,
+        app_version: `${STORAGE_KEY}:backup:${reason}`,
+        counts,
+        updated_at: now,
+        updated_by: "github-pages-cloud-backup"
+      },
+      { onConflict: "id" }
+    );
+    if (error) throw error;
+    return { createdAt: now, counts };
   }
 
   function guardMessage(action, drops, fromProfile, toProfile) {
@@ -445,7 +445,7 @@
     const manual = options.manual === true;
     const config = readConfig();
     if (!hasConnection(config)) {
-      if (!options.quiet) setStatus("warn", "Cloud neni nastaveny", "Data zustavaji ulozena v tomto prohlizeci.");
+      if (!options.quiet) setStatus("warn", "Cloud neni nastaveny", "Data nejsou odeslana do cloudu.");
       return false;
     }
     if (!hasAuthenticatedSession()) {
@@ -454,7 +454,7 @@
     }
     if (!manual) {
       pendingPush = true;
-      setStatus("warn", "Cloud nebyl automaticky prepsan", "Zmena je jen lokalne. Nahrani do cloudu je povolene jen rucne po kontrole.");
+      setStatus("warn", "Cloud nebyl automaticky prepsan", "Zmena ceka na rucni cloudovou kontrolu.");
       return false;
     }
 
@@ -479,7 +479,7 @@
         const cloudProfile = stateProfile(current.data.state);
         const drops = destructiveDrops(nextProfile, cloudProfile);
         if (drops.length) {
-          rememberBackup("blocked-cloud-upload", nextState);
+          await saveCloudBackup(supabase, config, "blocked-upload-app-state", nextState);
           setStatus("danger", "Cloud chranen - nahrani zablokovano", guardMessage("Nahrani", drops, nextProfile, cloudProfile));
           return false;
         }
@@ -487,7 +487,9 @@
 
       const now = new Date().toISOString();
       const counts = nextProfile;
-      rememberBackup("before-cloud-upload", nextState);
+      if (current.data?.state) {
+        await saveCloudBackup(supabase, config, "before-upload-cloud-state", current.data.state);
+      }
       const { error } = await supabase.from(config.table).upsert(
         {
           id: config.rowId,
@@ -514,7 +516,7 @@
   async function pullState() {
     const config = readConfig();
     if (!hasConnection(config)) {
-      setStatus("warn", "Cloud neni nastaveny", "Data zustavaji ulozena v tomto prohlizeci.");
+      setStatus("warn", "Cloud neni nastaveny", "Data nejsou pripojena ke cloudu.");
       return;
     }
     if (!hasAuthenticatedSession()) {
@@ -547,12 +549,12 @@
       }
       const drops = destructiveDrops(cloudProfile, localProfile);
       if (drops.length) {
-        rememberBackup("blocked-cloud-download", localBefore);
-        setStatus("danger", "Lokalni data chranena - stazeni zablokovano", guardMessage("Stazeni", drops, cloudProfile, localProfile));
+        await saveCloudBackup(supabase, config, "blocked-download-app-state", localBefore);
+        setStatus("danger", "Data v aplikaci chranena - stazeni zablokovano", guardMessage("Stazeni", drops, cloudProfile, localProfile));
         return;
       }
 
-      rememberBackup("before-cloud-download", localBefore);
+      await saveCloudBackup(supabase, config, "before-download-app-state", localBefore);
 
       state = normalizeState(data.state);
       selectedVehicle = state.vehicles[0]?.spz || "";
@@ -580,14 +582,14 @@
   async function flushQueuedPush(source = "Auto") {
     pendingPush = true;
     setSaveGuard(false);
-    setStatus("warn", "Cloud nebyl automaticky prepsan", "Automaticke odesilani je vypnute. Pouzijte rucni nahrani dat po kontrole.");
+    setStatus("warn", "Cloud nebyl automaticky prepsan", "Pouzijte rucni nahrani dat po cloudove kontrole.");
   }
 
   function schedulePush(options = {}) {
     pendingPush = true;
     const config = readConfig();
     if (!hasConnection(config)) return;
-    setStatus("warn", "Zmena je jen lokalne", "Cloud se automaticky neprepisuje. Pouzijte rucni nahrani dat po kontrole.");
+    setStatus("warn", "Cloud ceka na kontrolu", "Pouzijte rucni nahrani dat po cloudove kontrole.");
     setSaveGuard(false);
     window.clearTimeout(pushTimer);
   }
@@ -633,25 +635,6 @@
     }
   }
 
-  function downloadJson(name, payload) {
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadBackup() {
-    downloadJson(`kaiser-pneu-zaloha-${new Date().toISOString().slice(0, 10)}.json`, {
-      exportedAt: new Date().toISOString(),
-      source: "Kaiser Evidence pneumatik",
-      state: snapshotState()
-    });
-    setStatus("ok", "Zaloha JSON je stazena", lastSyncLabel());
-  }
-
   function bindPanel(panel) {
     const form = panel.querySelector("#cloudConfigForm");
     form.addEventListener("submit", (event) => {
@@ -662,14 +645,13 @@
     panel.querySelector("[data-cloud-test]").addEventListener("click", testConnection);
     panel.querySelector("[data-cloud-push]").addEventListener("click", () => pushState({ manual: true }));
     panel.querySelector("[data-cloud-pull]").addEventListener("click", pullState);
-    panel.querySelector("[data-cloud-backup]").addEventListener("click", downloadBackup);
     panel.querySelector("[data-cloud-disconnect]").addEventListener("click", () => {
       localStorage.removeItem(CONFIG_KEY);
       client = null;
       clientKey = "";
       fillForm();
       refreshAuthStatus();
-      setStatus("warn", "Cloud je odpojeny", "Data zustavaji ulozena v tomto prohlizeci.");
+      setStatus("warn", "Cloud je odpojeny", "Data nejsou pripojena ke cloudu.");
     });
   }
 
@@ -858,7 +840,6 @@
             <button class="button button-soft" type="button" data-cloud-test>Test pripojeni</button>
             <button class="button button-primary" type="button" data-cloud-push>Nahrat data</button>
             <button class="button button-soft" type="button" data-cloud-pull>Stahnout data</button>
-            <button class="button button-soft" type="button" data-cloud-backup>Zaloha JSON</button>
             <button class="button button-soft" type="button" data-cloud-disconnect disabled>Odpojit</button>
           </div>
         </article>
@@ -893,12 +874,11 @@
         }
       });
     } else {
-      setStatus("warn", "Lokalni rezim", "Data jsou zatim jen v tomto prohlizeci.");
+      setStatus("warn", "Cloud neni pripojen", "Data nejsou pripojena ke cloudu.");
     }
   }
 
   window.kaiserCloud = {
-    downloadBackup,
     isConfigured: hasConnection,
     openFile,
     pullState,
@@ -909,10 +889,10 @@
 
   window.addEventListener("kaiser-auth-ready", () => {
     cloudSessionReady = true;
-    setStatus("work", "Cloudove prihlaseni overeno", pendingPush ? "Zmeny zustavaji lokalne do rucniho nahrani." : "Stahuji produkcni data...");
+    setStatus("work", "Cloudove prihlaseni overeno", pendingPush ? "Zmeny cekaji na rucni cloudovou kontrolu." : "Stahuji produkcni data...");
     refreshAuthStatus();
     if (pendingPush) {
-      setStatus("warn", "Cloud nebyl automaticky prepsan", "Zmeny zustavaji lokalne do rucniho nahrani.");
+      setStatus("warn", "Cloud nebyl automaticky prepsan", "Zmeny cekaji na rucni cloudovou kontrolu.");
     } else if (readConfig().autoLoad) {
       window.setTimeout(() => pullState(), 300);
     }
@@ -921,7 +901,7 @@
   window.addEventListener("kaiser-auth-signed-out", () => {
     cloudSessionReady = false;
     refreshAuthStatus();
-    setStatus("warn", "Uzivatel je odhlaseny", "Data zustavaji ulozena v tomto prohlizeci.");
+    setStatus("warn", "Uzivatel je odhlaseny", "Cekam na cloudove prihlaseni.");
   });
 
   if (document.readyState === "loading") {

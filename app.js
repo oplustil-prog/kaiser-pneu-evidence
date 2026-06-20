@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-39",
+  build: "20260620-40",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Bezpecnostni kopie pred cloudovymi operacemi se ukladaji do Supabase cloud historie.",
     "Prihlaseni uz nezustava zasekle v nastaveni noveho hesla po dokoncene nebo zrusene obnove.",
     "Cloud uz se nikdy automaticky neprepisuje a synchronizace blokuje ztratu vozidel, uzivatelu, pneu i osazenych pozic.",
     "Rychle mereni zobrazuje vzdy jen jeden rezim, aby se jedna pozice a vsechny pozice nemichaly dohromady.",
@@ -20,10 +21,10 @@ const APP_VERSION = {
     "Prehled uzivatelu skryva duplicitni realne pristupy se stejnym jmenem.",
     "Zabraneno duplicitam realnych pristupu pri shodnem jmenu v cloudu a vychozim adresari.",
     "Doplneny realne pristupy Milan Gazi, Tomas Gazi a Martin Konecek do vychoziho adresare.",
-    "Vynuceno nove nacteni hlavniho skriptu po cache problemu v prohlizeci.",
+    "Vynuceno nove nacteni hlavniho skriptu po cache problemu.",
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
     "Realne uzivatelske pristupy jsou v seznamu nahore pred automatickymi ridici.",
-    "Uzivatele z cloudu se spojuji se zakladnim seznamem ridicu, aby nikdo nezmizel mezi prohlizeci.",
+    "Uzivatele z cloudu se spojuji se zakladnim seznamem ridicu, aby nikdo nezmizel ze seznamu.",
     "V detailu vozidla se zobrazuji koupene pneu z faktur pro vybranou SPZ bez primichani cizich rucnich pozic.",
     "Dashboardova karta je prejmenovana na Koupene pneu.",
     "Zpresneny stav cloudoveho ulozeni v horni liste.",
