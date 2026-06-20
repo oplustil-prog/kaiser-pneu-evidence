@@ -1,12 +1,12 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-20",
+  build: "20260620-21",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
-    "V detailu vozidla se zobrazuji namontovane pneu z faktur pro vybranou SPZ.",
+    "V detailu vozidla se zobrazuji namontovane pneu z faktur pro vybranou SPZ bez primichani cizich rucnich pozic.",
     "Vracena dashboardova karta Namontovane pneu.",
     "Zpresneny stav cloudoveho ulozeni v horni liste.",
     "Prehled uzivatelu sjednocuje role Manager a Spravce.",
@@ -1685,7 +1685,9 @@ function tireForPosition(spz, position) {
 function vehicleTireEvidence(spz) {
   const rows = new Map();
   (state.tires || []).forEach((tire) => {
-    if (tire.vehicle === spz || tire.sourceVehicle === spz) rows.set(tire.id, tire);
+    const belongsToInvoiceVehicle = tire.sourceVehicle === spz;
+    const manuallyCreatedOnVehicle = !tire.sourceVehicle && tire.vehicle === spz;
+    if (belongsToInvoiceVehicle || manuallyCreatedOnVehicle) rows.set(tire.id, tire);
   });
   return [...rows.values()].sort((a, b) => {
     const dateDiff = String(b.purchaseDate || "").localeCompare(String(a.purchaseDate || ""));
