@@ -1315,11 +1315,18 @@ function calculateKpis() {
   const importedRows = state.imports.length || importedInvoiceData.summary?.importRowCount || 0;
   const unmatched = importedInvoiceData.summary?.unmatchedInvoiceCount || 0;
   const avgVehicleCost = ytd / Math.max(state.vehicles.length, 1);
+  const mountedTires = state.tires.filter((tire) => tire.state === "na vozidle" && tire.vehicle).length;
+  const vehiclesWithMountedTires = new Set(
+    state.tires
+      .filter((tire) => tire.state === "na vozidle" && tire.vehicle)
+      .map((tire) => tire.vehicle)
+  ).size;
 
   return [
     { label: "Naklad posledni mesic", value: formatCurrency(serviceMonth), hint: formatMonthLabel(period.month) },
     { label: "Naklad YTD", value: formatCurrency(ytd), hint: `${yearServices.length} servisnich karet v roce ${period.year}` },
     { label: "Vozidla v evidenci", value: `${state.vehicles.length} ks`, hint: `${vehiclesWithCost} vozidel s nakladem v importu` },
+    { label: "Namontovane pneu", value: `${mountedTires} ks`, hint: `${vehiclesWithMountedTires} vozidel s osazenim` },
     { label: "Faktury import", value: `${invoiceCount()} ks`, hint: `${importedRows} radku, ${unmatched} bez SPZ` },
     { label: "Prumer / vozidlo YTD", value: formatCurrency(avgVehicleCost), hint: "naklad z faktur / vozovy park" }
   ];
