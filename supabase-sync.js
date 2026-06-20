@@ -2,7 +2,6 @@
   const CONFIG_KEY = "kaiser-pneu-supabase-config-v1";
   const META_KEY = "kaiser-pneu-supabase-meta-v1";
   const APP_STORAGE_KEY = "kaiser-pneu-evidence-v5";
-  const CLOUD_BACKUP_PREFIX = "backup";
   const SUPABASE_MODULE_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const defaults = {
@@ -251,29 +250,38 @@
     return problems;
   }
 
-  function backupRowId(config, reason) {
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const safeReason = String(reason || "snapshot").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "");
-    return `${config.rowId}-${CLOUD_BACKUP_PREFIX}-${stamp}-${safeReason || "snapshot"}`;
+  function withCloudBackupHistory(counts = {}, reason, backupState = state) {
+    const backup = JSON.parse(JSON.stringify(backupState || {}));
+    const entry = {
+      createdAt: new Date().toISOString(),
+      reason: reason || "snapshot",
+      counts: stateProfile(backup),
+      state: backup
+    };
+    const previous = Array.isArray(counts?.cloudBackups) ? counts.cloudBackups : [];
+    return {
+      ...(counts || {}),
+      cloudBackups: [entry, ...previous].slice(0, 3)
+    };
   }
 
-  async function saveCloudBackup(supabase, config, reason, backupState = state) {
-    const backup = JSON.parse(JSON.stringify(backupState || {}));
-    const counts = stateProfile(backup);
-    const now = new Date().toISOString();
-    const { error } = await supabase.from(config.table).upsert(
-      {
-        id: backupRowId(config, reason),
-        state: backup,
-        app_version: `${STORAGE_KEY}:backup:${reason}`,
-        counts,
-        updated_at: now,
-        updated_by: "github-pages-cloud-backup"
-      },
-      { onConflict: "id" }
-    );
-    if (error) throw error;
-    return { createdAt: now, counts };
+  async function saveCloudBackup(supabase, config, reason, backupState = state, baseRow = null) {
+    try {
+      if (!baseRow?.state) return false;
+      const counts = withCloudBackupHistory(baseRow.counts || {}, reason, backupState);
+      const { error } = await supabase.from(config.table).update(
+        {
+          state: baseRow.state,
+          app_version: baseRow.app_version || STORAGE_KEY,
+          counts,
+          updated_at: baseRow.updated_at || new Date().toISOString(),
+          updated_by: baseRow.updated_by || "github-pages"
+        }
+      ).eq("id", config.rowId);
+      return !error;
+    } catch {
+      return false;
+    }
   }
 
   function guardMessage(action, drops, fromProfile, toProfile) {
@@ -465,7 +473,7 @@
 
       const current = await supabase
         .from(config.table)
-        .select("state, updated_at, counts")
+        .select("state, updated_at, counts, app_version, updated_by")
         .eq("id", config.rowId)
         .maybeSingle();
       if (current.error) throw current.error;
@@ -473,28 +481,32 @@
         const cloudProfile = stateProfile(current.data.state);
         const drops = destructiveDrops(nextProfile, cloudProfile);
         if (drops.length) {
-          await saveCloudBackup(supabase, config, "blocked-upload-app-state", nextState);
+          await saveCloudBackup(supabase, config, "blocked-upload-app-state", nextState, current.data);
           setStatus("danger", "Cloud chranen - nahrani zablokovano", guardMessage("Nahrani", drops, nextProfile, cloudProfile));
           return false;
         }
       }
 
       const now = new Date().toISOString();
-      const counts = nextProfile;
+      let counts = nextProfile;
       if (current.data?.state) {
-        await saveCloudBackup(supabase, config, "before-upload-cloud-state", current.data.state);
+        counts = withCloudBackupHistory(
+          { ...nextProfile, cloudBackups: current.data.counts?.cloudBackups || [] },
+          "before-upload-cloud-state",
+          current.data.state
+        );
       }
-      const { error } = await supabase.from(config.table).upsert(
-        {
-          id: config.rowId,
-          state: nextState,
-          app_version: STORAGE_KEY,
-          counts,
-          updated_at: now,
-          updated_by: "github-pages"
-        },
-        { onConflict: "id" }
-      );
+      const payload = {
+        state: nextState,
+        app_version: STORAGE_KEY,
+        counts,
+        updated_at: now,
+        updated_by: "github-pages"
+      };
+      const write = current.data
+        ? await supabase.from(config.table).update(payload).eq("id", config.rowId)
+        : await supabase.from(config.table).upsert({ id: config.rowId, ...payload }, { onConflict: "id" });
+      const { error } = write;
 
       if (error) throw error;
       setMeta({ lastSyncAt: now, lastPushAt: now, counts });
@@ -523,7 +535,7 @@
       const supabase = await getClient();
       const { data, error } = await supabase
         .from(config.table)
-        .select("state, updated_at, counts")
+        .select("state, updated_at, counts, app_version, updated_by")
         .eq("id", config.rowId)
         .maybeSingle();
 
@@ -543,12 +555,12 @@
       }
       const drops = destructiveDrops(cloudProfile, localProfile);
       if (drops.length) {
-        await saveCloudBackup(supabase, config, "blocked-download-app-state", localBefore);
+        await saveCloudBackup(supabase, config, "blocked-download-app-state", localBefore, data);
         setStatus("danger", "Data v aplikaci chranena - stazeni zablokovano", guardMessage("Stazeni", drops, cloudProfile, localProfile));
         return;
       }
 
-      await saveCloudBackup(supabase, config, "before-download-app-state", localBefore);
+      await saveCloudBackup(supabase, config, "before-download-app-state", localBefore, data);
 
       state = normalizeState(data.state);
       selectedVehicle = state.vehicles[0]?.spz || "";
