@@ -1,11 +1,12 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-23",
+  build: "20260620-24",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
+    "Realne uzivatelske pristupy jsou v seznamu nahore pred automatickymi ridici.",
     "Uzivatele z cloudu se spojuji se zakladnim seznamem ridicu, aby nikdo nezmizel mezi prohlizeci.",
     "V detailu vozidla se zobrazuji koupene pneu z faktur pro vybranou SPZ bez primichani cizich rucnich pozic.",
     "Dashboardova karta je prejmenovana na Koupene pneu.",
@@ -824,6 +825,22 @@ function mergeDefaultUsers(existing = []) {
     });
   });
   return [...users.values()];
+}
+
+function userDisplayPriority(user) {
+  const email = String(user.email || "").toLowerCase();
+  if (email && !email.endsWith("@kaiser.local")) return 0;
+  return 1;
+}
+
+function sortUsersForDisplay(users = []) {
+  return [...users].sort((a, b) => {
+    const priorityDiff = userDisplayPriority(a) - userDisplayPriority(b);
+    if (priorityDiff) return priorityDiff;
+    const roleDiff = userRoleLabel(a.role).localeCompare(userRoleLabel(b.role), "cs");
+    if (roleDiff) return roleDiff;
+    return String(a.name || "").localeCompare(String(b.name || ""), "cs");
+  });
 }
 
 const formatCurrency = (value) =>
@@ -2154,11 +2171,11 @@ function renderUsers() {
 
   const roleFilter = query("#userRoleFilter")?.value || "all";
   const statusFilter = query("#userStatusFilter")?.value || "all";
-  const filteredUsers = users.filter((user) => {
+  const filteredUsers = sortUsersForDisplay(users.filter((user) => {
     const matchesRole = roleFilter === "all" || normalizeUserRole(user.role) === normalizeUserRole(roleFilter);
     const matchesStatus = statusFilter === "all" || user.status === statusFilter;
     return matchesRole && matchesStatus;
-  });
+  }));
 
   const activeCount = users.filter((user) => user.status === "aktivni").length;
   const managerCount = users.filter((user) => normalizeUserRole(user.role) === "Management").length;
