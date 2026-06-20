@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-47",
+  build: "20260620-48",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Mobilni navigace je bez vodorovneho posouvani a zobrazuje vsechny sekce najednou.",
     "Ukazkovy import je jen nahled a neuklada se do cloudu.",
     "Obnova importovanych dat uz nesaha na vozidla, uzivatele, mereni ani osazene pozice.",
     "Automaticke ulozeni s ubytkem dat nejdriv nacita cloud, aby neprepsalo novejsi produkcni stav.",

@@ -2243,7 +2243,10 @@ label {
   }
 
   .nav-list {
-    grid-template-columns: repeat(8, 116px);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    overflow-x: visible;
+    overscroll-behavior-x: auto;
+    padding-bottom: 0;
     width: 100%;
   }
 
@@ -2251,9 +2254,19 @@ label {
     justify-content: center;
     flex-direction: column;
     gap: 5px;
-    min-height: 66px;
+    min-width: 0;
+    min-height: 58px;
+    padding: 7px 4px;
     text-align: center;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
+    line-height: 1.08;
+    white-space: normal;
+  }
+
+  .nav-icon {
+    min-width: 28px;
+    height: 22px;
+    font-size: 0.68rem;
   }
 
   .hero-copy,
