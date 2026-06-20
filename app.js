@@ -1020,14 +1020,18 @@ function renderLoginStatus(user = {}) {
   const email = String(user.email || "oplustil@kaiserservis.cz").trim();
   const knownUser = state.users.find((item) => item.email === email);
   const name = user.name || knownUser?.name || "Radim Oplustil";
+  target.classList.remove("is-logged-out", "is-syncing");
   target.innerHTML = `
     <span class="login-status-dot" aria-hidden="true"></span>
     <span>
-      <strong>Jste prihlasen</strong>
-      <small>jako ${escapeHtml(name)}</small>
+      <strong data-login-status-title>Cloud prihlasen</strong>
+      <small data-login-status-subtitle>${escapeHtml(name)}</small>
     </span>
   `;
   target.title = email;
+  if (typeof window.kaiserApplyCloudHeaderStatus === "function") {
+    window.kaiserApplyCloudHeaderStatus();
+  }
 }
 
 window.kaiserSetLoginUser = renderLoginStatus;

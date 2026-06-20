@@ -255,11 +255,12 @@
     const state = window.kaiserAuthState || {};
     if (!state.authenticated) {
       box.classList.add("is-logged-out");
+      box.classList.remove("is-syncing");
       box.innerHTML = `
         <span class="login-status-dot" aria-hidden="true"></span>
         <span>
-          <strong>Cloud zamceny</strong>
-          <small>cloud je zamceny</small>
+          <strong data-login-status-title>Cloud neni prihlasen</strong>
+          <small data-login-status-subtitle>zmeny se neulozi do cloudu</small>
         </span>
       `;
       box.title = "";
@@ -271,16 +272,19 @@
     const knownUser = users.find((item) => item.email === email);
     const name = knownUser?.name || email || "uzivatel";
 
-    box.classList.remove("is-logged-out");
+    box.classList.remove("is-logged-out", "is-syncing");
     box.innerHTML = `
       <span class="login-status-dot" aria-hidden="true"></span>
       <span>
-        <strong>Cloud prihlasen</strong>
-        <small>${text(name)}</small>
+        <strong data-login-status-title>Cloud prihlasen</strong>
+        <small data-login-status-subtitle>${text(name)}</small>
       </span>
       <button class="button button-soft auth-logout-button" type="button" data-auth-simple-logout>Odhlasit</button>
     `;
     box.title = email;
+    if (typeof window.kaiserApplyCloudHeaderStatus === "function") {
+      window.kaiserApplyCloudHeaderStatus();
+    }
   }
 
   function stabilizeHeader() {

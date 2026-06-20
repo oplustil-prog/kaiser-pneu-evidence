@@ -100,10 +100,63 @@
     return "cloud pripraven";
   }
 
+  function headerStatusText(kind, message) {
+    const normalized = String(message || "").toLowerCase();
+    if (!hasAuthenticatedSession()) return "Cloud neni prihlasen";
+    if (kind === "danger") return normalized.includes("ulozeni") ? "Chyba ulozeni" : "Chyba cloudu";
+    if (kind === "work") {
+      if (normalized.includes("stahuji")) return "Nacitam z cloudu";
+      return "Ukladam do cloudu";
+    }
+    if (normalized.includes("ulozena")) return "Ulozeno v cloudu";
+    if (normalized.includes("nactena")) return "Nacteno z cloudu";
+    return "Cloud prihlasen";
+  }
+
+  function headerStatusDetail(kind, message, detail = "") {
+    const normalized = String(message || "").toLowerCase();
+    const auth = window.kaiserAuthState || {};
+    const email = String(auth.email || auth.user?.email || "").trim();
+    const users = Array.isArray(window.state?.users) ? window.state.users : [];
+    const knownUser = users.find((item) => item.email === email);
+    const name = knownUser?.name || email || "prihlaseny uzivatel";
+
+    if (!hasAuthenticatedSession()) return "zmeny zustanou jen v tomto prohlizeci";
+    if (kind === "danger") return detail || "ulozeni se nepodarilo";
+    if (kind === "work") return normalized.includes("stahuji") ? "cekam na data" : "zmena se odesila";
+    if (normalized.includes("ulozena") || normalized.includes("nactena")) return detail || lastSyncLabel();
+    return name;
+  }
+
+  function updateHeaderStatus(kind, message, detail = "") {
+    window.kaiserCloudHeaderStatus = { kind, message, detail };
+    const box = document.querySelector("#loginStatusBox");
+    if (!box) return;
+
+    const title = box.querySelector("[data-login-status-title]");
+    const subtitle = box.querySelector("[data-login-status-subtitle]");
+    if (!title || !subtitle) return;
+
+    const hasSession = hasAuthenticatedSession();
+    const isProblem = kind === "danger" || !hasSession;
+    box.classList.toggle("is-logged-out", isProblem);
+    box.classList.toggle("is-syncing", kind === "work" && hasSession);
+    title.textContent = headerStatusText(kind, message);
+    subtitle.textContent = headerStatusDetail(kind, message, detail);
+    box.title = detail || message || "";
+  }
+
+  window.kaiserApplyCloudHeaderStatus = function () {
+    const status = window.kaiserCloudHeaderStatus;
+    if (!status) return;
+    updateHeaderStatus(status.kind, status.message, status.detail);
+  };
+
   function setStatus(kind, message, detail = "") {
     const panel = document.querySelector("#cloudPanel");
     const badgeClass = kind === "ok" ? "badge-ok" : kind === "danger" ? "badge-danger" : "badge-warning";
     const settingsBadge = document.querySelector("[data-settings-sync-status]");
+    updateHeaderStatus(kind, message, detail);
     if (settingsBadge) {
       settingsBadge.className = `badge ${badgeClass}`;
       settingsBadge.textContent = settingsStatusText(kind, message);
@@ -397,6 +450,7 @@
       pendingPush = true;
       return;
     }
+    setStatus("work", "Ukladam do cloudu...", "zmena ceka na odeslani");
     setSaveGuard(true);
     window.clearTimeout(pushTimer);
     pushTimer = window.setTimeout(() => flushQueuedPush(options.source || "Auto"), options.delay ?? 250);
