@@ -237,8 +237,27 @@
       measurements: "mereni"
     };
     return Object.keys(labels)
-      .filter((key) => Number(currentProfile[key] || 0) > 0 && Number(nextProfile[key] || 0) < Number(currentProfile[key] || 0))
+      .filter((key) => isSevereDrop(key, Number(nextProfile[key] || 0), Number(currentProfile[key] || 0)))
       .map((key) => `${labels[key]} ${currentProfile[key]} -> ${nextProfile[key]}`);
+  }
+
+  function isSevereDrop(key, nextValue, currentValue) {
+    if (currentValue <= 0 || nextValue >= currentValue) return false;
+    const lost = currentValue - nextValue;
+    if (nextValue <= 0) return true;
+    const ratio = lost / currentValue;
+    const limits = {
+      vehicles: { count: 3, ratio: 0.15 },
+      vehicleSlots: { count: 6, ratio: 0.18 },
+      tires: { count: 8, ratio: 0.12 },
+      mountedPositions: { count: 3, ratio: 0.35 },
+      users: { count: 3, ratio: 0.18 },
+      realUsers: { count: 3, ratio: 0.18 },
+      services: { count: 10, ratio: 0.2 },
+      measurements: { count: 10, ratio: 0.3 }
+    };
+    const limit = limits[key] || { count: 3, ratio: 0.25 };
+    return lost >= limit.count || ratio >= limit.ratio;
   }
 
   function hardValidationProblems(profile) {
