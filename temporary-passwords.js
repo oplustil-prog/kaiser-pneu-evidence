@@ -28,15 +28,15 @@
       `
         <div class="temp-password-panel" data-temp-password-panel data-temp-password-key="${text(key)}">
           <label>
-            Docasne heslo
-            <input data-temp-password-input type="password" autocomplete="new-password" placeholder="neuklada se" />
+            Interni poznamka k heslu
+            <input data-temp-password-input type="password" autocomplete="new-password" placeholder="neni prihlasovaci heslo" />
           </label>
           <div class="temp-password-actions">
             <button class="button button-soft" type="button" data-temp-password-toggle>Ukazat</button>
             <button class="button button-soft" type="button" data-temp-password-copy>Kopirovat</button>
             <button class="button button-soft" type="button" data-temp-password-clear>Vymazat</button>
           </div>
-          <small>Jen docasne v tomto otevrenem okne.</small>
+          <small>Jen docasne v tomto otevrenem okne. Nevytvari ucet ani heslo v Supabase.</small>
         </div>
       `
     );
@@ -56,15 +56,15 @@
       `
         <div class="temp-password-panel temp-password-form-panel" data-temp-password-panel data-temp-password-form-panel data-temp-password-key="user-form">
           <label>
-            Docasne heslo
-            <input data-temp-password-input type="password" autocomplete="new-password" placeholder="vlozte docasne heslo" />
+            Interni poznamka k heslu
+            <input data-temp-password-input type="password" autocomplete="new-password" placeholder="neni prihlasovaci heslo" />
           </label>
           <div class="temp-password-actions">
             <button class="button button-soft" type="button" data-temp-password-toggle>Ukazat</button>
             <button class="button button-soft" type="button" data-temp-password-copy>Kopirovat</button>
             <button class="button button-soft" type="button" data-temp-password-clear>Vymazat</button>
           </div>
-          <small>Jen pro rucni predani. Neuklada se do aplikace ani do cloudu.</small>
+          <small>Jen pro rucni poznamku. Neuklada se do aplikace ani do cloudu a neprihlasi uzivatele.</small>
         </div>
       `
     );
@@ -80,18 +80,18 @@
 
   async function copyText(value, input) {
     if (!value) {
-      toast("Docasne heslo je prazdne.");
+      toast("Poznamka je prazdna.");
       return;
     }
     try {
       await navigator.clipboard.writeText(value);
-      toast("Docasne heslo je zkopirovane.");
+      toast("Poznamka je zkopirovana.");
     } catch {
       input.type = "text";
       input.select();
       document.execCommand("copy");
       input.type = "password";
-      toast("Docasne heslo je zkopirovane.");
+      toast("Poznamka je zkopirovana.");
     }
   }
 
@@ -125,7 +125,7 @@
       if (event.target.closest("[data-temp-password-clear]")) {
         input.value = "";
         memory.delete(key);
-        toast("Docasne heslo je vymazane.");
+        toast("Poznamka je vymazana.");
       }
     });
   }

@@ -1,10 +1,12 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-33",
+  build: "20260620-34",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Mereni kontroluje, ze novy stav km neni nizsi nez aktualni tachometr vozidla.",
+    "Prihlaseni ma obnovu hesla pres Supabase a prehled uzivatelu jasne oddeluje poznamku od skutecneho prihlasovaciho hesla.",
     "Mereni spolehlive propisuje aktualni stav km do tachometru vozidla.",
     "Vynuceno nove nacteni stylu mapy osazeni.",
     "Mapa osazeni zvyraznuje problemove pozice pulzem a potlacuje neosazene pozice.",
@@ -2658,6 +2660,12 @@ function addMeasurement(event) {
   const odometer = parseOdometerValue(data.odometer);
   if (odometer <= 0) {
     showToast("Zadejte aktualni stav km.");
+    form.elements.odometer?.focus();
+    return;
+  }
+  const currentOdometer = Number(vehicle?.odometer) || 0;
+  if (vehicle && currentOdometer > 0 && odometer < currentOdometer) {
+    showToast(`Stav km nesmi byt nizsi nez aktualni tachometr ${formatNumber(currentOdometer)} km.`);
     form.elements.odometer?.focus();
     return;
   }

@@ -48,7 +48,7 @@
           auth: {
             autoRefreshToken: true,
             persistSession: true,
-            detectSessionInUrl: false
+            detectSessionInUrl: true
           }
         });
         return client;
@@ -144,6 +144,11 @@
         gap: 13px;
       }
 
+      .kaiser-auth-simple-actions {
+        display: grid;
+        gap: 9px;
+      }
+
       .kaiser-auth-simple-form label {
         color: var(--muted, #61705e);
         display: grid;
@@ -171,6 +176,13 @@
       .kaiser-auth-simple-status.is-ok { color: var(--brand-strong, #579718); }
       .kaiser-auth-simple-status.is-warn { color: #9c6a08; }
       .kaiser-auth-simple-status.is-danger { color: #c73636; }
+
+      .kaiser-auth-simple-help {
+        color: var(--muted, #61705e);
+        font-size: .86rem;
+        font-weight: 800;
+        line-height: 1.4;
+      }
 
       .login-status-card.is-logged-out {
         border-color: rgba(224, 82, 82, .42);
@@ -216,12 +228,26 @@
             <div class="kaiser-auth-simple-logo" aria-label="Kaiser Servis">kaiser.</div>
             <div>
               <h2 id="kaiserAuthSimpleTitle">Prihlaseni do aplikace</h2>
-              <p>Evidence je dostupna po prihlaseni e-mailem a heslem.</p>
+              <p data-auth-simple-copy>Evidence je dostupna po prihlaseni e-mailem a heslem.</p>
             </div>
             <form class="kaiser-auth-simple-form" id="kaiserAuthSimpleForm">
               <label>E-mail <input name="email" type="email" autocomplete="email" required /></label>
               <label>Heslo <input name="password" type="password" autocomplete="current-password" required /></label>
-              <button class="button button-primary" type="submit">Prihlasit</button>
+              <div class="kaiser-auth-simple-actions">
+                <button class="button button-primary" type="submit">Prihlasit</button>
+                <button class="button button-soft" type="button" data-auth-reset-request>Nastavit / obnovit heslo</button>
+              </div>
+              <small class="kaiser-auth-simple-help">
+                Heslo se nastavuje pres e-mail ze Supabase. Heslo vyplnene v prehledu uzivatelu neni prihlasovaci heslo.
+              </small>
+            </form>
+            <form class="kaiser-auth-simple-form" id="kaiserPasswordResetForm" hidden>
+              <label>Nove heslo <input name="password" type="password" autocomplete="new-password" minlength="8" required /></label>
+              <label>Zopakovat heslo <input name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" required /></label>
+              <div class="kaiser-auth-simple-actions">
+                <button class="button button-primary" type="submit">Ulozit nove heslo</button>
+                <button class="button button-soft" type="button" data-auth-back-login>Zpet na prihlaseni</button>
+              </div>
             </form>
             <p class="kaiser-auth-simple-status" data-auth-simple-status role="status" aria-live="polite"></p>
           </main>
@@ -231,7 +257,43 @@
 
     root = document.querySelector("#kaiserAuthSimple");
     root.querySelector("#kaiserAuthSimpleForm")?.addEventListener("submit", signIn);
+    root.querySelector("#kaiserPasswordResetForm")?.addEventListener("submit", updatePassword);
     return root;
+  }
+
+  function authRedirectUrl() {
+    return `${window.location.origin}${window.location.pathname}`;
+  }
+
+  function hasRecoveryIntent() {
+    const marker = `${window.location.search || ""} ${window.location.hash || ""}`;
+    return /type=recovery|access_token=|code=/.test(marker);
+  }
+
+  function cleanAuthUrl() {
+    if (!window.history?.replaceState) return;
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  function setAuthMode(mode) {
+    const root = authRoot();
+    const title = root.querySelector("#kaiserAuthSimpleTitle");
+    const copy = root.querySelector("[data-auth-simple-copy]");
+    const loginForm = root.querySelector("#kaiserAuthSimpleForm");
+    const resetForm = root.querySelector("#kaiserPasswordResetForm");
+    const reset = mode === "reset";
+    if (title) title.textContent = reset ? "Nastaveni noveho hesla" : "Prihlaseni do aplikace";
+    if (copy) {
+      copy.textContent = reset
+        ? "Zadejte nove heslo pro svuj pristup."
+        : "Evidence je dostupna po prihlaseni e-mailem a heslem.";
+    }
+    if (loginForm) loginForm.hidden = reset;
+    if (resetForm) resetForm.hidden = !reset;
+    window.setTimeout(() => {
+      const selector = reset ? "#kaiserPasswordResetForm input[name='password']" : "#kaiserAuthSimpleForm input[name='email']";
+      root.querySelector(selector)?.focus();
+    }, 40);
   }
 
   function status(message, kind = "") {
@@ -295,9 +357,16 @@
 
   function showLogin() {
     const root = authRoot();
+    setAuthMode("login");
     root.classList.add("is-visible");
     document.body.classList.add("kaiser-auth-simple-locked");
-    window.setTimeout(() => root.querySelector("input[name='email']")?.focus(), 40);
+  }
+
+  function showPasswordReset() {
+    const root = authRoot();
+    setAuthMode("reset");
+    root.classList.add("is-visible");
+    document.body.classList.add("kaiser-auth-simple-locked");
   }
 
   function hideLogin() {
@@ -359,6 +428,72 @@
     }
   }
 
+  async function requestPasswordReset() {
+    if (busy) return;
+    const form = document.querySelector("#kaiserAuthSimpleForm");
+    const email = String(form?.elements.email?.value || "").trim();
+    if (!email) {
+      status("Nejdrive vyplnte e-mail.", "warn");
+      form?.elements.email?.focus();
+      return;
+    }
+
+    setBusy(true);
+    status("Posilam e-mail pro nastaveni hesla...");
+    try {
+      const supabase = await supabaseClient();
+      const { error } = await withTimeout(
+        supabase.auth.resetPasswordForEmail(email, { redirectTo: authRedirectUrl() }),
+        "Odeslani e-mailu trva moc dlouho. Zkuste to prosim znovu."
+      );
+      if (error) throw error;
+      status("Pokud ucet v Supabase existuje, prisel e-mail pro nastaveni hesla.", "ok");
+    } catch (error) {
+      status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat.", "danger");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function updatePassword(event) {
+    event.preventDefault();
+    if (busy) return;
+
+    const form = event.currentTarget;
+    const password = String(form.elements.password.value || "");
+    const passwordConfirm = String(form.elements.passwordConfirm.value || "");
+    if (password.length < 8) {
+      status("Heslo musi mit alespon 8 znaku.", "warn");
+      return;
+    }
+    if (password !== passwordConfirm) {
+      status("Hesla se neshoduji.", "warn");
+      return;
+    }
+
+    setBusy(true);
+    status("Ukladam nove heslo...");
+    try {
+      const supabase = await supabaseClient();
+      const { data, error } = await withTimeout(
+        supabase.auth.updateUser({ password }),
+        "Ulozeni hesla trva moc dlouho. Zkuste to prosim znovu."
+      );
+      if (error) throw error;
+      form.reset();
+      cleanAuthUrl();
+      const session = await supabase.auth.getSession();
+      setAuth(data?.user || session?.data?.session?.user || null);
+      hideLogin();
+      status("Heslo je nastavene. Jste prihlasen.", "ok");
+    } catch (error) {
+      status(error?.message || "Heslo se nepodarilo nastavit. Otevrete prosim odkaz z e-mailu znovu.", "danger");
+      showPasswordReset();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function signOut() {
     if (busy) return;
     setBusy(true);
@@ -400,6 +535,12 @@
       );
       if (error) throw error;
       const user = data?.session?.user || null;
+      if (hasRecoveryIntent()) {
+        setAuth(user);
+        showPasswordReset();
+        status(user ? "Zadejte nove heslo." : "Otevrete odkaz pro nastaveni hesla z e-mailu znovu.", user ? "ok" : "warn");
+        return;
+      }
       if (user) {
         setAuth(user);
         hideLogin();
@@ -424,6 +565,11 @@
 
   document.addEventListener("click", (event) => {
     if (event.target.closest("[data-auth-simple-logout]")) signOut();
+    if (event.target.closest("[data-auth-reset-request]")) requestPasswordReset();
+    if (event.target.closest("[data-auth-back-login]")) {
+      setAuthMode("login");
+      status("");
+    }
   });
 
   if (document.readyState === "loading") {
