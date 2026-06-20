@@ -1,10 +1,11 @@
 const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-34",
+  build: "20260620-35",
   releaseDate: "20. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Rychle mereni umi vyplnit vice pozic vybraneho vozidla a ulozit je najednou.",
     "Mereni kontroluje, ze novy stav km neni nizsi nez aktualni tachometr vozidla.",
     "Prihlaseni ma obnovu hesla pres Supabase a prehled uzivatelu jasne oddeluje poznamku od skutecneho prihlasovaciho hesla.",
     "Mereni spolehlive propisuje aktualni stav km do tachometru vozidla.",
@@ -2651,23 +2652,20 @@ function addTire(event) {
   showToast("Pneumatika je zalozena v evidenci.");
 }
 
-function addMeasurement(event) {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const data = Object.fromEntries(new FormData(form).entries());
+function saveMeasurementData(data) {
   const tire = tireForPosition(data.vehicle, data.position);
   const vehicle = state.vehicles.find((item) => item.spz === data.vehicle);
   const odometer = parseOdometerValue(data.odometer);
   if (odometer <= 0) {
-    showToast("Zadejte aktualni stav km.");
-    form.elements.odometer?.focus();
-    return;
+    return { ok: false, field: "odometer", message: "Zadejte aktualni stav km." };
   }
   const currentOdometer = Number(vehicle?.odometer) || 0;
   if (vehicle && currentOdometer > 0 && odometer < currentOdometer) {
-    showToast(`Stav km nesmi byt nizsi nez aktualni tachometr ${formatNumber(currentOdometer)} km.`);
-    form.elements.odometer?.focus();
-    return;
+    return {
+      ok: false,
+      field: "odometer",
+      message: `Stav km nesmi byt nizsi nez aktualni tachometr ${formatNumber(currentOdometer)} km.`
+    };
   }
   const measurement = {
     date: todayIso(),
@@ -2688,17 +2686,36 @@ function addMeasurement(event) {
       tire.mileage = Math.max(tire.mileage || 0, odometer - tire.mountedOdo);
     }
   }
+  selectedVehicle = data.vehicle;
+  selectedPosition = data.position;
+  return {
+    ok: true,
+    tire,
+    vehicle,
+    position: data.position,
+    message: tire ? "Mereni ulozeno a pneu aktualizovana." : "Mereni ulozeno, pozice zatim nema prirazene ID pneu."
+  };
+}
+
+function addMeasurement(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const result = saveMeasurementData(data);
+  if (!result.ok) {
+    showToast(result.message);
+    if (result.field) form.elements[result.field]?.focus();
+    return;
+  }
   saveState();
   form.reset();
   form.elements.vehicle.value = data.vehicle;
   fillPositionOptions(data.vehicle);
   form.elements.position.value = data.position;
-  selectedVehicle = data.vehicle;
-  selectedPosition = data.position;
   renderAll();
   form.elements.position.value = data.position;
   syncMeasurementOdometer(data.vehicle);
-  showToast(tire ? "Mereni ulozeno a pneu aktualizovana." : "Mereni ulozeno, pozice zatim nema prirazene ID pneu.");
+  showToast(result.message);
 }
 
 function addService(event) {

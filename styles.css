@@ -1148,6 +1148,13 @@ label {
   font-size: 1.08rem;
 }
 
+.quick-mode-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 .quick-form-dock {
   grid-template-columns:
     minmax(190px, 1.35fr)
@@ -1163,6 +1170,77 @@ label {
 .quick-form-dock .button {
   grid-column: 5;
   min-height: 46px;
+}
+
+.quick-bulk-form {
+  display: grid;
+  gap: 12px;
+}
+
+.quick-bulk-top {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(160px, .8fr);
+  gap: 10px;
+}
+
+.quick-bulk-top label,
+.quick-bulk-row label {
+  color: var(--muted);
+  display: grid;
+  font-size: .8rem;
+  font-weight: 900;
+  gap: 6px;
+}
+
+.quick-bulk-top select,
+.quick-bulk-top input,
+.quick-bulk-row input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.quick-bulk-rows {
+  display: grid;
+  gap: 8px;
+  max-height: min(48vh, 430px);
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.quick-bulk-row {
+  align-items: end;
+  background: rgba(117, 189, 37, .06);
+  border: 1px solid rgba(117, 189, 37, .2);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(96px, .75fr) minmax(82px, .48fr) minmax(82px, .48fr) minmax(120px, .8fr);
+  padding: 10px;
+}
+
+.quick-bulk-row strong {
+  display: block;
+  font-size: .98rem;
+}
+
+.quick-bulk-row small {
+  color: var(--muted);
+  display: block;
+  font-size: .75rem;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.quick-bulk-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
 }
 
 .form-panel {
@@ -2093,6 +2171,17 @@ label {
 
   .quick-form-dock {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-mode-controls,
+  .quick-bulk-top,
+  .quick-bulk-row,
+  .quick-bulk-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-bulk-rows {
+    max-height: min(50vh, 460px);
   }
 
   .quick-form-dock .measure-vehicle,
