@@ -2,10 +2,11 @@ const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260621-03",
+  build: "20260621-04",
   releaseDate: "21. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Do leveho panelu byl doplnen informacni box o zaloze pred prestavbou na Kaiser Provoz.",
     "Administrace umi pres zabezpecenou Supabase funkci automaticky zalozit chybejici Auth ucty pro nove i stavajici uzivatele.",
     "Obnova hesla jasne rika, ze e-mail prijde jen pro existujici ucet v Supabase Auth.",
     "Obnova hesla ma samostatnou obrazovku jen s e-mailem a pouziva recovery odkaz vhodny pro statickou aplikaci.",
