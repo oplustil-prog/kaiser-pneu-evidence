@@ -2,7 +2,7 @@ const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260621-02",
+  build: "20260621-03",
   releaseDate: "21. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
@@ -2341,6 +2341,9 @@ async function callAuthProvision(payload) {
     body = { message: text };
   }
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error("Supabase funkce pro automaticke zalozeni uctu jeste neni nasazena.");
+    }
     const message = body?.error || body?.message || `Supabase funkce vratila chybu ${response.status}.`;
     throw new Error(message);
   }
