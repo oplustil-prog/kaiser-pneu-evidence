@@ -2,10 +2,11 @@ const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260621-04",
+  build: "20260621-05",
   releaseDate: "21. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Pridan centralni shell Kaiser Provoz se skeleton moduly mimo hotovy modul Pneumatiky.",
     "Do leveho panelu byl doplnen informacni box o zaloze pred prestavbou na Kaiser Provoz.",
     "Administrace umi pres zabezpecenou Supabase funkci automaticky zalozit chybejici Auth ucty pro nove i stavajici uzivatele.",
     "Obnova hesla jasne rika, ze e-mail prijde jen pro existujici ucet v Supabase Auth.",
@@ -791,11 +792,14 @@ let authProvisionAutoSyncStarted = false;
 
 const titles = {
   dashboard: "Dashboard provozu",
-  tires: "Evidence pneumatik",
-  vehicles: "Vozidla a pozice",
-  service: "Servisni zasahy",
-  import: "Import faktur",
-  reports: "Reporty a naklady",
+  vehicles: "Vozovy park",
+  "service-reports": "Servisni hlaseni",
+  tires: "Pneumatiky",
+  "routes-bins": "Trasy svozu",
+  "routes-samples": "Trasy vzorku",
+  import: "Importy / Vistos",
+  service: "Naklady",
+  reports: "Reporty",
   users: "Uzivatele a pristupy",
   settings: "Nastaveni aplikace"
 };

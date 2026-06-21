@@ -97,6 +97,7 @@ textarea {
   min-width: 0;
   max-width: 100%;
   padding: 22px 18px;
+  overflow-y: auto;
   background: #1b251d;
   color: #ffffff;
   display: flex;
@@ -2069,6 +2070,77 @@ label {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.module-skeleton {
+  display: grid;
+  gap: 18px;
+}
+
+.module-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.module-intro h3,
+.skeleton-card h3,
+.skeleton-list h3 {
+  margin: 0;
+}
+
+.module-intro p,
+.skeleton-card p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.skeleton-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.skeleton-index {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(117, 189, 37, 0.14);
+  color: var(--brand-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.skeleton-list {
+  display: grid;
+  gap: 10px;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.status-row span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.status-row strong {
+  text-align: right;
+}
+
 .compact-table table {
   min-width: 720px;
 }
@@ -2119,10 +2191,9 @@ label {
   }
 
   .nav-list {
-    grid-template-columns: repeat(8, minmax(120px, 1fr));
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    padding-bottom: 2px;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    overflow-x: visible;
+    padding-bottom: 0;
   }
 
   .sidebar-note {
@@ -2134,6 +2205,7 @@ label {
   .service-layout,
   .import-grid,
   .vehicle-import-grid,
+  .skeleton-grid,
   .settings-grid {
     grid-template-columns: 1fr;
   }
@@ -2176,7 +2248,8 @@ label {
 
   .topbar,
   .toolbar,
-  .panel-header {
+  .panel-header,
+  .module-intro {
     align-items: stretch;
     flex-direction: column;
   }
@@ -2221,7 +2294,8 @@ label {
   .role-grid,
   .users-grid,
   .entry-form,
-  .quick-form {
+  .quick-form,
+  .skeleton-grid {
     grid-template-columns: 1fr;
   }
 
