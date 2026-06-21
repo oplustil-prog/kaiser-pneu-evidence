@@ -2089,15 +2089,133 @@ label {
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.72);
   color: var(--muted);
+  font: inherit;
   font-size: 0.82rem;
   font-weight: 800;
   line-height: 1.2;
+  cursor: pointer;
 }
 
 .module-subitem.is-active {
   border-color: rgba(117, 189, 37, 0.46);
   background: rgba(117, 189, 37, 0.14);
   color: var(--brand-dark);
+}
+
+.module-dashboard {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.module-dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.module-dashboard-header h3 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+}
+
+.module-dashboard-header p:not(.eyebrow) {
+  margin: 7px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.module-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.module-kpi-card,
+.module-dashboard-block {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.module-kpi-card {
+  display: grid;
+  gap: 6px;
+  min-height: 112px;
+  padding: 14px;
+}
+
+.module-kpi-card span,
+.module-list-item span,
+.module-action span {
+  color: var(--muted);
+}
+
+.module-kpi-card span {
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.module-kpi-card strong {
+  font-size: 1.42rem;
+}
+
+.module-kpi-card small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.module-dashboard-layout {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.module-dashboard-block {
+  min-width: 0;
+  padding: 14px;
+}
+
+.module-actions,
+.module-list {
+  display: grid;
+  gap: 8px;
+}
+
+.module-action {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  border: 1px solid rgba(117, 189, 37, 0.34);
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: rgba(117, 189, 37, 0.12);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.module-list-item {
+  display: grid;
+  gap: 3px;
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+}
+
+.module-list-item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.module-list-item.is-danger strong {
+  color: var(--danger);
 }
 
 .module-intro {

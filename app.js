@@ -2,10 +2,11 @@ const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260621-06",
+  build: "20260621-07",
   releaseDate: "21. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Kazdy hlavni modul ma vlastni modulovy dashboard a route ve tvaru /modul/dashboard.",
     "Hlavni navigace byla rozsirena podle stromu Kaiser Provoz vcetne podsekci modulu.",
     "Pridan centralni shell Kaiser Provoz se skeleton moduly mimo hotovy modul Pneumatiky.",
     "Do leveho panelu byl doplnen informacni box o zaloze pred prestavbou na Kaiser Provoz.",
@@ -799,13 +800,64 @@ const titles = {
   tires: "Pneumatiky",
   "routes-bins": "Trasy svozu",
   "routes-samples": "Trasy vzorku",
-  customers: "Zakaznici a smlouvy",
+  customers: "Zakaznici / Vistos",
   import: "Importy / Vistos",
   service: "Naklady",
   reports: "Reporty",
   users: "Uzivatele a pristupy",
   settings: "Nastaveni aplikace"
 };
+
+const routeConfig = {
+  dashboard: { dashboard: "/dashboard", routes: ["/dashboard"] },
+  vehicles: {
+    dashboard: "/vozovy-park/dashboard",
+    routes: ["/vozovy-park/dashboard", "/vozovy-park/vozidla", "/vozovy-park/detail", "/vozovy-park/stk-revize", "/vozovy-park/naklady"]
+  },
+  "service-reports": {
+    dashboard: "/hlaseni-ridicu/dashboard",
+    routes: ["/hlaseni-ridicu/dashboard", "/hlaseni-ridicu/nove", "/hlaseni-ridicu/moje", "/hlaseni-ridicu/vsechna", "/hlaseni-ridicu/kanban", "/hlaseni-ridicu/archiv"]
+  },
+  maintenance: {
+    dashboard: "/servis-udrzba/dashboard",
+    routes: ["/servis-udrzba/dashboard", "/servis-udrzba/otevrene-opravy", "/servis-udrzba/planovane-servisy", "/servis-udrzba/udrzba-vozidel", "/servis-udrzba/externi-servisy", "/servis-udrzba/material-dily"]
+  },
+  tires: { dashboard: "/pneumatiky", routes: ["/pneumatiky"] },
+  "routes-bins": {
+    dashboard: "/trasy-svozu/dashboard",
+    routes: ["/trasy-svozu/dashboard", "/trasy-svozu/denni-trasy", "/trasy-svozu/zastavky", "/trasy-svozu/mapa", "/trasy-svozu/import-vistos"]
+  },
+  "routes-samples": {
+    dashboard: "/trasy-vzorku/dashboard",
+    routes: ["/trasy-vzorku/dashboard", "/trasy-vzorku/denni-trasy", "/trasy-vzorku/odberna-mista", "/trasy-vzorku/vzorky", "/trasy-vzorku/mapa", "/trasy-vzorku/import-vistos"]
+  },
+  customers: {
+    dashboard: "/vistos/dashboard",
+    routes: ["/vistos/dashboard", "/vistos/zakaznici", "/vistos/smlouvy", "/vistos/adresy-stanoviste", "/vistos/sluzby", "/vistos/synchronizace"]
+  },
+  import: { dashboard: "/importy-vistos/dashboard", routes: ["/importy-vistos/dashboard"] },
+  service: {
+    dashboard: "/naklady/dashboard",
+    routes: ["/naklady/dashboard", "/naklady/vozidla", "/naklady/servis", "/naklady/podle-spz", "/naklady/dodavatele", "/naklady/exporty"]
+  },
+  reports: {
+    dashboard: "/reporty/dashboard",
+    routes: ["/reporty/dashboard", "/reporty/provozni", "/reporty/vozovy-park", "/reporty/servis", "/reporty/trasy", "/reporty/pneumatiky", "/reporty/export"]
+  },
+  users: {
+    dashboard: "/uzivatele/dashboard",
+    routes: ["/uzivatele/dashboard", "/uzivatele/ridici", "/uzivatele/garazmistri", "/uzivatele/management", "/uzivatele/role"]
+  },
+  settings: {
+    dashboard: "/nastaveni/dashboard",
+    routes: ["/nastaveni/dashboard", "/nastaveni/ciselniky", "/nastaveni/notifikace", "/nastaveni/integrace", "/nastaveni/cloudflare-api", "/nastaveni/audit-log"]
+  }
+};
+
+const routeToSection = Object.entries(routeConfig).reduce((map, [section, config]) => {
+  config.routes.forEach((route) => map.set(route, section));
+  return map;
+}, new Map());
 
 const userRoles = [
   "Management",
@@ -1222,6 +1274,49 @@ function queryAll(selector, scope = document) {
   return [...scope.querySelectorAll(selector)];
 }
 
+function appBasePath() {
+  const match = window.location.pathname.match(/^(.+?\/kaiser-pneu-evidence)(?:\/|$)/);
+  return match?.[1] || "";
+}
+
+function normalizeRoutePath(route) {
+  let path = String(route || "/dashboard").split("?")[0].split("#")[0];
+  const base = appBasePath();
+  if (base && path.startsWith(base)) path = path.slice(base.length) || "/";
+  if (!path.startsWith("/")) path = `/${path}`;
+  path = path.replace(/\/+$/, "");
+  return path || "/dashboard";
+}
+
+function routeFromLocation() {
+  const params = new URLSearchParams(window.location.search);
+  const redirectedRoute = params.get("route");
+  return normalizeRoutePath(redirectedRoute || window.location.pathname);
+}
+
+function routeUrl(route) {
+  return `${appBasePath()}${normalizeRoutePath(route)}`;
+}
+
+function routeSection(route) {
+  return routeToSection.get(normalizeRoutePath(route)) || "dashboard";
+}
+
+function updateBrowserRoute(route, replace = false) {
+  const nextUrl = routeUrl(route);
+  if (window.location.pathname === nextUrl && !window.location.search) return;
+  const statePayload = { route: normalizeRoutePath(route) };
+  if (replace) window.history.replaceState(statePayload, "", nextUrl);
+  else window.history.pushState(statePayload, "", nextUrl);
+}
+
+function updateActiveRoute(route) {
+  const normalized = normalizeRoutePath(route);
+  queryAll("[data-module-route]").forEach((button) =>
+    button.classList.toggle("is-active", normalizeRoutePath(button.dataset.moduleRoute) === normalized)
+  );
+}
+
 function renderVersionInfo() {
   const target = query("#appVersionBadge");
   if (!target) return;
@@ -1277,12 +1372,14 @@ function applySettings() {
   document.documentElement.style.setProperty("--green", color);
 }
 
-function setSection(section) {
+function setSection(section, options = {}) {
   activeSection = section;
   queryAll(".section").forEach((el) => el.classList.toggle("is-active", el.id === section));
   queryAll(".nav-item").forEach((el) =>
     el.classList.toggle("is-active", el.dataset.section === section)
   );
+  const activeRoute = normalizeRoutePath(options.route || routeConfig[section]?.dashboard || "/dashboard");
+  updateActiveRoute(activeRoute);
   query("#pageTitle").textContent = titles[section] || "Evidence pneumatik";
   if (section === "vehicles") renderVehicles();
   if (section === "reports") renderReports();
@@ -1291,6 +1388,16 @@ function setSection(section) {
     scheduleAuthUsersAutoSync();
   }
   if (section === "settings") renderSettings();
+  if (options.updateRoute !== false) updateBrowserRoute(activeRoute, Boolean(options.replaceRoute));
+}
+
+function applyRouteFromLocation(options = {}) {
+  const route = routeFromLocation();
+  setSection(routeSection(route), {
+    route,
+    updateRoute: false
+  });
+  if (options.replace !== false) updateBrowserRoute(route, true);
 }
 
 function getSearchTerm() {
@@ -1483,31 +1590,17 @@ function getAlerts() {
 
 function calculateKpis() {
   const period = latestServicePeriod();
-  const serviceMonth = serviceCostForPrefix(period.month);
   const yearServices = servicesForPrefix(period.year);
   const ytd = serviceCostForPrefix(period.year);
-  const vehiclesWithCost = new Set(
-    yearServices
-      .map((service) => service.vehicle)
-      .filter(isKnownVehicle)
-  ).size;
-  const importedRows = state.imports.length || importedInvoiceData.summary?.importRowCount || 0;
-  const unmatched = importedInvoiceData.summary?.unmatchedInvoiceCount || 0;
-  const avgVehicleCost = ytd / Math.max(state.vehicles.length, 1);
-  const mountedTires = state.tires.filter((tire) => tire.state === "na vozidle" && tire.vehicle).length;
-  const vehiclesWithMountedTires = new Set(
-    state.tires
-      .filter((tire) => tire.state === "na vozidle" && tire.vehicle)
-      .map((tire) => tire.vehicle)
-  ).size;
+  const alerts = getAlerts();
 
   return [
-    { label: "Naklad posledni mesic", value: formatCurrency(serviceMonth), hint: formatMonthLabel(period.month) },
-    { label: "Naklad YTD", value: formatCurrency(ytd), hint: `${yearServices.length} servisnich karet v roce ${period.year}` },
-    { label: "Vozidla v evidenci", value: `${state.vehicles.length} ks`, hint: `${vehiclesWithCost} vozidel s nakladem v importu` },
-    { label: "Koupené pneu", value: `${mountedTires} ks`, hint: `${vehiclesWithMountedTires} vozidel s osazenim` },
-    { label: "Faktury import", value: `${invoiceCount()} ks`, hint: `${importedRows} radku, ${unmatched} bez SPZ` },
-    { label: "Prumer / vozidlo YTD", value: formatCurrency(avgVehicleCost), hint: "naklad z faktur / vozovy park" }
+    { label: "Otevrene zavady celkem", value: `${alerts.length} ks`, hint: "z aktivnich upozorneni a kontrol" },
+    { label: "Vozidla mimo provoz", value: "0 ks", hint: "skeleton do napojeni servisu" },
+    { label: "Naklady servis YTD", value: formatCurrency(ytd), hint: `${yearServices.length} servisnich karet v roce ${period.year}` },
+    { label: "Aktivni trasy dnes", value: "0", hint: "skeleton tras svozu a vzorku" },
+    { label: "Cekajici notifikace", value: `${alerts.length}`, hint: "upozorneni k provereni" },
+    { label: "STK / emise / revize", value: "0 do 30 dnu", hint: "bude doplneno ve vozovem parku" }
   ];
 }
 
@@ -1545,6 +1638,356 @@ function renderAlerts() {
         `
       )
       .join("") || `<p class="meta">Bez aktivnich upozorneni.</p>`;
+}
+
+function KpiCard(kpi) {
+  return `
+    <article class="module-kpi-card">
+      <span>${escapeHtml(kpi.label)}</span>
+      <strong>${escapeHtml(kpi.value)}</strong>
+      <small>${escapeHtml(kpi.hint || "")}</small>
+    </article>
+  `;
+}
+
+function QuickAction(action) {
+  return `
+    <button class="module-action" type="button" data-module-route="${escapeHtml(action.route)}">
+      <strong>${escapeHtml(action.label)}</strong>
+      <span>${escapeHtml(action.hint || "")}</span>
+    </button>
+  `;
+}
+
+function ActivityList(items) {
+  return `
+    <div class="module-list">
+      ${items
+        .map(
+          (item) => `
+            <div class="module-list-item">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span>${escapeHtml(item.body)}</span>
+            </div>
+          `
+        )
+        .join("") || `<p class="meta">Zatim bez udalosti.</p>`}
+    </div>
+  `;
+}
+
+function AlertList(items) {
+  return `
+    <div class="module-list">
+      ${items
+        .map(
+          (item) => `
+            <div class="module-list-item ${item.level === "danger" ? "is-danger" : ""}">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span>${escapeHtml(item.body)}</span>
+            </div>
+          `
+        )
+        .join("") || `<p class="meta">Bez aktivnich problemu.</p>`}
+    </div>
+  `;
+}
+
+function ModuleDashboard(config) {
+  return `
+    <section class="module-dashboard" aria-label="${escapeHtml(config.title)} dashboard">
+      <div class="module-dashboard-header">
+        <div>
+          <p class="eyebrow">${escapeHtml(config.eyebrow || "Dashboard modulu")}</p>
+          <h3>${escapeHtml(config.title)}</h3>
+          <p>${escapeHtml(config.description)}</p>
+        </div>
+        <span class="badge badge-neutral">${escapeHtml(config.source || "mock / adapter")}</span>
+      </div>
+      <div class="module-kpi-grid">
+        ${config.kpis.map(KpiCard).join("")}
+      </div>
+      <div class="module-dashboard-layout">
+        <article class="module-dashboard-block">
+          <div class="panel-header compact-header">
+            <div>
+              <p class="eyebrow">Rychle akce</p>
+              <h3>Nejcastejsi kroky</h3>
+            </div>
+          </div>
+          <div class="module-actions">${config.actions.map(QuickAction).join("")}</div>
+        </article>
+        <article class="module-dashboard-block">
+          <div class="panel-header compact-header">
+            <div>
+              <p class="eyebrow">Posledni udalosti</p>
+              <h3>Aktivita</h3>
+            </div>
+          </div>
+          ${ActivityList(config.activities)}
+        </article>
+        <article class="module-dashboard-block">
+          <div class="panel-header compact-header">
+            <div>
+              <p class="eyebrow">Upozorneni</p>
+              <h3>Problemy</h3>
+            </div>
+          </div>
+          ${AlertList(config.alerts)}
+        </article>
+        <article class="module-dashboard-block">
+          <div class="panel-header compact-header">
+            <div>
+              <p class="eyebrow">Prehled</p>
+              <h3>${escapeHtml(config.overviewTitle || "Souhrn")}</h3>
+            </div>
+          </div>
+          ${ActivityList(config.overview)}
+        </article>
+      </div>
+    </section>
+  `;
+}
+
+function moduleDashboardData(section) {
+  const period = latestServicePeriod();
+  const alerts = getAlerts();
+  const monthCost = serviceCostForPrefix(period.month);
+  const ytdCost = serviceCostForPrefix(period.year);
+  const topVehicles = vehicleCosts({ includeFleetZeros: true }).slice(0, 3);
+  const activeUsers = state.users.filter((user) => user.status === "aktivni").length;
+  const driverUsers = state.users.filter((user) => user.role === "Ridic").length;
+  const managerUsers = state.users.filter((user) => user.role === "Management").length;
+  const adminUsers = state.users.filter((user) => /spravce|management/i.test(user.role || "")).length;
+  const baseAlerts = alerts.slice(0, 3).map((alert) => ({
+    title: alert.title,
+    body: alert.body,
+    level: alert.level
+  }));
+  const lastServices = state.services.slice(-3).reverse().map((service) => ({
+    title: `${service.date || "bez data"} / ${service.vehicle || "bez SPZ"}`,
+    body: `${service.type || "servis"} - ${formatCurrency(serviceTotal(service))}`
+  }));
+  const noApiHint = "skeleton do napojeni API / Vistos";
+
+  const configs = {
+    vehicles: {
+      eyebrow: "Vozovy park",
+      title: "Dashboard vozoveho parku",
+      description: "Prehled vozidel, stavu, revizi a nejdrazsich servisnich polozek.",
+      source: "adapter + mock",
+      kpis: [
+        { label: "Aktivni vozidla", value: `${state.vehicles.length} ks`, hint: "vozidla v evidenci" },
+        { label: "Mimo provoz", value: "0 ks", hint: noApiHint },
+        { label: "Otevrena zavada", value: `${alerts.length} ks`, hint: "z aktivnich upozorneni" },
+        { label: "STK / revize do 30 dnu", value: "0", hint: noApiHint },
+        { label: "Naklady servis YTD", value: formatCurrency(ytdCost), hint: `${period.year}` }
+      ],
+      actions: [{ label: "Pridat vozidlo", hint: "otevrit prehled vozidel", route: "/vozovy-park/vozidla" }],
+      activities: lastServices,
+      alerts: baseAlerts,
+      overviewTitle: "Nejdrazsi vozidla",
+      overview: topVehicles.map((vehicle) => ({ title: vehicle.label, body: `${vehicle.driver} - ${formatCurrency(vehicle.value)}` }))
+    },
+    "service-reports": {
+      eyebrow: "Hlaseni ridicu",
+      title: "Dashboard hlaseni",
+      description: "Fronta zavad od ridicu, stavy reseni a rychly vstup do kanbanu.",
+      source: "mock",
+      kpis: [
+        { label: "Nove nahlaseno", value: "0", hint: noApiHint },
+        { label: "V reseni", value: "0", hint: noApiHint },
+        { label: "Ceka na dily", value: "0", hint: noApiHint },
+        { label: "Opraveno tento mesic", value: "0", hint: noApiHint },
+        { label: "Prumerna doba reseni", value: "-", hint: noApiHint }
+      ],
+      actions: [
+        { label: "Nahlasit zavadu", hint: "nova udalost ridice", route: "/hlaseni-ridicu/nove" },
+        { label: "Otevrit kanban", hint: "stav oprav", route: "/hlaseni-ridicu/kanban" }
+      ],
+      activities: [{ title: "Pripraveno pro ridice", body: "Ceka na datovy model hlaseni." }],
+      alerts: [],
+      overviewTitle: "Stavy hlaseni",
+      overview: [
+        { title: "Nove", body: "prijem od ridice" },
+        { title: "V reseni", body: "dilna nebo externi servis" },
+        { title: "Archiv", body: "uzavrene pripady" }
+      ]
+    },
+    maintenance: {
+      eyebrow: "Servis a udrzba",
+      title: "Dashboard servisu",
+      description: "Otevrene opravy, planovane servisy, externi dodavatele a material.",
+      source: "adapter + mock",
+      kpis: [
+        { label: "Otevrene opravy", value: `${state.services.length} ks`, hint: "servisni karty v evidenci" },
+        { label: "Planovane servisy", value: "0", hint: noApiHint },
+        { label: "Dokonceno tento mesic", value: `${servicesForPrefix(period.month).length} ks`, hint: formatMonthLabel(period.month) },
+        { label: "Naklady mesic", value: formatCurrency(monthCost), hint: formatMonthLabel(period.month) },
+        { label: "Ceka na dily", value: "0", hint: noApiHint }
+      ],
+      actions: [{ label: "Zalozit servisni zaznam", hint: "otevrit servisni formular", route: "/servis-udrzba/otevrene-opravy" }],
+      activities: lastServices,
+      alerts: baseAlerts,
+      overviewTitle: "Dodavatele a material",
+      overview: [
+        { title: "Externi servisy", body: "pripraveno jako samostatna podstranka" },
+        { title: "Material / dily", body: "pripraveno pro skladove pohyby" }
+      ]
+    },
+    "routes-bins": {
+      eyebrow: "Trasy svozu",
+      title: "Dashboard svozu",
+      description: "Denni trasy, zastavky, mapa svozu a budouci import z Vistos.",
+      source: "mock",
+      kpis: [
+        { label: "Trasy dnes", value: "0", hint: noApiHint },
+        { label: "Zastavky dnes", value: "0", hint: noApiHint },
+        { label: "Nadoby dnes", value: "0", hint: noApiHint },
+        { label: "Neodbavene zastavky", value: "0", hint: noApiHint },
+        { label: "Mimoradne svozy", value: "0", hint: noApiHint }
+      ],
+      actions: [{ label: "Vytvorit trasu", hint: "nova denni trasa", route: "/trasy-svozu/denni-trasy" }],
+      activities: [{ title: "Import z Vistos", body: "ceka na datovy adapter" }],
+      alerts: [],
+      overviewTitle: "Mapa a zastavky",
+      overview: [
+        { title: "Mapa svozu", body: "pripravena podstranka" },
+        { title: "Zastavky", body: "pripravena podstranka" }
+      ]
+    },
+    "routes-samples": {
+      eyebrow: "Trasy vzorku",
+      title: "Dashboard vzorku",
+      description: "Odberna mista, vzorky, casova okna a predani do laboratore.",
+      source: "mock",
+      kpis: [
+        { label: "Trasy dnes", value: "0", hint: noApiHint },
+        { label: "Odberna mista dnes", value: "0", hint: noApiHint },
+        { label: "Odebrane vzorky", value: "0", hint: noApiHint },
+        { label: "Ceka na laboratore", value: "0", hint: noApiHint },
+        { label: "Casova okna", value: "0", hint: noApiHint }
+      ],
+      actions: [{ label: "Vytvorit trasu", hint: "nova trasa vzorku", route: "/trasy-vzorku/denni-trasy" }],
+      activities: [{ title: "Vzorky", body: "ceka na napojeni Vistos / backend" }],
+      alerts: [],
+      overviewTitle: "Odbery",
+      overview: [
+        { title: "Odberna mista", body: "pripravena podstranka" },
+        { title: "Mapa trasy", body: "pripravena podstranka" }
+      ]
+    },
+    customers: {
+      eyebrow: "Zakaznici / Vistos",
+      title: "Dashboard Vistos",
+      description: "Zakaznici, smlouvy, stanoviste, sluzby a synchronizace Vistos.",
+      source: "mock",
+      kpis: [
+        { label: "Zakaznici", value: "0", hint: noApiHint },
+        { label: "Aktivni smlouvy", value: "0", hint: noApiHint },
+        { label: "Posledni synchronizace", value: "-", hint: noApiHint },
+        { label: "Chyby synchronizace", value: "0", hint: noApiHint },
+        { label: "Nove zmeny z Vistos", value: "0", hint: noApiHint }
+      ],
+      actions: [{ label: "Spustit synchronizaci", hint: "budouci Vistos adapter", route: "/vistos/synchronizace" }],
+      activities: [{ title: "Datovy adapter", body: "pripraveno pro Vistos API" }],
+      alerts: [],
+      overviewTitle: "Zakaznici a smlouvy",
+      overview: [
+        { title: "Zakaznici", body: "pripravena evidence" },
+        { title: "Smlouvy", body: "pripravena evidence" }
+      ]
+    },
+    service: {
+      eyebrow: "Naklady",
+      title: "Dashboard nakladu",
+      description: "Servisni naklady, vozidla, dodavatele, exporty a nejvetsi polozky.",
+      source: "adapter",
+      kpis: [
+        { label: "Naklady tento mesic", value: formatCurrency(monthCost), hint: formatMonthLabel(period.month) },
+        { label: "Naklady YTD", value: formatCurrency(ytdCost), hint: `${period.year}` },
+        { label: "Servisni naklady", value: formatCurrency(ytdCost), hint: "z importu a servisnich karet" },
+        { label: "Vozidla s nakladem", value: `${topVehicles.length}`, hint: "top podle servisnich nakladu" },
+        { label: "Faktury", value: `${invoiceCount()} ks`, hint: "doklady v importu" }
+      ],
+      actions: [{ label: "Export CSV", hint: "stahnout naklady", route: "/naklady/exporty" }],
+      activities: lastServices,
+      alerts: baseAlerts,
+      overviewTitle: "Nejvetsi polozky",
+      overview: topVehicles.map((vehicle) => ({ title: vehicle.label, body: formatCurrency(vehicle.value) }))
+    },
+    reports: {
+      eyebrow: "Reporty",
+      title: "Dashboard reportu",
+      description: "Prehled pripravenych reportu, exportu a naplanovanych vystupu.",
+      source: "adapter + mock",
+      kpis: [
+        { label: "Vygenerovane reporty", value: "0", hint: noApiHint },
+        { label: "Naplanovane reporty", value: "0", hint: noApiHint },
+        { label: "Exporty ke stazeni", value: "0", hint: noApiHint },
+        { label: "Pneu reporty", value: `${sizeCosts().length}`, hint: "rozmery podle faktur" }
+      ],
+      actions: [{ label: "Vytvorit report", hint: "vybrat typ reportu", route: "/reporty/provozni" }],
+      activities: [{ title: "Reporty nakladu", body: "vyuziva aktualni import a servisni karty" }],
+      alerts: baseAlerts,
+      overviewTitle: "Typy reportu",
+      overview: [
+        { title: "Provozni reporty", body: "celofiremni souhrn" },
+        { title: "Pneumatiky", body: "stale pres hotovy pneu modul" }
+      ]
+    },
+    users: {
+      eyebrow: "Uzivatele",
+      title: "Dashboard uzivatelu",
+      description: "Prehled pristupu, roli, aktivnich uctu a poslednich zmen.",
+      source: "adapter",
+      kpis: [
+        { label: "Aktivni uzivatele", value: `${activeUsers}`, hint: "aktivni zaznamy v evidenci" },
+        { label: "Ridici", value: `${driverUsers}`, hint: "role Ridic" },
+        { label: "Garazmistri", value: "0", hint: noApiHint },
+        { label: "Administratori", value: `${adminUsers}`, hint: "spravci a management" },
+        { label: "Posledni prihlaseni", value: "-", hint: noApiHint }
+      ],
+      actions: [{ label: "Pridat uzivatele", hint: "otevrit formular pristupu", route: "/uzivatele/role" }],
+      activities: state.users.slice(0, 3).map((user) => ({ title: user.name, body: `${user.email} - ${user.role}` })),
+      alerts: [],
+      overviewTitle: "Role a opravneni",
+      overview: [
+        { title: "Ridici", body: "merenim a hlasenim" },
+        { title: "Management", body: "reporty a prehledy" }
+      ]
+    },
+    settings: {
+      eyebrow: "Nastaveni",
+      title: "Dashboard nastaveni",
+      description: "Integrace, notifikace, API konfigurace, ciselniky a audit log.",
+      source: "adapter + mock",
+      kpis: [
+        { label: "Stav integraci", value: "Cloud OK", hint: "Supabase konfigurace aktivni" },
+        { label: "Notifikace", value: "0", hint: noApiHint },
+        { label: "Audit log", value: "0 zmen", hint: noApiHint },
+        { label: "Cloudflare / API", value: "pripraveno", hint: "budouci konfigurace" },
+        { label: "Ciselniky", value: "5", hint: "role, stavy, limity, depa, typy" }
+      ],
+      actions: [{ label: "Upravit integrace", hint: "nastaveni API", route: "/nastaveni/integrace" }],
+      activities: [{ title: "Cloud sync", body: "nastaveni aplikace zustava v Supabase flow" }],
+      alerts: [],
+      overviewTitle: "Konfigurace",
+      overview: [
+        { title: "Ciselniky", body: "pripraveno pro samostatnou spravu" },
+        { title: "Audit log", body: "pripraveno pro historicke udalosti" }
+      ]
+    }
+  };
+
+  return configs[section];
+}
+
+function renderModuleDashboards() {
+  queryAll("[data-module-dashboard]").forEach((target) => {
+    const config = moduleDashboardData(target.dataset.moduleDashboard);
+    target.innerHTML = config ? ModuleDashboard(config) : "";
+  });
 }
 
 function vehicleCosts(options = {}) {
@@ -2943,16 +3386,29 @@ function renderAll() {
   renderReports();
   renderUsers();
   renderSettings();
+  renderModuleDashboards();
 }
 
 function bindEvents() {
   queryAll("[data-section]").forEach((button) =>
-    button.addEventListener("click", () => setSection(button.dataset.section))
+    button.addEventListener("click", () =>
+      setSection(button.dataset.section, { route: button.dataset.route || routeConfig[button.dataset.section]?.dashboard })
+    )
   );
 
   document.addEventListener("click", (event) => {
+    const routeTarget = event.target.closest("[data-module-route]");
+    if (routeTarget) {
+      const route = normalizeRoutePath(routeTarget.dataset.moduleRoute);
+      setSection(routeSection(route), { route });
+      return;
+    }
+
     const jumpTarget = event.target.closest("[data-section-jump]");
-    if (jumpTarget) setSection(jumpTarget.dataset.sectionJump);
+    if (jumpTarget) {
+      const section = jumpTarget.dataset.sectionJump;
+      setSection(section, { route: routeConfig[section]?.dashboard });
+    }
 
     const userFill = event.target.closest("[data-user-fill]");
     if (userFill) fillUserForm(userFill.dataset.userFill);
@@ -2960,6 +3416,8 @@ function bindEvents() {
     const userToggle = event.target.closest("[data-user-toggle]");
     if (userToggle) toggleUserStatus(userToggle.dataset.userToggle);
   });
+
+  window.addEventListener("popstate", () => applyRouteFromLocation({ replace: false }));
 
   query("#globalSearch").addEventListener("input", renderTires);
   query("#qrFocusButton").addEventListener("click", () => {
@@ -3055,3 +3513,4 @@ function bindEvents() {
 
 bindEvents();
 renderAll();
+applyRouteFromLocation({ replace: true });

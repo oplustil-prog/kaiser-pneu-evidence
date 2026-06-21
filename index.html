@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260621-06" />
+    <link rel="stylesheet" href="./styles.css?v=20260621-07" />
     <link rel="stylesheet" href="./service-card.css?v=20260618-15" />
     <link rel="stylesheet" href="./vehicle-photos.css?v=20260618-16" />
   </head>
@@ -27,51 +27,51 @@
         </button>
 
         <nav class="nav-list" id="sectionNav" aria-label="Sekce aplikace">
-          <button class="nav-item is-active" type="button" data-section="dashboard">
+          <button class="nav-item is-active" type="button" data-section="dashboard" data-route="/dashboard">
             <span class="nav-icon" aria-hidden="true">01</span>
             Dashboard
           </button>
-          <button class="nav-item" type="button" data-section="vehicles">
+          <button class="nav-item" type="button" data-section="vehicles" data-route="/vozovy-park/dashboard">
             <span class="nav-icon" aria-hidden="true">02</span>
             Vozovy park
           </button>
-          <button class="nav-item" type="button" data-section="service-reports">
+          <button class="nav-item" type="button" data-section="service-reports" data-route="/hlaseni-ridicu/dashboard">
             <span class="nav-icon" aria-hidden="true">03</span>
             Hlaseni ridicu
           </button>
-          <button class="nav-item" type="button" data-section="maintenance">
+          <button class="nav-item" type="button" data-section="maintenance" data-route="/servis-udrzba/dashboard">
             <span class="nav-icon" aria-hidden="true">04</span>
             Servis a udrzba
           </button>
-          <button class="nav-item" type="button" data-section="tires">
+          <button class="nav-item" type="button" data-section="tires" data-route="/pneumatiky">
             <span class="nav-icon" aria-hidden="true">05</span>
             Pneumatiky
           </button>
-          <button class="nav-item" type="button" data-section="routes-bins">
+          <button class="nav-item" type="button" data-section="routes-bins" data-route="/trasy-svozu/dashboard">
             <span class="nav-icon" aria-hidden="true">06</span>
             Trasy svozu
           </button>
-          <button class="nav-item" type="button" data-section="routes-samples">
+          <button class="nav-item" type="button" data-section="routes-samples" data-route="/trasy-vzorku/dashboard">
             <span class="nav-icon" aria-hidden="true">07</span>
             Trasy vzorku
           </button>
-          <button class="nav-item" type="button" data-section="customers">
+          <button class="nav-item" type="button" data-section="customers" data-route="/vistos/dashboard">
             <span class="nav-icon" aria-hidden="true">08</span>
-            Zakaznici a smlouvy
+            Zakaznici / Vistos
           </button>
-          <button class="nav-item" type="button" data-section="service">
+          <button class="nav-item" type="button" data-section="service" data-route="/naklady/dashboard">
             <span class="nav-icon" aria-hidden="true">09</span>
             Naklady
           </button>
-          <button class="nav-item" type="button" data-section="reports">
+          <button class="nav-item" type="button" data-section="reports" data-route="/reporty/dashboard">
             <span class="nav-icon" aria-hidden="true">10</span>
             Reporty
           </button>
-          <button class="nav-item" type="button" data-section="users">
+          <button class="nav-item" type="button" data-section="users" data-route="/uzivatele/dashboard">
             <span class="nav-icon" aria-hidden="true">11</span>
             Uzivatele
           </button>
-          <button class="nav-item" type="button" data-section="settings">
+          <button class="nav-item" type="button" data-section="settings" data-route="/nastaveni/dashboard">
             <span class="nav-icon" aria-hidden="true">12</span>
             Nastaveni
           </button>
@@ -310,12 +310,14 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce vozoveho parku">
-            <span class="module-subitem is-active">Prehled vozidel</span>
-            <span class="module-subitem">Detail vozidla</span>
-            <span class="module-subitem">Servisni intervaly</span>
-            <span class="module-subitem">STK / emise / revize</span>
-            <span class="module-subitem">Naklady vozidel</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/vozovy-park/dashboard">Dashboard vozoveho parku</button>
+            <button class="module-subitem" type="button" data-module-route="/vozovy-park/vozidla">Prehled vozidel</button>
+            <button class="module-subitem" type="button" data-module-route="/vozovy-park/detail">Detail vozidla</button>
+            <button class="module-subitem" type="button" data-module-route="/vozovy-park/stk-revize">STK / emise / revize</button>
+            <button class="module-subitem" type="button" data-module-route="/vozovy-park/naklady">Naklady vozidel</button>
           </div>
+
+          <div data-module-dashboard="vehicles"></div>
 
           <div class="vehicle-layout">
             <article class="panel vehicle-card" id="vehicleDetail"></article>
@@ -343,12 +345,15 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce hlaseni ridicu">
-            <span class="module-subitem is-active">Nove hlaseni</span>
-            <span class="module-subitem">Moje hlaseni</span>
-            <span class="module-subitem">Vsechna hlaseni</span>
-            <span class="module-subitem">Kanban oprav</span>
-            <span class="module-subitem">Archiv hlaseni</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/hlaseni-ridicu/dashboard">Dashboard hlaseni</button>
+            <button class="module-subitem" type="button" data-module-route="/hlaseni-ridicu/nove">Nove hlaseni</button>
+            <button class="module-subitem" type="button" data-module-route="/hlaseni-ridicu/moje">Moje hlaseni</button>
+            <button class="module-subitem" type="button" data-module-route="/hlaseni-ridicu/vsechna">Vsechna hlaseni</button>
+            <button class="module-subitem" type="button" data-module-route="/hlaseni-ridicu/kanban">Kanban oprav</button>
+            <button class="module-subitem" type="button" data-module-route="/hlaseni-ridicu/archiv">Archiv</button>
           </div>
+
+          <div data-module-dashboard="service-reports"></div>
 
           <div class="module-skeleton">
             <article class="panel module-intro">
@@ -414,12 +419,15 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce servisu a udrzby">
-            <span class="module-subitem is-active">Otevrene opravy</span>
-            <span class="module-subitem">Planovane servisy</span>
-            <span class="module-subitem">Udrzba vozidel</span>
-            <span class="module-subitem">Externi servisy</span>
-            <span class="module-subitem">Nahradni dily / material</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/servis-udrzba/dashboard">Dashboard servisu</button>
+            <button class="module-subitem" type="button" data-module-route="/servis-udrzba/otevrene-opravy">Otevrene opravy</button>
+            <button class="module-subitem" type="button" data-module-route="/servis-udrzba/planovane-servisy">Planovane servisy</button>
+            <button class="module-subitem" type="button" data-module-route="/servis-udrzba/udrzba-vozidel">Udrzba vozidel</button>
+            <button class="module-subitem" type="button" data-module-route="/servis-udrzba/externi-servisy">Externi servisy</button>
+            <button class="module-subitem" type="button" data-module-route="/servis-udrzba/material-dily">Material / dily</button>
           </div>
+
+          <div data-module-dashboard="maintenance"></div>
 
           <div class="module-skeleton">
             <article class="panel module-intro">
@@ -464,12 +472,14 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce tras svozu">
-            <span class="module-subitem is-active">Denni trasy</span>
-            <span class="module-subitem">Zastavky</span>
-            <span class="module-subitem">Smlouvy / nadoby</span>
-            <span class="module-subitem">Mapa svozu</span>
-            <span class="module-subitem">Import z Vistos</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/trasy-svozu/dashboard">Dashboard svozu</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-svozu/denni-trasy">Denni trasy</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-svozu/zastavky">Zastavky</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-svozu/mapa">Mapa svozu</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-svozu/import-vistos">Import z Vistos</button>
           </div>
+
+          <div data-module-dashboard="routes-bins"></div>
 
           <div class="module-skeleton">
             <article class="panel module-intro">
@@ -514,12 +524,15 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce tras vzorku">
-            <span class="module-subitem is-active">Denni trasy</span>
-            <span class="module-subitem">Odberna mista</span>
-            <span class="module-subitem">Vzorky</span>
-            <span class="module-subitem">Mapa trasy</span>
-            <span class="module-subitem">Import z Vistos</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/trasy-vzorku/dashboard">Dashboard vzorku</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-vzorku/denni-trasy">Denni trasy</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-vzorku/odberna-mista">Odberna mista</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-vzorku/vzorky">Vzorky</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-vzorku/mapa">Mapa trasy</button>
+            <button class="module-subitem" type="button" data-module-route="/trasy-vzorku/import-vistos">Import z Vistos</button>
           </div>
+
+          <div data-module-dashboard="routes-samples"></div>
 
           <div class="module-skeleton">
             <article class="panel module-intro">
@@ -554,22 +567,25 @@
           </div>
         </section>
 
-        <section class="section" id="customers" aria-label="Zakaznici a smlouvy">
+        <section class="section" id="customers" aria-label="Zakaznici / Vistos">
           <div class="toolbar">
             <div>
-              <p class="eyebrow">Zakaznici a smlouvy</p>
+              <p class="eyebrow">Zakaznici / Vistos</p>
               <h2>Zakaznici, stanoviste, sluzby a Vistos</h2>
             </div>
             <span class="badge badge-neutral">skeleton modulu</span>
           </div>
 
           <div class="module-subnav" aria-label="Podsekce zakazniku a smluv">
-            <span class="module-subitem is-active">Zakaznici</span>
-            <span class="module-subitem">Smlouvy</span>
-            <span class="module-subitem">Adresy / stanoviste</span>
-            <span class="module-subitem">Sluzby</span>
-            <span class="module-subitem">Synchronizace Vistos</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/vistos/dashboard">Dashboard Vistos</button>
+            <button class="module-subitem" type="button" data-module-route="/vistos/zakaznici">Zakaznici</button>
+            <button class="module-subitem" type="button" data-module-route="/vistos/smlouvy">Smlouvy</button>
+            <button class="module-subitem" type="button" data-module-route="/vistos/adresy-stanoviste">Adresy / stanoviste</button>
+            <button class="module-subitem" type="button" data-module-route="/vistos/sluzby">Sluzby</button>
+            <button class="module-subitem" type="button" data-module-route="/vistos/synchronizace">Synchronizace</button>
           </div>
+
+          <div data-module-dashboard="customers"></div>
 
           <div class="module-skeleton">
             <article class="panel module-intro">
@@ -614,13 +630,15 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce nakladu">
-            <span class="module-subitem is-active">Naklady vozidel</span>
-            <span class="module-subitem">Servisni naklady</span>
-            <span class="module-subitem">Pneumatiky</span>
-            <span class="module-subitem">Naklady podle SPZ</span>
-            <span class="module-subitem">Naklady podle dodavatele</span>
-            <span class="module-subitem">Exporty</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/naklady/dashboard">Dashboard nakladu</button>
+            <button class="module-subitem" type="button" data-module-route="/naklady/vozidla">Naklady vozidel</button>
+            <button class="module-subitem" type="button" data-module-route="/naklady/servis">Servisni naklady</button>
+            <button class="module-subitem" type="button" data-module-route="/naklady/podle-spz">Naklady podle SPZ</button>
+            <button class="module-subitem" type="button" data-module-route="/naklady/dodavatele">Naklady podle dodavatele</button>
+            <button class="module-subitem" type="button" data-module-route="/naklady/exporty">Exporty</button>
           </div>
+
+          <div data-module-dashboard="service"></div>
 
           <div class="service-layout">
             <article class="panel">
@@ -831,13 +849,16 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce reportu">
-            <span class="module-subitem is-active">Provozni prehled</span>
-            <span class="module-subitem">Vozovy park</span>
-            <span class="module-subitem">Servis</span>
-            <span class="module-subitem">Trasy</span>
-            <span class="module-subitem">Pneumatiky</span>
-            <span class="module-subitem">Export CSV / PDF</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/reporty/dashboard">Dashboard reportu</button>
+            <button class="module-subitem" type="button" data-module-route="/reporty/provozni">Provozni reporty</button>
+            <button class="module-subitem" type="button" data-module-route="/reporty/vozovy-park">Vozovy park</button>
+            <button class="module-subitem" type="button" data-module-route="/reporty/servis">Servis</button>
+            <button class="module-subitem" type="button" data-module-route="/reporty/trasy">Trasy</button>
+            <button class="module-subitem" type="button" data-module-route="/reporty/pneumatiky">Pneumatiky</button>
+            <button class="module-subitem" type="button" data-module-route="/reporty/export">Export CSV / PDF</button>
           </div>
+
+          <div data-module-dashboard="reports"></div>
 
           <div class="report-grid">
             <article class="panel">
@@ -895,11 +916,14 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce uzivatelu">
-            <span class="module-subitem is-active">Ridici</span>
-            <span class="module-subitem">Garazmistri</span>
-            <span class="module-subitem">Management</span>
-            <span class="module-subitem">Role a opravneni</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/uzivatele/dashboard">Dashboard uzivatelu</button>
+            <button class="module-subitem" type="button" data-module-route="/uzivatele/ridici">Ridici</button>
+            <button class="module-subitem" type="button" data-module-route="/uzivatele/garazmistri">Garazmistri</button>
+            <button class="module-subitem" type="button" data-module-route="/uzivatele/management">Management</button>
+            <button class="module-subitem" type="button" data-module-route="/uzivatele/role">Role a opravneni</button>
           </div>
+
+          <div data-module-dashboard="users"></div>
 
           <div class="users-grid">
             <article class="panel">
@@ -986,12 +1010,15 @@
           </div>
 
           <div class="module-subnav" aria-label="Podsekce nastaveni">
-            <span class="module-subitem is-active">Ciselniky</span>
-            <span class="module-subitem">Notifikace</span>
-            <span class="module-subitem">Integrace</span>
-            <span class="module-subitem">Cloudflare / API</span>
-            <span class="module-subitem">Audit log</span>
+            <button class="module-subitem is-active" type="button" data-module-route="/nastaveni/dashboard">Dashboard nastaveni</button>
+            <button class="module-subitem" type="button" data-module-route="/nastaveni/ciselniky">Ciselniky</button>
+            <button class="module-subitem" type="button" data-module-route="/nastaveni/notifikace">Notifikace</button>
+            <button class="module-subitem" type="button" data-module-route="/nastaveni/integrace">Integrace</button>
+            <button class="module-subitem" type="button" data-module-route="/nastaveni/cloudflare-api">Cloudflare / API</button>
+            <button class="module-subitem" type="button" data-module-route="/nastaveni/audit-log">Audit log</button>
           </div>
+
+          <div data-module-dashboard="settings"></div>
 
           <div class="settings-grid">
             <article class="panel">
