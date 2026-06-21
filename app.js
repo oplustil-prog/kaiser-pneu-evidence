@@ -2,10 +2,11 @@ const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260621-01",
+  build: "20260621-02",
   releaseDate: "21. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Administrace umi pres zabezpecenou Supabase funkci automaticky zalozit chybejici Auth ucty pro nove i stavajici uzivatele.",
     "Obnova hesla jasne rika, ze e-mail prijde jen pro existujici ucet v Supabase Auth.",
     "Obnova hesla ma samostatnou obrazovku jen s e-mailem a pouziva recovery odkaz vhodny pro statickou aplikaci.",
     "Mereni odmita nerealne vysoky tachometr a umi opravit zjevne chybne ulozeny stav km.",
@@ -785,6 +786,7 @@ let activeSection = "dashboard";
 let selectedVehicle = state.vehicles[0]?.spz || "";
 let selectedPosition = "";
 let importSamplePreviewOnly = false;
+let authProvisionAutoSyncStarted = false;
 
 const titles = {
   dashboard: "Dashboard provozu",
@@ -1276,7 +1278,10 @@ function setSection(section) {
   query("#pageTitle").textContent = titles[section] || "Evidence pneumatik";
   if (section === "vehicles") renderVehicles();
   if (section === "reports") renderReports();
-  if (section === "users") renderUsers();
+  if (section === "users") {
+    renderUsers();
+    scheduleAuthUsersAutoSync();
+  }
   if (section === "settings") renderSettings();
 }
 
@@ -2285,6 +2290,105 @@ function fillUserControls() {
   }
 }
 
+function isRealAuthEmail(email) {
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized || !normalized.includes("@")) return false;
+  if (normalized.endsWith("@kaiser.local")) return false;
+  return !["dilna@kaiserservis.cz", "management@kaiserservis.cz"].includes(normalized);
+}
+
+function authProvisionConfig() {
+  return window.kaiserSupabaseDefaults || window.kaiserSupabaseConfig || {};
+}
+
+function authProvisionEndpoint() {
+  const config = authProvisionConfig();
+  const url = String(config.url || "").replace(/\/+$/, "");
+  return url ? `${url}/functions/v1/provision-auth-users` : "";
+}
+
+async function callAuthProvision(payload) {
+  const endpoint = authProvisionEndpoint();
+  const config = authProvisionConfig();
+  if (!endpoint || !config.anonKey) {
+    throw new Error("Supabase konfigurace neni dostupna.");
+  }
+  if (!window.kaiserAuthSimple?.getClient) {
+    throw new Error("Cloud prihlaseni neni dostupne.");
+  }
+
+  const supabase = await window.kaiserAuthSimple.getClient();
+  const sessionResult = await supabase.auth.getSession();
+  const token = sessionResult?.data?.session?.access_token;
+  if (!token) {
+    throw new Error("Nejdriv se prihlaste jako spravce.");
+  }
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      apikey: config.anonKey,
+      authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+  const text = await response.text();
+  let body = null;
+  try {
+    body = text ? JSON.parse(text) : null;
+  } catch {
+    body = { message: text };
+  }
+  if (!response.ok) {
+    const message = body?.error || body?.message || `Supabase funkce vratila chybu ${response.status}.`;
+    throw new Error(message);
+  }
+  return body || {};
+}
+
+function describeAuthProvisionResult(result) {
+  const created = Number(result?.created?.length || 0);
+  const existing = Number(result?.existing?.length || 0);
+  const failed = Number(result?.failed?.length || 0);
+  const skipped = Number(result?.skipped?.length || 0);
+  if (failed) return `Auth synchronizace ma ${failed} chybu. Zalozeno ${created}, existuje ${existing}, preskoceno ${skipped}.`;
+  if (created) return `Auth synchronizace hotova. Zalozeno ${created}, existuje ${existing}, preskoceno ${skipped}.`;
+  return `Auth synchronizace hotova. Existuje ${existing}, preskoceno ${skipped}.`;
+}
+
+async function syncAllAuthUsers() {
+  const button = query("#syncAuthUsers");
+  if (button) button.disabled = true;
+  showToast("Kontroluji Supabase Auth ucty...");
+  try {
+    const result = await callAuthProvision({ mode: "sync-all", sendReset: false });
+    showToast(describeAuthProvisionResult(result));
+  } catch (error) {
+    showToast(`Auth synchronizace selhala: ${error?.message || "neznamy duvod"}`);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+function scheduleAuthUsersAutoSync() {
+  if (authProvisionAutoSyncStarted) return;
+  authProvisionAutoSyncStarted = true;
+  window.setTimeout(syncAllAuthUsers, 500);
+}
+
+function provisionAuthUserAfterSave(user) {
+  if (!user || user.status !== "aktivni" || !isRealAuthEmail(user.email)) return;
+  window.setTimeout(async () => {
+    try {
+      const result = await callAuthProvision({ mode: "ensure-user", user, sendReset: false });
+      showToast(describeAuthProvisionResult(result));
+    } catch (error) {
+      showToast(`Uzivatel ulozen, Auth ucet ale ne: ${error?.message || "neznamy duvod"}`);
+    }
+  }, 0);
+}
+
 function renderUsers() {
   const users = dedupeUsersForDisplay(state.users || []);
   fillUserControls();
@@ -2336,7 +2440,7 @@ function renderUsers() {
               </dl>
               <div class="user-access-note">
                 <strong>Prihlaseni</strong>
-                <span>Tento zaznam nastavuje roli v evidenci. Skutecny ucet musi existovat v Supabase Auth; jinak obnovovaci e-mail neprijde.</span>
+                <span>Tento zaznam nastavuje roli v evidenci. Aplikace po ulozeni automaticky pozada Supabase o zalozeni prihlasovaciho uctu; heslo si uzivatel nastavi pres Obnovit heslo.</span>
               </div>
               <div class="user-actions">
                 <button class="button button-soft" type="button" data-user-fill="${escapeHtml(user.id)}">Upravit</button>
@@ -2367,20 +2471,24 @@ function addUser(event) {
     lastActive: existing?.lastActive || todayIso()
   };
 
+  const wasExisting = Boolean(existing);
+  let savedUser = existing;
   if (existing) {
     Object.assign(existing, userData);
   } else {
-    state.users.unshift({
+    savedUser = {
       id: `USR-${String(Date.now()).slice(-6)}`,
       ...userData
-    });
+    };
+    state.users.unshift(savedUser);
   }
 
   saveState();
   form.reset();
   renderAll();
   setSection("users");
-  showToast(existing ? "Uzivatel je aktualizovany." : "Uzivatel je pridany.");
+  showToast(wasExisting ? "Uzivatel je aktualizovany." : "Uzivatel je pridany.");
+  provisionAuthUserAfterSave(savedUser);
 }
 
 function fillUserForm(userId) {
@@ -2877,6 +2985,7 @@ function bindEvents() {
   query("#userRoleFilter").addEventListener("change", renderUsers);
   query("#userStatusFilter").addEventListener("change", renderUsers);
   query("#userSearch")?.addEventListener("input", renderUsers);
+  query("#syncAuthUsers")?.addEventListener("click", syncAllAuthUsers);
   query("#settingsForm").addEventListener("submit", saveSettings);
 
   query("#loadSampleImport").addEventListener("click", () => {
