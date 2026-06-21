@@ -2075,6 +2075,31 @@ label {
   gap: 18px;
 }
 
+.module-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 18px;
+}
+
+.module-subitem {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.module-subitem.is-active {
+  border-color: rgba(117, 189, 37, 0.46);
+  background: rgba(117, 189, 37, 0.14);
+  color: var(--brand-dark);
+}
+
 .module-intro {
   display: flex;
   align-items: flex-start;
@@ -2297,6 +2322,16 @@ label {
   .quick-form,
   .skeleton-grid {
     grid-template-columns: 1fr;
+  }
+
+  .module-subnav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .module-subitem {
+    border-radius: 8px;
+    text-align: center;
   }
 
   .quick-form .measure-number,
