@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kaiser Provozni Centrum | Kaiser Servis</title>
+    <title>Kaiser Servis | Evidence pneumatik</title>
     <meta
       name="description"
-      content="Cloudove provozni centrum Kaiser Servis pro vozovy park, servisni hlaseni, pneumatiky, trasy, importy a naklady."
+      content="Responzivni aplikace pro evidenci pneumatik, vozidel, mereni, servisu a nakladu."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260621-06" />
+    <link rel="stylesheet" href="./styles.css?v=20260620-51" />
     <link rel="stylesheet" href="./service-card.css?v=20260618-15" />
     <link rel="stylesheet" href="./vehicle-photos.css?v=20260618-16" />
   </head>
@@ -23,7 +23,7 @@
       <aside class="sidebar" aria-label="Hlavni navigace">
         <button class="brand brand-home" type="button" data-section="dashboard" aria-label="Zpet na dashboard">
           <div class="brand-wordmark" aria-label="Kaiser Servis">kaiser.</div>
-          <span>Kaiser Provoz</span>
+          <span>Evidence pneumatik</span>
         </button>
 
         <nav class="nav-list" id="sectionNav" aria-label="Sekce aplikace">
@@ -31,48 +31,32 @@
             <span class="nav-icon" aria-hidden="true">01</span>
             Dashboard
           </button>
-          <button class="nav-item" type="button" data-section="vehicles">
-            <span class="nav-icon" aria-hidden="true">02</span>
-            Vozovy park
-          </button>
-          <button class="nav-item" type="button" data-section="service-reports">
-            <span class="nav-icon" aria-hidden="true">03</span>
-            Hlaseni ridicu
-          </button>
-          <button class="nav-item" type="button" data-section="maintenance">
-            <span class="nav-icon" aria-hidden="true">04</span>
-            Servis a udrzba
-          </button>
           <button class="nav-item" type="button" data-section="tires">
-            <span class="nav-icon" aria-hidden="true">05</span>
+            <span class="nav-icon" aria-hidden="true">02</span>
             Pneumatiky
           </button>
-          <button class="nav-item" type="button" data-section="routes-bins">
-            <span class="nav-icon" aria-hidden="true">06</span>
-            Trasy svozu
-          </button>
-          <button class="nav-item" type="button" data-section="routes-samples">
-            <span class="nav-icon" aria-hidden="true">07</span>
-            Trasy vzorku
-          </button>
-          <button class="nav-item" type="button" data-section="customers">
-            <span class="nav-icon" aria-hidden="true">08</span>
-            Zakaznici a smlouvy
+          <button class="nav-item" type="button" data-section="vehicles">
+            <span class="nav-icon" aria-hidden="true">03</span>
+            Vozidla
           </button>
           <button class="nav-item" type="button" data-section="service">
-            <span class="nav-icon" aria-hidden="true">09</span>
-            Naklady
+            <span class="nav-icon" aria-hidden="true">04</span>
+            Servis
+          </button>
+          <button class="nav-item" type="button" data-section="import">
+            <span class="nav-icon" aria-hidden="true">05</span>
+            Import
           </button>
           <button class="nav-item" type="button" data-section="reports">
-            <span class="nav-icon" aria-hidden="true">10</span>
+            <span class="nav-icon" aria-hidden="true">06</span>
             Reporty
           </button>
           <button class="nav-item" type="button" data-section="users">
-            <span class="nav-icon" aria-hidden="true">11</span>
+            <span class="nav-icon" aria-hidden="true">07</span>
             Uzivatele
           </button>
           <button class="nav-item" type="button" data-section="settings">
-            <span class="nav-icon" aria-hidden="true">12</span>
+            <span class="nav-icon" aria-hidden="true">08</span>
             Nastaveni
           </button>
         </nav>
@@ -81,18 +65,13 @@
           <span class="status-dot" aria-hidden="true"></span>
           <span>Mobilni rezim pro dilnu je pripraveny pro rychle mereni a servisni kartu.</span>
         </div>
-        <div class="sidebar-backup" aria-label="Zaloha aplikace">
-          <span>Zaloha</span>
-          <strong>Stav pred prestavbou ulozen</strong>
-          <small>Git backup b045415 / 21. 6. 2026</small>
-        </div>
         <div class="sidebar-version" id="appVersionBadge"></div>
       </aside>
 
       <main class="main">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Kaiser provozni centrum</p>
+            <p class="eyebrow">Fleet pneu lifecycle</p>
             <h1 id="pageTitle">Dashboard provozu</h1>
           </div>
           <div class="topbar-actions">
@@ -117,11 +96,11 @@
         <section class="section is-active" id="dashboard" aria-labelledby="pageTitle">
           <div class="hero-panel">
             <div class="hero-copy">
-              <p class="eyebrow">Kaiser Servis / provoz</p>
-              <h2>Provoz, vozidla a pneu na jednom miste</h2>
+              <p class="eyebrow">Kaiser Servis / vozovy park</p>
+              <h2>Pneu pod kontrolou od nakupu po vyrazeni</h2>
               <p>
-                Jedno misto pro SPZ, servisni hlaseni, pozice kol, hloubku dezenu, tlak,
-                trasy, faktury a skutecne naklady na kilometr.
+                Jedno misto pro SPZ, pozici kola, hloubku dezenu, tlak, servisni zasahy,
+                faktury a skutecne naklady na kilometr.
               </p>
             </div>
             <div class="hero-visual dashboard-preview" id="liveDashboard" aria-label="Aktivni hlavni dashboard"></div>
@@ -303,18 +282,10 @@
         <section class="section" id="vehicles" aria-label="Vozidla a pozice">
           <div class="toolbar">
             <div>
-              <p class="eyebrow">Vozovy park</p>
+              <p class="eyebrow">Vozidla</p>
               <h2>SPZ, pozice kol a aktualni osazeni</h2>
             </div>
             <select id="vehicleSelect" aria-label="Vybrat vozidlo"></select>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce vozoveho parku">
-            <span class="module-subitem is-active">Prehled vozidel</span>
-            <span class="module-subitem">Detail vozidla</span>
-            <span class="module-subitem">Servisni intervaly</span>
-            <span class="module-subitem">STK / emise / revize</span>
-            <span class="module-subitem">Naklady vozidel</span>
           </div>
 
           <div class="vehicle-layout">
@@ -333,293 +304,13 @@
           </div>
         </section>
 
-        <section class="section" id="service-reports" aria-label="Hlaseni ridicu">
+        <section class="section" id="service" aria-label="Servisni zasahy">
           <div class="toolbar">
             <div>
-              <p class="eyebrow">Provoz / dilna / ridici</p>
-              <h2>Hlaseni ridicu</h2>
-            </div>
-            <span class="badge badge-neutral">skeleton modulu</span>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce hlaseni ridicu">
-            <span class="module-subitem is-active">Nove hlaseni</span>
-            <span class="module-subitem">Moje hlaseni</span>
-            <span class="module-subitem">Vsechna hlaseni</span>
-            <span class="module-subitem">Kanban oprav</span>
-            <span class="module-subitem">Archiv hlaseni</span>
-          </div>
-
-          <div class="module-skeleton">
-            <article class="panel module-intro">
-              <div>
-                <p class="eyebrow">Hlaseni ridicu</p>
-                <h3>Fronta oprav a predani do servisu</h3>
-                <p>
-                  Ridic, dilna i garazmistr budou pracovat nad jednou frontou udalosti.
-                  Data modulu zustanou oddelena od stavajiciho pneu stavu.
-                </p>
-              </div>
-              <span class="badge badge-ok">cloud-first navrh</span>
-            </article>
-
-            <div class="skeleton-grid">
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">01</span>
-                <h3>Ridic nahlasi zavadu</h3>
-                <p>SPZ, typ zavady, fotka, priorita, poloha a kratka poznamka.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">02</span>
-                <h3>Dilna rozhodne dalsi krok</h3>
-                <p>Prevzit, odlozit, poslat externimu servisu nebo uzavrit.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">03</span>
-                <h3>Historie zustane u vozidla</h3>
-                <p>Casova osa hlaseni, fotek, praci a navazanych nakladu.</p>
-              </article>
-            </div>
-
-            <article class="panel skeleton-list">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Budouci stav</p>
-                  <h3>Navrzene stavy hlaseni</h3>
-                </div>
-              </div>
-              <div class="status-row">
-                <span>Nove</span>
-                <strong>cekaji na prijeti</strong>
-              </div>
-              <div class="status-row">
-                <span>V reseni</span>
-                <strong>dilna nebo externi servis</strong>
-              </div>
-              <div class="status-row">
-                <span>Uzavreno</span>
-                <strong>ulozeno do historie vozidla</strong>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section class="section" id="maintenance" aria-label="Servis a udrzba">
-          <div class="toolbar">
-            <div>
-              <p class="eyebrow">Servis a udrzba</p>
-              <h2>Opravy, planovane servisy a material</h2>
-            </div>
-            <span class="badge badge-neutral">skeleton modulu</span>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce servisu a udrzby">
-            <span class="module-subitem is-active">Otevrene opravy</span>
-            <span class="module-subitem">Planovane servisy</span>
-            <span class="module-subitem">Udrzba vozidel</span>
-            <span class="module-subitem">Externi servisy</span>
-            <span class="module-subitem">Nahradni dily / material</span>
-          </div>
-
-          <div class="module-skeleton">
-            <article class="panel module-intro">
-              <div>
-                <p class="eyebrow">Servisni provoz</p>
-                <h3>Prace, terminy a dodavatele</h3>
-                <p>
-                  Samostatny modul pro opravy vozidel, terminy, externi servisy,
-                  material a navazani na naklady.
-                </p>
-              </div>
-              <span class="badge badge-ok">mimo Pneumatiky</span>
-            </article>
-
-            <div class="skeleton-grid">
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">01</span>
-                <h3>Otevrene opravy</h3>
-                <p>Priorita, odpovedna osoba, vozidlo a aktualni stav zakazky.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">02</span>
-                <h3>Planovane servisy</h3>
-                <p>Terminy podle km, casu, revizi a internich pravidel.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">03</span>
-                <h3>Material</h3>
-                <p>Nahradni dily, dodavatele, skladove pohyby a cena opravy.</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="section" id="routes-bins" aria-label="Trasy svozu">
-          <div class="toolbar">
-            <div>
-              <p class="eyebrow">Logistika</p>
-              <h2>Trasy svozu</h2>
-            </div>
-            <span class="badge badge-neutral">skeleton modulu</span>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce tras svozu">
-            <span class="module-subitem is-active">Denni trasy</span>
-            <span class="module-subitem">Zastavky</span>
-            <span class="module-subitem">Smlouvy / nadoby</span>
-            <span class="module-subitem">Mapa svozu</span>
-            <span class="module-subitem">Import z Vistos</span>
-          </div>
-
-          <div class="module-skeleton">
-            <article class="panel module-intro">
-              <div>
-                <p class="eyebrow">Planovani tras</p>
-                <h3>Svozove trasy a denni prehled</h3>
-                <p>
-                  Pripraveny prostor pro zakazniky, poradi zastavek, ridice, vozidlo,
-                  potvrzeni odvozu a navazani na provozni reporty.
-                </p>
-              </div>
-              <span class="badge badge-ok">bez zasahu do pneu</span>
-            </article>
-
-            <div class="skeleton-grid">
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">01</span>
-                <h3>Denni trasa</h3>
-                <p>Datum, ridic, vozidlo, oblast a seznam zastavek.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">02</span>
-                <h3>Stav zastavky</h3>
-                <p>Naplanovano, splneno, problem, zruseno nebo presunuto.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">03</span>
-                <h3>Doklady a fotky</h3>
-                <p>Potvrzeni, poznamky a fotodokumentace primo u zastavky.</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="section" id="routes-samples" aria-label="Trasy vzorku">
-          <div class="toolbar">
-            <div>
-              <p class="eyebrow">Vzorky</p>
-              <h2>Trasy vzorku</h2>
-            </div>
-            <span class="badge badge-neutral">skeleton modulu</span>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce tras vzorku">
-            <span class="module-subitem is-active">Denni trasy</span>
-            <span class="module-subitem">Odberna mista</span>
-            <span class="module-subitem">Vzorky</span>
-            <span class="module-subitem">Mapa trasy</span>
-            <span class="module-subitem">Import z Vistos</span>
-          </div>
-
-          <div class="module-skeleton">
-            <article class="panel module-intro">
-              <div>
-                <p class="eyebrow">Sber a predani</p>
-                <h3>Evidence vzorku od vyzvednuti po predani</h3>
-                <p>
-                  Modul bude oddeleny od Pneumatik. Pocita se se samostatnymi cloudovymi
-                  tabulkami pro vzorek, trasu, stav a prilohy.
-                </p>
-              </div>
-              <span class="badge badge-ok">samostatna data</span>
-            </article>
-
-            <div class="skeleton-grid">
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">01</span>
-                <h3>Vyzvednuti</h3>
-                <p>Zakaznik, typ vzorku, cas, ridic a potvrzeni prevzeti.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">02</span>
-                <h3>Prevoz</h3>
-                <p>Trasa, priorita, teplotni nebo casovy rezim podle zadani.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">03</span>
-                <h3>Predani</h3>
-                <p>Komu bylo predano, kdy, s jakym vysledkem a dokladem.</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="section" id="customers" aria-label="Zakaznici a smlouvy">
-          <div class="toolbar">
-            <div>
-              <p class="eyebrow">Zakaznici a smlouvy</p>
-              <h2>Zakaznici, stanoviste, sluzby a Vistos</h2>
-            </div>
-            <span class="badge badge-neutral">skeleton modulu</span>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce zakazniku a smluv">
-            <span class="module-subitem is-active">Zakaznici</span>
-            <span class="module-subitem">Smlouvy</span>
-            <span class="module-subitem">Adresy / stanoviste</span>
-            <span class="module-subitem">Sluzby</span>
-            <span class="module-subitem">Synchronizace Vistos</span>
-          </div>
-
-          <div class="module-skeleton">
-            <article class="panel module-intro">
-              <div>
-                <p class="eyebrow">Obchodni data</p>
-                <h3>Zakaznik jako zdroj pro trasy i fakturaci</h3>
-                <p>
-                  Modul bude drzet zakazniky, smlouvy, adresy stanovist, typy sluzeb
-                  a synchronizaci z Vistos v samostatnych cloudovych tabulkach.
-                </p>
-              </div>
-              <span class="badge badge-ok">samostatna data</span>
-            </article>
-
-            <div class="skeleton-grid">
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">01</span>
-                <h3>Zakaznici</h3>
-                <p>Firma, kontakt, provozovna, fakturacni udaje a vazby na smlouvy.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">02</span>
-                <h3>Smlouvy a sluzby</h3>
-                <p>Rozsah sluzby, interval, ceny, platnost a provozni poznamky.</p>
-              </article>
-              <article class="panel skeleton-card">
-                <span class="skeleton-index">03</span>
-                <h3>Stanoviste</h3>
-                <p>Adresy, nadoby, odberna mista, GPS a vazba na trasu.</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section class="section" id="service" aria-label="Naklady a servisni zasahy">
-          <div class="toolbar">
-            <div>
-              <p class="eyebrow">Naklady</p>
+              <p class="eyebrow">Servisni karta</p>
               <h2>Zasahy, prace, material a pneu oddelene</h2>
             </div>
             <span class="badge badge-ok">automaticky soucet</span>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce nakladu">
-            <span class="module-subitem is-active">Naklady vozidel</span>
-            <span class="module-subitem">Servisni naklady</span>
-            <span class="module-subitem">Pneumatiky</span>
-            <span class="module-subitem">Naklady podle SPZ</span>
-            <span class="module-subitem">Naklady podle dodavatele</span>
-            <span class="module-subitem">Exporty</span>
           </div>
 
           <div class="service-layout">
@@ -746,13 +437,13 @@
           </div>
         </section>
 
-        <section class="section" id="import" aria-label="Importy a Vistos">
+        <section class="section" id="import" aria-label="Import faktur">
           <div class="toolbar">
             <div>
-              <p class="eyebrow">Importy / Vistos</p>
+              <p class="eyebrow">Faktury a doklady</p>
               <h2>Rucni import CSV / XLS exportu</h2>
             </div>
-            <span class="badge badge-neutral">Vistos integrace ve fazi 2</span>
+            <span class="badge badge-neutral">PDF a OCR ve fazi 2</span>
           </div>
 
           <div class="import-grid">
@@ -824,19 +515,10 @@
         <section class="section" id="reports" aria-label="Reporty a metriky">
           <div class="toolbar">
             <div>
-              <p class="eyebrow">Reporty</p>
+              <p class="eyebrow">Naklady a vyjednavani</p>
               <h2>Reporty pro provoz a nakup</h2>
             </div>
             <button class="button button-soft" id="resetDemoData" type="button">Obnovit importovana data</button>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce reportu">
-            <span class="module-subitem is-active">Provozni prehled</span>
-            <span class="module-subitem">Vozovy park</span>
-            <span class="module-subitem">Servis</span>
-            <span class="module-subitem">Trasy</span>
-            <span class="module-subitem">Pneumatiky</span>
-            <span class="module-subitem">Export CSV / PDF</span>
           </div>
 
           <div class="report-grid">
@@ -892,13 +574,6 @@
               <h2>Uzivatele</h2>
             </div>
             <span class="badge badge-ok" id="userCountBadge">0 aktivnich</span>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce uzivatelu">
-            <span class="module-subitem is-active">Ridici</span>
-            <span class="module-subitem">Garazmistri</span>
-            <span class="module-subitem">Management</span>
-            <span class="module-subitem">Role a opravneni</span>
           </div>
 
           <div class="users-grid">
@@ -983,14 +658,6 @@
               <h2>Nastaveni aplikace</h2>
             </div>
             <span class="badge badge-warning" data-settings-sync-status>cekam na cloud</span>
-          </div>
-
-          <div class="module-subnav" aria-label="Podsekce nastaveni">
-            <span class="module-subitem is-active">Ciselniky</span>
-            <span class="module-subitem">Notifikace</span>
-            <span class="module-subitem">Integrace</span>
-            <span class="module-subitem">Cloudflare / API</span>
-            <span class="module-subitem">Audit log</span>
           </div>
 
           <div class="settings-grid">
@@ -1123,7 +790,7 @@
     <script src="./supabase-sync.js?v=20260620-49" defer></script>
     <script src="./invoice-data.js?v=20260618-14" defer></script>
     <script src="./cloud-auth-preview.js?v=20260621-01" defer></script>
-    <script src="./app.js?v=20260621-06" defer></script>
+    <script src="./app.js?v=20260621-03" defer></script>
     <script src="./global-search.js?v=20260620-09" defer></script>
     <script src="./tire-assignment.js?v=20260620-48" defer></script>
     <script src="./quick-measure.js?v=20260620-53" defer></script>

@@ -2,13 +2,10 @@ const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260621-06",
+  build: "20260621-03",
   releaseDate: "21. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
-    "Hlavni navigace byla rozsirena podle stromu Kaiser Provoz vcetne podsekci modulu.",
-    "Pridan centralni shell Kaiser Provoz se skeleton moduly mimo hotovy modul Pneumatiky.",
-    "Do leveho panelu byl doplnen informacni box o zaloze pred prestavbou na Kaiser Provoz.",
     "Administrace umi pres zabezpecenou Supabase funkci automaticky zalozit chybejici Auth ucty pro nove i stavajici uzivatele.",
     "Obnova hesla jasne rika, ze e-mail prijde jen pro existujici ucet v Supabase Auth.",
     "Obnova hesla ma samostatnou obrazovku jen s e-mailem a pouziva recovery odkaz vhodny pro statickou aplikaci.",
@@ -16,7 +13,7 @@ const APP_VERSION = {
     "Rychle mereni predvyplni aktualni stav km a pri prazdnem km ukaze jasnou chybu.",
     "Prehled uzivatelu uz jasne rika, ze zaznam v evidenci neni Supabase ucet a heslo se nastavuje e-mailovou obnovou.",
     "Odstraneno nacitani neexistujiciho souboru vehicle-photo-assets.js.",
-    "Tabletova navigace zobrazuje vsechny hlavni sekce bez orezu.",
+    "Tabletova navigace uz zobrazuje vsech osm sekci bez orezu.",
     "Odhlasena aplikace je skutecne uzamcena za prihlasovacim dialogem.",
     "Supabase klient se sdili mezi auth a sync modulem, aby nevznikaly duplicitni auth instance.",
     "Servisni karta respektuje zadany pocet pneu vcetne hodnoty 0.",
@@ -793,16 +790,11 @@ let authProvisionAutoSyncStarted = false;
 
 const titles = {
   dashboard: "Dashboard provozu",
-  vehicles: "Vozovy park",
-  "service-reports": "Hlaseni ridicu",
-  maintenance: "Servis a udrzba",
-  tires: "Pneumatiky",
-  "routes-bins": "Trasy svozu",
-  "routes-samples": "Trasy vzorku",
-  customers: "Zakaznici a smlouvy",
-  import: "Importy / Vistos",
-  service: "Naklady",
-  reports: "Reporty",
+  tires: "Evidence pneumatik",
+  vehicles: "Vozidla a pozice",
+  service: "Servisni zasahy",
+  import: "Import faktur",
+  reports: "Reporty a naklady",
   users: "Uzivatele a pristupy",
   settings: "Nastaveni aplikace"
 };
