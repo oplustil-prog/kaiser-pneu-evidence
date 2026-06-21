@@ -2,10 +2,11 @@ const STORAGE_KEY = "kaiser-pneu-evidence-v5";
 const ODOMETER_HARD_LIMIT = 5000000;
 const APP_VERSION = {
   number: "v0.9.12",
-  build: "20260620-54",
-  releaseDate: "20. 6. 2026",
+  build: "20260621-01",
+  releaseDate: "21. 6. 2026",
   name: "Ostra cloudova verze",
   notes: [
+    "Obnova hesla jasne rika, ze e-mail prijde jen pro existujici ucet v Supabase Auth.",
     "Obnova hesla ma samostatnou obrazovku jen s e-mailem a pouziva recovery odkaz vhodny pro statickou aplikaci.",
     "Mereni odmita nerealne vysoky tachometr a umi opravit zjevne chybne ulozeny stav km.",
     "Rychle mereni predvyplni aktualni stav km a pri prazdnem km ukaze jasnou chybu.",
@@ -2335,7 +2336,7 @@ function renderUsers() {
               </dl>
               <div class="user-access-note">
                 <strong>Prihlaseni</strong>
-                <span>Tento zaznam nastavuje roli v evidenci. Skutecny ucet musi existovat v Supabase Auth; potom si uzivatel nastavi heslo odkazem z e-mailu.</span>
+                <span>Tento zaznam nastavuje roli v evidenci. Skutecny ucet musi existovat v Supabase Auth; jinak obnovovaci e-mail neprijde.</span>
               </div>
               <div class="user-actions">
                 <button class="button button-soft" type="button" data-user-fill="${escapeHtml(user.id)}">Upravit</button>

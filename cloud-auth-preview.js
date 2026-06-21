@@ -272,7 +272,7 @@
                 <button class="button button-soft" type="button" data-auth-back-login>Zpet na prihlaseni</button>
               </div>
               <small class="kaiser-auth-simple-help">
-                Odkaz prijde jen na e-mail, ktery ma vytvoreny ucet v Supabase Auth.
+                Odkaz prijde jen na e-mail, ktery ma vytvoreny ucet v Supabase Auth. Zaznam v Uzivatelich aplikace nestaci.
               </small>
             </form>
             <form class="kaiser-auth-simple-form" id="kaiserPasswordResetForm" hidden>
@@ -586,7 +586,7 @@
         "Odeslani e-mailu trva moc dlouho. Zkuste to prosim znovu."
       );
       if (error) throw error;
-      status("Pokud tento e-mail ma Supabase ucet, poslali jsme odkaz pro nastaveni hesla.", "ok");
+      status("Pokud tento e-mail ma Supabase Auth ucet, poslali jsme odkaz pro nastaveni hesla. Pokud e-mail neprijde ani do spamu, ucet v Supabase Auth nejspis neexistuje a musi ho vytvorit spravce.", "ok");
     } catch (error) {
       status(error?.message || "E-mail pro nastaveni hesla se nepodarilo odeslat.", "danger");
     } finally {
