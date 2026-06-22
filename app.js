@@ -4,18 +4,18 @@ const APP_VERSION = {
   number: "v0.9.12",
   build: "20260621-03",
   releaseDate: "21. 6. 2026",
-  name: "Ostra cloudova verze",
+  name: "Verze bez vlastniho prihlaseni",
   notes: [
-    "Administrace umi pres zabezpecenou Supabase funkci automaticky zalozit chybejici Auth ucty pro nove i stavajici uzivatele.",
-    "Obnova hesla jasne rika, ze e-mail prijde jen pro existujici ucet v Supabase Auth.",
-    "Obnova hesla ma samostatnou obrazovku jen s e-mailem a pouziva recovery odkaz vhodny pro statickou aplikaci.",
+    "Aplikace se otevira rovnou do evidence pneumatik bez vlastni prihlasovaci obrazovky.",
+    "Pristup bude chranen centralne pres Smart odpady nebo Cloudflare.",
+    "Supabase cloud, verejna GitHub Pages aplikace a zaloha produkcnich dat.",
     "Mereni odmita nerealne vysoky tachometr a umi opravit zjevne chybne ulozeny stav km.",
     "Rychle mereni predvyplni aktualni stav km a pri prazdnem km ukaze jasnou chybu.",
-    "Prehled uzivatelu uz jasne rika, ze zaznam v evidenci neni Supabase ucet a heslo se nastavuje e-mailovou obnovou.",
+    "Prehled uzivatelu slouzi jen pro role v evidenci, ne pro prihlasovaci ucty.",
     "Odstraneno nacitani neexistujiciho souboru vehicle-photo-assets.js.",
     "Tabletova navigace uz zobrazuje vsech osm sekci bez orezu.",
-    "Odhlasena aplikace je skutecne uzamcena za prihlasovacim dialogem.",
-    "Supabase klient se sdili mezi auth a sync modulem, aby nevznikaly duplicitni auth instance.",
+    "Vlastni prihlasovaci modul aplikace byl odstranen.",
+    "Supabase klient slouzi jen pro cloudova data a soubory evidence.",
     "Servisni karta respektuje zadany pocet pneu vcetne hodnoty 0.",
     "Obnova importovanych dat ma potvrzeni a jasne rika, ceho se netyka.",
     "Mobilni navigace je bez vodorovneho posouvani a zobrazuje vsechny sekce najednou.",
@@ -27,13 +27,13 @@ const APP_VERSION = {
     "Ukladani do cloudu uz nepridava velkou historii do zaznamu, aby nenarazilo na Supabase limit.",
     "Ochrana proti destruktivnim zapisum blokuje rizikovou zmenu bez dalsiho zapisu do Supabase.",
     "Tlacitko Ulozit znovu uklada bezne zmeny do Supabase cloudu; destruktivni prepisy zustavaji blokovane.",
-    "Prihlaseni uz nezustava zasekle v nastaveni noveho hesla po dokoncene nebo zrusene obnove.",
+    "Cloud uz se po otevreni aplikace neceka na vlastni prihlaseni.",
     "Cloud uz se nikdy automaticky neprepisuje a synchronizace blokuje ztratu vozidel, uzivatelu, pneu i osazenych pozic.",
     "Rychle mereni zobrazuje vzdy jen jeden rezim, aby se jedna pozice a vsechny pozice nemichaly dohromady.",
-    "Prihlaseni zobrazuje jen jeden formular: prihlaseni nebo nastaveni noveho hesla.",
+    "Evidence pneumatik zustava dostupna hned po nacteni aplikace.",
     "Rychle mereni umi vyplnit vice pozic vybraneho vozidla a ulozit je najednou.",
     "Mereni kontroluje, ze novy stav km neni nizsi nez aktualni tachometr vozidla.",
-    "Prihlaseni ma obnovu hesla pres Supabase.",
+    "Aplikace neposila ani neuklada uzivatelska hesla.",
     "Mereni spolehlive propisuje aktualni stav km do tachometru vozidla.",
     "Vynuceno nove nacteni stylu mapy osazeni.",
     "Mapa osazeni zvyraznuje problemove pozice pulzem a potlacuje neosazene pozice.",
@@ -55,8 +55,8 @@ const APP_VERSION = {
     "Automaticke zalozeni kusove evidence pneu z ostrych faktur.",
     "Ochrana proti prazdnemu cloudovemu stavu v evidenci pneumatik.",
     "Plovouci rychle mereni neprekryva tlacitka pri editaci formularu.",
-    "Info prihlasovaci box v horni liste aplikace.",
-    "Automaticke ukladani zmen do Supabase cloudu po prihlaseni.",
+    "Info box v horni liste ukazuje centralni pristup.",
+    "Automaticke ukladani zmen do Supabase cloudu je bez vlastniho loginu aplikace.",
     "Cloudove nacteni a automaticke ukladani jsou v ostrem provozu zamcene.",
     "Produkční Supabase nastaveni je chranene proti prepsani.",
     "Prihlaseny uzivatel ma zamceny nahled e-mailu a maskovaneho hesla.",
@@ -786,7 +786,6 @@ let activeSection = "dashboard";
 let selectedVehicle = state.vehicles[0]?.spz || "";
 let selectedPosition = "";
 let importSamplePreviewOnly = false;
-let authProvisionAutoSyncStarted = false;
 
 const titles = {
   dashboard: "Dashboard provozu",
@@ -1224,27 +1223,22 @@ function renderVersionInfo() {
   `;
 }
 
-function renderLoginStatus(user = {}) {
+function renderAccessStatus() {
   const target = query("#loginStatusBox");
   if (!target) return;
-  const email = String(user.email || "oplustil@kaiserservis.cz").trim();
-  const knownUser = state.users.find((item) => item.email === email);
-  const name = user.name || knownUser?.name || "Radim Oplustil";
   target.classList.remove("is-logged-out", "is-syncing");
   target.innerHTML = `
     <span class="login-status-dot" aria-hidden="true"></span>
     <span>
-      <strong data-login-status-title>Cloud prihlasen</strong>
-      <small data-login-status-subtitle>${escapeHtml(name)}</small>
+      <strong data-login-status-title>Centralni pristup</strong>
+      <small data-login-status-subtitle>Evidence je otevrena bez vlastniho prihlaseni</small>
     </span>
   `;
-  target.title = email;
+  target.title = "Pristup bude chranen centralne pres Smart odpady nebo Cloudflare.";
   if (typeof window.kaiserApplyCloudHeaderStatus === "function") {
     window.kaiserApplyCloudHeaderStatus();
   }
 }
-
-window.kaiserSetLoginUser = renderLoginStatus;
 
 function showToast(message) {
   const toast = query("#toast");
@@ -1280,7 +1274,6 @@ function setSection(section) {
   if (section === "reports") renderReports();
   if (section === "users") {
     renderUsers();
-    scheduleAuthUsersAutoSync();
   }
   if (section === "settings") renderSettings();
 }
@@ -2290,108 +2283,6 @@ function fillUserControls() {
   }
 }
 
-function isRealAuthEmail(email) {
-  const normalized = String(email || "").trim().toLowerCase();
-  if (!normalized || !normalized.includes("@")) return false;
-  if (normalized.endsWith("@kaiser.local")) return false;
-  return !["dilna@kaiserservis.cz", "management@kaiserservis.cz"].includes(normalized);
-}
-
-function authProvisionConfig() {
-  return window.kaiserSupabaseDefaults || window.kaiserSupabaseConfig || {};
-}
-
-function authProvisionEndpoint() {
-  const config = authProvisionConfig();
-  const url = String(config.url || "").replace(/\/+$/, "");
-  return url ? `${url}/functions/v1/provision-auth-users` : "";
-}
-
-async function callAuthProvision(payload) {
-  const endpoint = authProvisionEndpoint();
-  const config = authProvisionConfig();
-  if (!endpoint || !config.anonKey) {
-    throw new Error("Supabase konfigurace neni dostupna.");
-  }
-  if (!window.kaiserAuthSimple?.getClient) {
-    throw new Error("Cloud prihlaseni neni dostupne.");
-  }
-
-  const supabase = await window.kaiserAuthSimple.getClient();
-  const sessionResult = await supabase.auth.getSession();
-  const token = sessionResult?.data?.session?.access_token;
-  if (!token) {
-    throw new Error("Nejdriv se prihlaste jako spravce.");
-  }
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      apikey: config.anonKey,
-      authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify(payload)
-  });
-  const text = await response.text();
-  let body = null;
-  try {
-    body = text ? JSON.parse(text) : null;
-  } catch {
-    body = { message: text };
-  }
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error("Supabase funkce pro automaticke zalozeni uctu jeste neni nasazena.");
-    }
-    const message = body?.error || body?.message || `Supabase funkce vratila chybu ${response.status}.`;
-    throw new Error(message);
-  }
-  return body || {};
-}
-
-function describeAuthProvisionResult(result) {
-  const created = Number(result?.created?.length || 0);
-  const existing = Number(result?.existing?.length || 0);
-  const failed = Number(result?.failed?.length || 0);
-  const skipped = Number(result?.skipped?.length || 0);
-  if (failed) return `Auth synchronizace ma ${failed} chybu. Zalozeno ${created}, existuje ${existing}, preskoceno ${skipped}.`;
-  if (created) return `Auth synchronizace hotova. Zalozeno ${created}, existuje ${existing}, preskoceno ${skipped}.`;
-  return `Auth synchronizace hotova. Existuje ${existing}, preskoceno ${skipped}.`;
-}
-
-async function syncAllAuthUsers() {
-  const button = query("#syncAuthUsers");
-  if (button) button.disabled = true;
-  showToast("Kontroluji Supabase Auth ucty...");
-  try {
-    const result = await callAuthProvision({ mode: "sync-all", sendReset: false });
-    showToast(describeAuthProvisionResult(result));
-  } catch (error) {
-    showToast(`Auth synchronizace selhala: ${error?.message || "neznamy duvod"}`);
-  } finally {
-    if (button) button.disabled = false;
-  }
-}
-
-function scheduleAuthUsersAutoSync() {
-  if (authProvisionAutoSyncStarted) return;
-  authProvisionAutoSyncStarted = true;
-  window.setTimeout(syncAllAuthUsers, 500);
-}
-
-function provisionAuthUserAfterSave(user) {
-  if (!user || user.status !== "aktivni" || !isRealAuthEmail(user.email)) return;
-  window.setTimeout(async () => {
-    try {
-      const result = await callAuthProvision({ mode: "ensure-user", user, sendReset: false });
-      showToast(describeAuthProvisionResult(result));
-    } catch (error) {
-      showToast(`Uzivatel ulozen, Auth ucet ale ne: ${error?.message || "neznamy duvod"}`);
-    }
-  }, 0);
-}
-
 function renderUsers() {
   const users = dedupeUsersForDisplay(state.users || []);
   fillUserControls();
@@ -2442,8 +2333,8 @@ function renderUsers() {
                 <div><dt>Posledni aktivita</dt><dd>${escapeHtml(user.lastActive || "-")}</dd></div>
               </dl>
               <div class="user-access-note">
-                <strong>Prihlaseni</strong>
-                <span>Tento zaznam nastavuje roli v evidenci. Aplikace po ulozeni automaticky pozada Supabase o zalozeni prihlasovaciho uctu; heslo si uzivatel nastavi pres Obnovit heslo.</span>
+                <strong>Pristup</strong>
+                <span>Tento zaznam nastavuje roli v evidenci. Vlastni prihlaseni a hesla aplikace nepouziva.</span>
               </div>
               <div class="user-actions">
                 <button class="button button-soft" type="button" data-user-fill="${escapeHtml(user.id)}">Upravit</button>
@@ -2491,7 +2382,6 @@ function addUser(event) {
   renderAll();
   setSection("users");
   showToast(wasExisting ? "Uzivatel je aktualizovany." : "Uzivatel je pridany.");
-  provisionAuthUserAfterSave(savedUser);
 }
 
 function fillUserForm(userId) {
@@ -2924,7 +2814,7 @@ function renderAll() {
   ensureHydratedState();
   applySettings();
   renderVersionInfo();
-  renderLoginStatus();
+  renderAccessStatus();
   fillSelectOptions();
   renderDashboard();
   renderTires();
@@ -2988,7 +2878,6 @@ function bindEvents() {
   query("#userRoleFilter").addEventListener("change", renderUsers);
   query("#userStatusFilter").addEventListener("change", renderUsers);
   query("#userSearch")?.addEventListener("input", renderUsers);
-  query("#syncAuthUsers")?.addEventListener("click", syncAllAuthUsers);
   query("#settingsForm").addEventListener("submit", saveSettings);
 
   query("#loadSampleImport").addEventListener("click", () => {

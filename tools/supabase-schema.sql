@@ -11,22 +11,24 @@ alter table public.kaiser_app_state enable row level security;
 
 drop policy if exists "kaiser_app_state_authenticated_read" on public.kaiser_app_state;
 drop policy if exists "kaiser_app_state_authenticated_write" on public.kaiser_app_state;
+drop policy if exists "kaiser_app_state_public_read" on public.kaiser_app_state;
+drop policy if exists "kaiser_app_state_public_write" on public.kaiser_app_state;
 
-create policy "kaiser_app_state_authenticated_read"
+create policy "kaiser_app_state_public_read"
 on public.kaiser_app_state
 for select
-to authenticated
+to anon
 using (id = 'production');
 
-create policy "kaiser_app_state_authenticated_write"
+create policy "kaiser_app_state_public_write"
 on public.kaiser_app_state
 for all
-to authenticated
+to anon
 using (id = 'production')
 with check (id = 'production');
 
-grant usage on schema public to authenticated;
-grant select, insert, update, delete on public.kaiser_app_state to authenticated;
+grant usage on schema public to anon;
+grant select, insert, update, delete on public.kaiser_app_state to anon;
 
 insert into storage.buckets (id, name, public)
 values ('kaiser-documents', 'kaiser-documents', false)
@@ -34,16 +36,18 @@ on conflict (id) do update set public = excluded.public;
 
 drop policy if exists "kaiser_documents_authenticated_read" on storage.objects;
 drop policy if exists "kaiser_documents_authenticated_write" on storage.objects;
+drop policy if exists "kaiser_documents_public_read" on storage.objects;
+drop policy if exists "kaiser_documents_public_write" on storage.objects;
 
-create policy "kaiser_documents_authenticated_read"
+create policy "kaiser_documents_public_read"
 on storage.objects
 for select
-to authenticated
+to anon
 using (bucket_id = 'kaiser-documents');
 
-create policy "kaiser_documents_authenticated_write"
+create policy "kaiser_documents_public_write"
 on storage.objects
 for all
-to authenticated
+to anon
 using (bucket_id = 'kaiser-documents')
 with check (bucket_id = 'kaiser-documents');

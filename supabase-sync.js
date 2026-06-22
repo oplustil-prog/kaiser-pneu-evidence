@@ -21,7 +21,6 @@
   let syncPaused = false;
   let localSaveState = null;
   let initialized = false;
-  let cloudSessionReady = false;
   let pushInFlight = false;
   let pendingPush = false;
   let saveGuardActive = false;
@@ -77,10 +76,6 @@
     return Boolean(String(config.url || "").trim() && String(config.anonKey || "").trim());
   }
 
-  function hasAuthenticatedSession() {
-    return Boolean(window.kaiserAuthState?.authenticated || cloudSessionReady);
-  }
-
   function getMeta() {
     return readJson(META_KEY, {});
   }
@@ -97,19 +92,16 @@
       return "ukladam do cloudu";
     }
     if (kind === "warn") {
-      if (normalized.includes("prihlaseni")) return "cekam na prihlaseni";
       if (normalized.includes("lokalni")) return "lokalni rezim";
       return "cloud ceka";
     }
     if (normalized.includes("ulozena")) return "ulozeno v cloudu";
     if (normalized.includes("nactena")) return "nacteno z cloudu";
-    if (hasAuthenticatedSession()) return "cloud aktivni";
-    return "cloud pripraven";
+    return "cloud aktivni";
   }
 
   function headerStatusText(kind, message) {
     const normalized = String(message || "").toLowerCase();
-    if (!hasAuthenticatedSession()) return "Cloud neni prihlasen";
     if (kind === "danger") return normalized.includes("ulozeni") ? "Chyba ulozeni" : "Chyba cloudu";
     if (kind === "work") {
       if (normalized.includes("stahuji")) return "Nacitam z cloudu";
@@ -117,22 +109,15 @@
     }
     if (normalized.includes("ulozena")) return "Ulozeno v cloudu";
     if (normalized.includes("nactena")) return "Nacteno z cloudu";
-    return "Cloud prihlasen";
+    return "Centralni pristup";
   }
 
   function headerStatusDetail(kind, message, detail = "") {
     const normalized = String(message || "").toLowerCase();
-    const auth = window.kaiserAuthState || {};
-    const email = String(auth.email || auth.user?.email || "").trim();
-    const users = Array.isArray(window.state?.users) ? window.state.users : [];
-    const knownUser = users.find((item) => item.email === email);
-    const name = knownUser?.name || email || "prihlaseny uzivatel";
-
-    if (!hasAuthenticatedSession()) return "ceka na cloudove prihlaseni";
     if (kind === "danger") return detail || "ulozeni se nepodarilo";
     if (kind === "work") return normalized.includes("stahuji") ? "cekam na data" : "zmena se odesila";
     if (normalized.includes("ulozena") || normalized.includes("nactena")) return compactSyncLabel(detail);
-    return name;
+    return "bez vlastniho prihlaseni aplikace";
   }
 
   function compactSyncLabel(detail = "") {
@@ -154,10 +139,9 @@
     const subtitle = box.querySelector("[data-login-status-subtitle]");
     if (!title || !subtitle) return;
 
-    const hasSession = hasAuthenticatedSession();
-    const isProblem = kind === "danger" || !hasSession;
+    const isProblem = kind === "danger";
     box.classList.toggle("is-logged-out", isProblem);
-    box.classList.toggle("is-syncing", kind === "work" && hasSession);
+    box.classList.toggle("is-syncing", kind === "work");
     title.textContent = headerStatusText(kind, message);
     subtitle.textContent = headerStatusDetail(kind, message, detail);
     box.title = detail || message || "";
@@ -387,15 +371,6 @@
     }
     if (shared.promise && shared.key === key) return shared.promise;
 
-    if (window.kaiserAuthSimple?.getClient) {
-      const sharedClient = await window.kaiserAuthSimple.getClient();
-      client = sharedClient;
-      clientKey = key;
-      shared.key = key;
-      shared.client = sharedClient;
-      return sharedClient;
-    }
-
     if (client && clientKey === key) return client;
     if (clientPromise && clientKey === key) return clientPromise;
 
@@ -403,13 +378,7 @@
     shared.key = key;
     clientPromise = shared.promise = import(SUPABASE_MODULE_URL)
       .then((module) => {
-        client = module.createClient(config.url.trim(), config.anonKey.trim(), {
-          auth: {
-            autoRefreshToken: true,
-            persistSession: true,
-            detectSessionInUrl: false
-          }
-        });
+        client = module.createClient(config.url.trim(), config.anonKey.trim());
         shared.client = client;
         return client;
       })
@@ -428,18 +397,8 @@
       return null;
     }
 
-    try {
-      const supabase = await getClient();
-      const { data } = await supabase.auth.getSession();
-      const user = data?.session?.user || null;
-      cloudSessionReady = Boolean(user);
-      target.textContent = user?.email || "neprihlaseno";
-      return user;
-    } catch {
-      cloudSessionReady = false;
-      target.textContent = "neprihlaseno";
-      return null;
-    }
+    target.textContent = "centralni pristup";
+    return { email: "centralni-pristup" };
   }
 
   async function testConnection() {
@@ -474,10 +433,6 @@
     const config = readConfig();
     if (!hasConnection(config)) {
       if (!options.quiet) setStatus("warn", "Cloud neni nastaveny", "Data nejsou odeslana do cloudu.");
-      return false;
-    }
-    if (!hasAuthenticatedSession()) {
-      if (!options.quiet) setStatus("warn", "Cloud ceka na prihlaseni", "Nejdrive se prihlaste.");
       return false;
     }
     setStatus("work", manual ? "Kontroluji data pred nahranim..." : "Ukladam zmenu do cloudu...");
@@ -548,11 +503,6 @@
       setStatus("warn", "Cloud neni nastaveny", "Data nejsou pripojena ke cloudu.");
       return;
     }
-    if (!hasAuthenticatedSession()) {
-      setStatus("warn", "Cloud ceka na prihlaseni", "Nejdrive se prihlaste.");
-      return;
-    }
-
     setStatus("work", "Stahuji data z cloudu...");
     try {
       const supabase = await getClient();
@@ -587,7 +537,6 @@
       selectedPosition = "";
       saveLocalOnly();
       if (typeof renderAll === "function") renderAll();
-      window.kaiserAuthSimple?.renderHeader?.();
       setMeta({ lastSyncAt: new Date().toISOString(), lastPullAt: new Date().toISOString(), counts: data.counts || stateCounts() });
       cloudBaselineReady = true;
       setStatus("ok", "Cloudova data jsou nactena", lastSyncLabel());
@@ -614,10 +563,6 @@
     pendingPush = true;
     const config = readConfig();
     if (!hasConnection(config)) return;
-    if (!hasAuthenticatedSession()) {
-      setStatus("warn", "Cloud ceka na prihlaseni", "Nejdrive se prihlaste.");
-      return;
-    }
     setStatus("work", "Ukladam zmenu do cloudu...", "Po ulozeni bude zmena drzet i po obnoveni stranky.");
     setSaveGuard(true);
     window.clearTimeout(pushTimer);
@@ -630,7 +575,7 @@
 
   async function uploadFile(file, folder = "documents") {
     const config = readConfig();
-    if (!file || !hasConnection(config) || !hasAuthenticatedSession()) return null;
+    if (!file || !hasConnection(config)) return null;
 
     const supabase = await getClient();
     const safeName = String(file.name || "soubor")
@@ -658,7 +603,7 @@
 
   async function openFile(path) {
     const config = readConfig();
-    if (!path || !hasConnection(config) || !hasAuthenticatedSession()) return;
+    if (!path || !hasConnection(config)) return;
     try {
       const supabase = await getClient();
       const { data, error } = await supabase.storage.from(config.bucket).createSignedUrl(path, 60 * 10);
@@ -756,7 +701,7 @@
       }
 
       .cloud-config-form,
-      .cloud-auth-form {
+      .cloud-access-form {
         margin-top: 16px;
       }
 
@@ -764,7 +709,7 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       }
 
-      .cloud-auth-form {
+      .cloud-access-form {
         border-top: 1px solid rgba(30, 41, 36, .1);
         padding-top: 14px;
       }
@@ -833,7 +778,7 @@
               <span class="badge ${hasConnection(config) ? "badge-ok" : "badge-warning"}" data-cloud-status>
                 ${hasConnection(config) ? "pripraveno" : "lokalni rezim"}
               </span>
-              <span class="badge badge-neutral" data-cloud-auth>neprihlaseno</span>
+              <span class="badge badge-neutral" data-cloud-auth>centralni pristup</span>
             </div>
           </div>
           <p class="cloud-meta" data-cloud-meta>${text(lastSyncLabel())}</p>
@@ -900,13 +845,8 @@
     const config = readConfig();
     if (hasConnection(config)) {
       setStatus("ok", "Cloud pripraven", lastSyncLabel());
-      refreshAuthStatus().then((user) => {
-        if (config.autoLoad && hasAuthenticatedSession() && user) {
-          window.setTimeout(() => pullState(), 500);
-        } else if (config.autoLoad) {
-          setStatus("warn", "Cloud pripraven, cekam na prihlaseni", lastSyncLabel());
-        }
-      });
+      refreshAuthStatus();
+      if (config.autoLoad) window.setTimeout(() => pullState(), 500);
     } else {
       setStatus("warn", "Cloud neni pripojen", "Data nejsou pripojena ke cloudu.");
     }
@@ -920,23 +860,6 @@
     testConnection,
     uploadFile
   };
-
-  window.addEventListener("kaiser-auth-ready", () => {
-    cloudSessionReady = true;
-    setStatus("work", "Cloudove prihlaseni overeno", pendingPush ? "Ukladam cekajici zmeny do cloudu..." : "Stahuji produkcni data...");
-    refreshAuthStatus();
-    if (pendingPush) {
-      window.setTimeout(() => pushState({ source: "Auth ready" }), 100);
-    } else if (readConfig().autoLoad) {
-      window.setTimeout(() => pullState(), 300);
-    }
-  });
-
-  window.addEventListener("kaiser-auth-signed-out", () => {
-    cloudSessionReady = false;
-    refreshAuthStatus();
-    setStatus("warn", "Uzivatel je odhlaseny", "Cekam na cloudove prihlaseni.");
-  });
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initCloudSync);

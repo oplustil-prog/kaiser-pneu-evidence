@@ -78,8 +78,8 @@
             <div class="login-status-card" id="loginStatusBox" role="status" aria-live="polite">
               <span class="login-status-dot" aria-hidden="true"></span>
               <span>
-                <strong data-login-status-title>Cloud prihlasen</strong>
-                <small data-login-status-subtitle>Radim Oplustil</small>
+                <strong data-login-status-title>Centralni pristup</strong>
+                <small data-login-status-subtitle>Evidence je otevrena bez vlastniho prihlaseni</small>
               </span>
             </div>
             <label class="search-control">
@@ -618,8 +618,8 @@
                   <input name="phone" type="tel" placeholder="+420 ..." />
                 </label>
                 <div class="user-access-note user-access-form-note">
-                  <strong>Jak se uzivatel prihlasi</strong>
-                  <span>Heslo se tady nezadava. Po ulozeni aplikace pozada zabezpecenou Supabase funkci o zalozeni prihlasovaciho uctu. Pak si uzivatel nastavi heslo pres Obnovit heslo.</span>
+                  <strong>Pristup</strong>
+                  <span>Zaznam uzivatele slouzi jen pro roli v evidenci. Aplikace nema vlastni prihlaseni ani vlastni hesla.</span>
                 </div>
                 <button class="button button-primary" type="submit">Ulozit uzivatele</button>
               </form>
@@ -642,7 +642,6 @@
                     <option value="aktivni">Aktivni</option>
                     <option value="pozastaveno">Pozastaveno</option>
                   </select>
-                  <button class="button button-soft" id="syncAuthUsers" type="button">Synchronizovat pristupy</button>
                 </div>
               </div>
               <div class="user-metrics" id="userMetrics"></div>
@@ -789,7 +788,6 @@
     <script src="./supabase-config.js?v=20260618-32" defer></script>
     <script src="./supabase-sync.js?v=20260620-49" defer></script>
     <script src="./invoice-data.js?v=20260618-14" defer></script>
-    <script src="./cloud-auth-preview.js?v=20260621-01" defer></script>
     <script src="./app.js?v=20260621-03" defer></script>
     <script src="./global-search.js?v=20260620-09" defer></script>
     <script src="./tire-assignment.js?v=20260620-48" defer></script>
