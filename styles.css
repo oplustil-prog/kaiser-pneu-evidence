@@ -308,7 +308,7 @@ textarea {
   gap: 10px;
 }
 
-.login-status-card {
+.access-status-card {
   display: grid;
   grid-template-columns: 10px minmax(150px, 1fr) auto;
   align-items: center;
@@ -324,11 +324,11 @@ textarea {
   white-space: nowrap;
 }
 
-.login-status-card > span:not(.login-status-dot) {
+.access-status-card > span:not(.access-status-dot) {
   min-width: 0;
 }
 
-.login-status-dot {
+.access-status-dot {
   animation: cloudPulseGreen 1.45s ease-in-out infinite;
   width: 10px;
   height: 10px;
@@ -337,18 +337,18 @@ textarea {
   box-shadow: 0 0 0 0 rgba(117, 189, 37, 0.36);
 }
 
-.login-status-card.is-logged-out {
+.access-status-card.is-problem {
   border-color: rgba(224, 82, 82, 0.42);
   background: rgba(224, 82, 82, 0.1);
 }
 
-.login-status-card.is-logged-out .login-status-dot {
+.access-status-card.is-problem .access-status-dot {
   animation-name: cloudPulseRed;
   background: #e05252;
   box-shadow: 0 0 0 0 rgba(224, 82, 82, 0.36);
 }
 
-.login-status-card.is-syncing .login-status-dot {
+.access-status-card.is-syncing .access-status-dot {
   animation-duration: 0.85s;
 }
 
@@ -376,20 +376,20 @@ textarea {
   }
 }
 
-.login-status-card strong,
-.login-status-card small {
+.access-status-card strong,
+.access-status-card small {
   display: block;
   line-height: 1.12;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.login-status-card strong {
+.access-status-card strong {
   font-size: 0.82rem;
   font-weight: 900;
 }
 
-.login-status-card small {
+.access-status-card small {
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 800;
@@ -422,33 +422,6 @@ textarea:focus,
 
 .search-control {
   min-width: min(390px, 42vw);
-}
-
-.user-search-control {
-  display: grid;
-  gap: 5px;
-  min-width: min(300px, 34vw);
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.user-search-control input {
-  width: 100%;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: #ffffff;
-  color: var(--ink);
-  min-height: 42px;
-  padding: 10px 12px;
-  outline: none;
-  text-transform: none;
-}
-
-.user-search-control input:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(117, 189, 37, 0.16);
 }
 
 .button,
@@ -1822,152 +1795,6 @@ label {
   line-height: 1.38;
 }
 
-.users-grid {
-  display: grid;
-  grid-template-columns: minmax(300px, 0.75fr) minmax(0, 1.25fr);
-  gap: 18px;
-}
-
-.user-form .button {
-  grid-column: 1 / -1;
-}
-
-.user-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.user-metric {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 12px;
-  background: var(--surface-strong);
-}
-
-.user-metric span {
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.user-metric strong {
-  display: block;
-  margin-top: 4px;
-  font-size: 1.35rem;
-}
-
-.user-list {
-  display: grid;
-  gap: 12px;
-}
-
-.user-card {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px;
-  background: #ffffff;
-}
-
-.user-card.is-paused {
-  background: #fff9f7;
-  border-color: rgba(200, 73, 63, 0.28);
-}
-
-.user-avatar {
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 8px;
-  background: var(--brand-soft);
-  color: var(--brand-strong);
-  font-weight: 900;
-}
-
-.user-card-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.user-card-header strong {
-  display: block;
-  font-size: 1.02rem;
-}
-
-.user-card-header p {
-  margin: 3px 0 0;
-  color: var(--muted);
-  font-size: 0.86rem;
-}
-
-.user-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 12px 0 0;
-}
-
-.user-detail-grid div {
-  border-top: 1px solid var(--line);
-  padding-top: 8px;
-}
-
-.user-detail-grid dt {
-  color: var(--muted);
-  font-size: 0.74rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.user-detail-grid dd {
-  margin: 3px 0 0;
-  color: var(--ink);
-  font-weight: 800;
-}
-
-.user-access-note {
-  align-items: flex-start;
-  background: rgba(48, 111, 153, 0.08);
-  border: 1px solid rgba(48, 111, 153, 0.2);
-  border-radius: 8px;
-  color: var(--muted);
-  display: grid;
-  gap: 5px;
-  margin-top: 12px;
-  padding: 10px 12px;
-}
-
-.user-access-note strong {
-  color: var(--ink);
-  font-size: 0.82rem;
-}
-
-.user-access-note span {
-  font-size: 0.8rem;
-  font-weight: 800;
-  line-height: 1.38;
-}
-
-.user-access-form-note {
-  grid-column: 1 / -1;
-  margin-top: 0;
-}
-
-.user-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
-}
-
 .empty-state {
   border: 1px dashed var(--line-strong);
   border-radius: 8px;
@@ -2000,14 +1827,12 @@ label {
   accent-color: var(--brand);
 }
 
-.settings-summary,
-.role-grid {
+.settings-summary {
   display: grid;
   gap: 12px;
 }
 
-.settings-summary-card,
-.role-card {
+.settings-summary-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
@@ -2021,22 +1846,16 @@ label {
   text-transform: uppercase;
 }
 
-.settings-summary-card strong,
-.role-card strong {
+.settings-summary-card strong {
   display: block;
   margin-top: 5px;
   font-size: 1.02rem;
 }
 
-.settings-summary-card p,
-.role-card p {
+.settings-summary-card p {
   margin: 6px 0 0;
   color: var(--muted);
   line-height: 1.45;
-}
-
-.role-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .compact-table table {
@@ -2159,7 +1978,7 @@ label {
     flex-direction: column;
   }
 
-  .login-status-card {
+  .access-status-card {
     justify-content: start;
     max-width: none;
     min-width: 0;
@@ -2188,8 +2007,6 @@ label {
   .dashboard-grid,
   .report-grid,
   .supplier-grid,
-  .role-grid,
-  .users-grid,
   .entry-form,
   .quick-form {
     grid-template-columns: 1fr;
@@ -2247,11 +2064,6 @@ label {
   .quick-form-dock .wide-input,
   .quick-form-dock .button {
     grid-column: 1 / -1;
-  }
-
-  .user-metrics,
-  .user-detail-grid {
-    grid-template-columns: 1fr;
   }
 
   .wide-input,
@@ -2321,15 +2133,8 @@ label {
   }
 
   .position-detail dl,
-  .vehicle-metric-grid,
-  .user-card {
+  .vehicle-metric-grid {
     grid-template-columns: 1fr;
-  }
-
-  .user-actions,
-  .user-card-header {
-    align-items: stretch;
-    flex-direction: column;
   }
 
   .toast {

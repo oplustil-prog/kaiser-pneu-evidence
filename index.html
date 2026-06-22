@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260620-51" />
+    <link rel="stylesheet" href="./styles.css?v=20260622-02" />
     <link rel="stylesheet" href="./service-card.css?v=20260618-15" />
     <link rel="stylesheet" href="./vehicle-photos.css?v=20260618-16" />
   </head>
@@ -51,12 +51,8 @@
             <span class="nav-icon" aria-hidden="true">06</span>
             Reporty
           </button>
-          <button class="nav-item" type="button" data-section="users">
-            <span class="nav-icon" aria-hidden="true">07</span>
-            Uzivatele
-          </button>
           <button class="nav-item" type="button" data-section="settings">
-            <span class="nav-icon" aria-hidden="true">08</span>
+            <span class="nav-icon" aria-hidden="true">07</span>
             Nastaveni
           </button>
         </nav>
@@ -75,11 +71,11 @@
             <h1 id="pageTitle">Dashboard provozu</h1>
           </div>
           <div class="topbar-actions">
-            <div class="login-status-card" id="loginStatusBox" role="status" aria-live="polite">
-              <span class="login-status-dot" aria-hidden="true"></span>
+            <div class="access-status-card" id="accessStatusBox" role="status" aria-live="polite">
+              <span class="access-status-dot" aria-hidden="true"></span>
               <span>
-                <strong data-login-status-title>Centralni pristup</strong>
-                <small data-login-status-subtitle>Evidence je otevrena bez vlastniho prihlaseni</small>
+                <strong data-access-status-title>Centralni pristup</strong>
+                <small data-access-status-subtitle>Evidence je otevrena bez vlastniho prihlaseni</small>
               </span>
             </div>
             <label class="search-control">
@@ -567,87 +563,28 @@
           </div>
         </section>
 
-        <section class="section" id="users" aria-label="Uzivatele aplikace">
+        <section class="section" id="users" aria-label="Centralni sprava uzivatelu">
           <div class="toolbar">
             <div>
-              <p class="eyebrow">Pristupy</p>
-              <h2>Uzivatele</h2>
+              <p class="eyebrow">Centralni pristup</p>
+              <h2>Sprava uzivatelu byla presunuta</h2>
             </div>
-            <span class="badge badge-ok" id="userCountBadge">0 aktivnich</span>
           </div>
 
-          <div class="users-grid">
-            <article class="panel">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Novy pristup</p>
-                  <h3>Pridat nebo aktualizovat uzivatele</h3>
-                </div>
+          <article class="panel user-moved-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Smart odpady</p>
+                <h3>Správa uživatelů byla přesunuta do centrální aplikace Smart odpady.</h3>
               </div>
-              <form class="entry-form user-form" id="userForm">
-                <label>
-                  Jmeno
-                  <input name="name" type="text" placeholder="napr. Petr Novak" required />
-                </label>
-                <label>
-                  E-mail
-                  <input name="email" type="email" placeholder="jmeno@kaiserservis.cz" required />
-                </label>
-                <label>
-                  Role
-                  <select name="role" required></select>
-                </label>
-                <label>
-                  Stredisko
-                  <select name="depot" required>
-                    <option value="Brno">Brno</option>
-                    <option value="Slapanice">Slapanice</option>
-                    <option value="Praha">Praha</option>
-                    <option value="Externi">Externi</option>
-                  </select>
-                </label>
-                <label>
-                  Stav
-                  <select name="status" required>
-                    <option value="aktivni">Aktivni</option>
-                    <option value="pozastaveno">Pozastaveno</option>
-                  </select>
-                </label>
-                <label>
-                  Telefon
-                  <input name="phone" type="tel" placeholder="+420 ..." />
-                </label>
-                <div class="user-access-note user-access-form-note">
-                  <strong>Pristup</strong>
-                  <span>Zaznam uzivatele slouzi jen pro roli v evidenci. Aplikace nema vlastni prihlaseni ani vlastni hesla.</span>
-                </div>
-                <button class="button button-primary" type="submit">Ulozit uzivatele</button>
-              </form>
-            </article>
-
-            <article class="panel wide-panel">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Adresar a role</p>
-                  <h3>Prehled pristupu</h3>
-                </div>
-                <div class="toolbar-actions">
-                  <label class="user-search-control">
-                    <span>Hledat uzivatele</span>
-                    <input id="userSearch" type="search" autocomplete="off" placeholder="Jmeno, e-mail nebo role" />
-                  </label>
-                  <select id="userRoleFilter" aria-label="Filtrovat podle role"></select>
-                  <select id="userStatusFilter" aria-label="Filtrovat podle stavu">
-                    <option value="all">Vsechny stavy</option>
-                    <option value="aktivni">Aktivni</option>
-                    <option value="pozastaveno">Pozastaveno</option>
-                  </select>
-                </div>
-              </div>
-              <div class="user-metrics" id="userMetrics"></div>
-              <div class="user-list" id="userList"></div>
-            </article>
-          </div>
+            </div>
+            <p>
+              Uživatelé se nyní spravují centrálně v aplikaci Smart odpady.
+            </p>
+            <a class="button button-primary" href="https://kaiser-control-center.pages.dev/uzivatele" target="_blank" rel="noopener">
+              Otevřít centrální správu uživatelů
+            </a>
+          </article>
         </section>
 
         <section class="section" id="settings" aria-label="Nastaveni aplikace">
@@ -709,29 +646,6 @@
               </div>
               <div class="settings-summary" id="settingsSummary"></div>
             </article>
-
-            <article class="panel wide-panel">
-              <div class="panel-header">
-                <div>
-                  <p class="eyebrow">Role a pristupy</p>
-                  <h3>Navrh pro ostrou verzi</h3>
-                </div>
-              </div>
-              <div class="role-grid">
-                <div class="role-card">
-                  <strong>Management</strong>
-                  <p>Dashboard, reporty, ceny, uspory a exporty bez editace servisnich karet.</p>
-                </div>
-                <div class="role-card">
-                  <strong>Dilna</strong>
-                  <p>Rychle mereni dezenu, tlaku, montaze, defekty a servisni karta z mobilu.</p>
-                </div>
-                <div class="role-card">
-                  <strong>Spravce vozoveho parku</strong>
-                  <p>Kompletni evidence pneu, vozidel, limitu, dodavatelu a importu faktur.</p>
-                </div>
-              </div>
-            </article>
           </div>
         </section>
       </main>
@@ -786,10 +700,10 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./measurement-reminders.js?v=20260618-23" defer></script>
     <script src="./supabase-config.js?v=20260618-32" defer></script>
-    <script src="./supabase-sync.js?v=20260620-49" defer></script>
+    <script src="./supabase-sync.js?v=20260622-02" defer></script>
     <script src="./invoice-data.js?v=20260618-14" defer></script>
-    <script src="./app.js?v=20260621-03" defer></script>
-    <script src="./global-search.js?v=20260620-09" defer></script>
+    <script src="./app.js?v=20260622-04" defer></script>
+    <script src="./global-search.js?v=20260622-02" defer></script>
     <script src="./tire-assignment.js?v=20260620-48" defer></script>
     <script src="./quick-measure.js?v=20260620-53" defer></script>
     <script src="./service-card.js?v=20260620-49" defer></script>

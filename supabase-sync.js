@@ -132,15 +132,15 @@
 
   function updateHeaderStatus(kind, message, detail = "") {
     window.kaiserCloudHeaderStatus = { kind, message, detail };
-    const box = document.querySelector("#loginStatusBox");
+    const box = document.querySelector("#accessStatusBox");
     if (!box) return;
 
-    const title = box.querySelector("[data-login-status-title]");
-    const subtitle = box.querySelector("[data-login-status-subtitle]");
+    const title = box.querySelector("[data-access-status-title]");
+    const subtitle = box.querySelector("[data-access-status-subtitle]");
     if (!title || !subtitle) return;
 
     const isProblem = kind === "danger";
-    box.classList.toggle("is-logged-out", isProblem);
+    box.classList.toggle("is-problem", isProblem);
     box.classList.toggle("is-syncing", kind === "work");
     title.textContent = headerStatusText(kind, message);
     subtitle.textContent = headerStatusDetail(kind, message, detail);
@@ -194,16 +194,13 @@
     const vehicles = Array.isArray(sourceState?.vehicles) ? sourceState.vehicles : [];
     const services = Array.isArray(sourceState?.services) ? sourceState.services : [];
     const measurements = Array.isArray(sourceState?.measurements) ? sourceState.measurements : [];
-    const users = Array.isArray(sourceState?.users) ? sourceState.users : [];
     return {
       tires: tires.length,
       vehicles: vehicles.length,
       services: services.length,
       measurements: measurements.length,
-      users: users.length,
       mountedPositions: tires.filter((tire) => tire?.vehicle && tire?.position).length,
-      vehicleSlots: vehicles.reduce((sum, vehicle) => sum + (Array.isArray(vehicle?.configuration) ? vehicle.configuration.length : 0), 0),
-      realUsers: users.filter((user) => String(user?.email || "").includes("@") && !String(user?.email || "").endsWith("@kaiser.local")).length
+      vehicleSlots: vehicles.reduce((sum, vehicle) => sum + (Array.isArray(vehicle?.configuration) ? vehicle.configuration.length : 0), 0)
     };
   }
 
@@ -212,8 +209,7 @@
       `vozidla ${profile.vehicles}`,
       `pozice ${profile.vehicleSlots}`,
       `pneu ${profile.tires}`,
-      `osazene ${profile.mountedPositions}`,
-      `uzivatele ${profile.users}`
+      `osazene ${profile.mountedPositions}`
     ].join(", ");
   }
 
@@ -231,8 +227,6 @@
       vehicleSlots: "pozice vozidel",
       tires: "pneu",
       mountedPositions: "osazene pozice",
-      users: "uzivatele",
-      realUsers: "realne pristupy",
       services: "servis",
       measurements: "mereni"
     };
@@ -257,8 +251,6 @@
       vehicleSlots: { count: 6, ratio: 0.18 },
       tires: { count: 8, ratio: 0.12 },
       mountedPositions: { count: 3, ratio: 0.35 },
-      users: { count: 3, ratio: 0.18 },
-      realUsers: { count: 3, ratio: 0.18 },
       services: { count: 10, ratio: 0.2 },
       measurements: { count: 10, ratio: 0.3 }
     };
@@ -271,7 +263,6 @@
     if (profile.vehicles <= 0) problems.push("chybi vozidla");
     if (profile.vehicleSlots <= 0) problems.push("chybi pozice vozidel");
     if (profile.tires <= 0) problems.push("chybi pneu");
-    if (profile.users <= 0) problems.push("chybi uzivatele");
     return problems;
   }
 
@@ -279,34 +270,9 @@
     return `${action} zablokovano: ${drops.join("; ")}. Zdroj: ${profileText(fromProfile)}. Cil: ${profileText(toProfile)}.`;
   }
 
-  function userMergeKey(user) {
-    return String(user?.email || user?.id || user?.name || "").trim().toLowerCase();
-  }
-
-  function mergeUserRows(baseUsers = [], incomingUsers = []) {
-    const users = new Map();
-    (baseUsers || []).forEach((user) => {
-      const key = userMergeKey(user);
-      if (key) users.set(key, structuredClone(user));
-    });
-    (incomingUsers || []).forEach((user) => {
-      const key = userMergeKey(user);
-      if (!key) return;
-      users.set(key, {
-        ...(users.get(key) || {}),
-        ...user
-      });
-    });
-    return [...users.values()];
-  }
-
   function normalizeState(nextState) {
     const base = typeof initialState !== "undefined" ? structuredClone(initialState) : {};
-    const mergedUsers =
-      typeof mergeDefaultUsers === "function"
-        ? mergeDefaultUsers(nextState?.users || base.users || [])
-        : mergeUserRows(base.users || [], nextState?.users || []);
-    return {
+    const normalized = {
       ...base,
       ...(nextState || {}),
       tires: nextState?.tires || base.tires || [],
@@ -316,12 +282,13 @@
       priceRefs: nextState?.priceRefs || base.priceRefs || [],
       imports: nextState?.imports || base.imports || [],
       vehicleImports: nextState?.vehicleImports || base.vehicleImports || [],
-      users: mergedUsers,
       settings: {
         ...(base.settings || {}),
         ...(nextState?.settings || {})
       }
     };
+    delete normalized.users;
+    return normalized;
   }
 
   function saveLocalOnly() {

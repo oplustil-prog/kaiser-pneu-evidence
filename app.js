@@ -11,7 +11,7 @@ const APP_VERSION = {
     "Supabase cloud, verejna GitHub Pages aplikace a zaloha produkcnich dat.",
     "Mereni odmita nerealne vysoky tachometr a umi opravit zjevne chybne ulozeny stav km.",
     "Rychle mereni predvyplni aktualni stav km a pri prazdnem km ukaze jasnou chybu.",
-    "Prehled uzivatelu slouzi jen pro role v evidenci, ne pro prihlasovaci ucty.",
+    "Sprava uzivatelu byla presunuta do centralni aplikace Smart odpady.",
     "Odstraneno nacitani neexistujiciho souboru vehicle-photo-assets.js.",
     "Tabletova navigace uz zobrazuje vsech osm sekci bez orezu.",
     "Vlastni prihlasovaci modul aplikace byl odstranen.",
@@ -20,9 +20,9 @@ const APP_VERSION = {
     "Obnova importovanych dat ma potvrzeni a jasne rika, ceho se netyka.",
     "Mobilni navigace je bez vodorovneho posouvani a zobrazuje vsechny sekce najednou.",
     "Ukazkovy import je jen nahled a neuklada se do cloudu.",
-    "Obnova importovanych dat uz nesaha na vozidla, uzivatele, mereni ani osazene pozice.",
+    "Obnova importovanych dat uz nesaha na vozidla, mereni ani osazene pozice.",
     "Automaticke ulozeni s ubytkem dat nejdriv nacita cloud, aby neprepsalo novejsi produkcni stav.",
-    "Cloudova ochrana uz neblokuje bezne male zmeny v osazenych pozicich a uzivatelich.",
+    "Cloudova ochrana uz neblokuje bezne male zmeny v osazenych pozicich.",
     "Modul prirazovani pneu uz neprepisuje hlavni build aplikace na starou verzi.",
     "Ukladani do cloudu uz nepridava velkou historii do zaznamu, aby nenarazilo na Supabase limit.",
     "Ochrana proti destruktivnim zapisum blokuje rizikovou zmenu bez dalsiho zapisu do Supabase.",
@@ -37,32 +37,27 @@ const APP_VERSION = {
     "Mereni spolehlive propisuje aktualni stav km do tachometru vozidla.",
     "Vynuceno nove nacteni stylu mapy osazeni.",
     "Mapa osazeni zvyraznuje problemove pozice pulzem a potlacuje neosazene pozice.",
-    "Opraveno poradi nacitani odebranych uzivatelu pred inicializaci stavu.",
-    "Prehled uzivatelu ma vlastni vyhledavani a skryva odebrane obecne ucty dilny a managementu.",
-    "Prehled uzivatelu skryva duplicitni realne pristupy se stejnym jmenem.",
-    "Zabraneno duplicitam realnych pristupu pri shodnem jmenu v cloudu a vychozim adresari.",
-    "Doplneny realne pristupy Milan Gazi, Tomas Gazi a Martin Konecek do vychoziho adresare.",
+    "Lokální sprava uzivatelu, roli a pristupu byla odstranena z modulu Pneumatiky.",
     "Vynuceno nove nacteni hlavniho skriptu po cache problemu.",
     "Zkracen horni cloudovy stav, aby se v liste nerezal.",
-    "Realne uzivatelske pristupy jsou v seznamu nahore pred automatickymi ridici.",
-    "Uzivatele z cloudu se spojuji se zakladnim seznamem ridicu, aby nikdo nezmizel ze seznamu.",
+    "Stara data uzivatelu v ulozisti uz neridi chovani evidence pneumatik.",
     "V detailu vozidla se zobrazuji koupene pneu z faktur pro vybranou SPZ bez primichani cizich rucnich pozic.",
     "Dashboardova karta je prejmenovana na Koupene pneu.",
     "Zpresneny stav cloudoveho ulozeni v horni liste.",
-    "Prehled uzivatelu sjednocuje role Manager a Spravce.",
+    "Centralni sprava uzivatelu je dostupna pres Smart odpady.",
     "Supabase cloud, verejna GitHub Pages aplikace a zaloha produkcnich dat.",
     "Import ostrych servisnich faktur s rozdelenim na praci, material a pneu.",
     "Automaticke zalozeni kusove evidence pneu z ostrych faktur.",
     "Ochrana proti prazdnemu cloudovemu stavu v evidenci pneumatik.",
     "Plovouci rychle mereni neprekryva tlacitka pri editaci formularu.",
     "Info box v horni liste ukazuje centralni pristup.",
-    "Automaticke ukladani zmen do Supabase cloudu je bez vlastniho loginu aplikace.",
+    "Automaticke ukladani zmen do Supabase cloudu je bez vlastniho prihlaseni aplikace.",
     "Cloudove nacteni a automaticke ukladani jsou v ostrem provozu zamcene.",
     "Produkční Supabase nastaveni je chranene proti prepsani.",
-    "Prehled uzivatelu zustava zamceny pro produkcni nastaveni roli.",
+    "Modul Pneumatiky uz nema vlastni role ani opravneni.",
     "Kliknuti na logo vraci aplikaci na hlavni dashboard.",
     "Dashboard metriky, upozorneni na 30denni rychle mereni a proklik na mereni.",
-    "Mapa osazeni z pudorysu, servisni karta, uzivatele a PDF karta vozidla."
+    "Mapa osazeni z pudorysu, servisni karta a PDF karta vozidla."
   ]
 };
 
@@ -492,229 +487,6 @@ const kaiserFleetVehicles = [
   }
 ];
 
-const kaiserDriverUsers = [
-  {
-    id: "RID-001",
-    name: "Bronislav Ondrášek",
-    email: "bronislav.ondrasek@kaiser.local",
-    role: "Ridic",
-    depot: "ROP",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-002",
-    name: "David Urc",
-    email: "david.urc@kaiser.local",
-    role: "Ridic",
-    depot: "PIU",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-003",
-    name: "Jakub Kozlíček",
-    email: "jakub.kozlicek@kaiser.local",
-    role: "Ridic",
-    depot: "LJE",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-004",
-    name: "Jan Gaží",
-    email: "jan.gazi@kaiser.local",
-    role: "Ridic",
-    depot: "LJE",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-005",
-    name: "Jan Kovařík",
-    email: "jan.kovarik@kaiser.local",
-    role: "Ridic",
-    depot: "ROP",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-006",
-    name: "Jan Kozumplík",
-    email: "jan.kozumplik@kaiser.local",
-    role: "Ridic",
-    depot: "LJE",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-007",
-    name: "Libor Ferbar",
-    email: "libor.ferbar@kaiser.local",
-    role: "Ridic",
-    depot: "ROP",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-008",
-    name: "Lukáš Malánik",
-    email: "lukas.malanik@kaiser.local",
-    role: "Ridic",
-    depot: "PIU",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-009",
-    name: "Martin Bartoš",
-    email: "martin.bartos@kaiser.local",
-    role: "Ridic",
-    depot: "JOL, ROP",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-010",
-    name: "Martin Bravenec",
-    email: "martin.bravenec@kaiser.local",
-    role: "Ridic",
-    depot: "LJE",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-011",
-    name: "Martin Ištvánek",
-    email: "martin.istvanek@kaiser.local",
-    role: "Ridic",
-    depot: "LJE",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-012",
-    name: "Martin Macejka",
-    email: "martin.macejka@kaiser.local",
-    role: "Ridic",
-    depot: "ROP",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-013",
-    name: "Martin Pinkava",
-    email: "martin.pinkava@kaiser.local",
-    role: "Ridic",
-    depot: "JOL",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-014",
-    name: "Milan Popelár",
-    email: "milan.popelar@kaiser.local",
-    role: "Ridic",
-    depot: "JOL",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-015",
-    name: "Miroslav Florián",
-    email: "miroslav.florian@kaiser.local",
-    role: "Ridic",
-    depot: "ROP",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-016",
-    name: "Miroslav Vašek",
-    email: "miroslav.vasek@kaiser.local",
-    role: "Ridic",
-    depot: "PIU",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-017",
-    name: "Ondřej Hanzlíček",
-    email: "ondrej.hanzlicek@kaiser.local",
-    role: "Ridic",
-    depot: "LJE",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-018",
-    name: "Petr Kučera",
-    email: "petr.kucera@kaiser.local",
-    role: "Ridic",
-    depot: "JOL",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-019",
-    name: "Radek Pich",
-    email: "radek.pich@kaiser.local",
-    role: "Ridic",
-    depot: "JOL, ROP",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-020",
-    name: "Roman Drdlík",
-    email: "roman.drdlik@kaiser.local",
-    role: "Ridic",
-    depot: "ROP, PIU",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-021",
-    name: "Stanislav Janeček",
-    email: "stanislav.janecek@kaiser.local",
-    role: "Ridic",
-    depot: "JOL",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  },
-  {
-    id: "RID-022",
-    name: "Štefan Brychnáč",
-    email: "stefan.brychnac@kaiser.local",
-    role: "Ridic",
-    depot: "ROP",
-    status: "aktivni",
-    phone: "",
-    lastActive: "2026-06-18"
-  }
-];
-
 const initialState = {
   tires: buildTiresFromServiceInvoices(importedInvoiceData.services || []),
   vehicles: kaiserFleetVehicles,
@@ -723,49 +495,6 @@ const initialState = {
   priceRefs: [],
   imports: importedInvoiceData.imports || [],
   vehicleImports: [],
-  users: [
-    {
-      id: "USR-001",
-      name: "Radim Oplustil",
-      email: "oplustil@kaiserservis.cz",
-      role: "Spravce vozoveho parku",
-      depot: "Brno",
-      status: "aktivni",
-      phone: "",
-      lastActive: "2026-06-18"
-    },
-    {
-      id: "USR-004",
-      name: "Milan Gaží",
-      email: "milan.gazi@kaiserservis.cz",
-      role: "Ridic",
-      depot: "Kaiser Servis",
-      status: "aktivni",
-      phone: "",
-      lastActive: "2026-06-20"
-    },
-    {
-      id: "USR-005",
-      name: "Tomáš Gaží",
-      email: "tomas.gazi@kaiserservis.cz",
-      role: "Ridic",
-      depot: "Kaiser Servis",
-      status: "aktivni",
-      phone: "",
-      lastActive: "2026-06-20"
-    },
-    {
-      id: "USR-006",
-      name: "Martin Koneček",
-      email: "martin.konecek@kaiserservis.cz",
-      role: "Ridic",
-      depot: "Kaiser Servis",
-      status: "aktivni",
-      phone: "",
-      lastActive: "2026-06-20"
-    },
-    ...kaiserDriverUsers
-  ],
   settings: {
     companyName: "Kaiser Servis",
     primaryColor: "#75bd25",
@@ -777,8 +506,6 @@ const initialState = {
     workshopMobileMode: true
   }
 };
-
-const removedUserEmails = new Set(["dilna@kaiserservis.cz", "management@kaiserservis.cz"]);
 
 let state = loadState();
 saveState();
@@ -794,175 +521,9 @@ const titles = {
   service: "Servisni zasahy",
   import: "Import faktur",
   reports: "Reporty a naklady",
-  users: "Uzivatele a pristupy",
+  users: "Sprava uzivatelu presunuta",
   settings: "Nastaveni aplikace"
 };
-
-const userRoles = [
-  "Management",
-  "Dilna",
-  "Ridic",
-  "Spravce vozoveho parku",
-  "Externi servis"
-];
-
-const userPermissions = {
-  Management: "Dashboard, reporty, ceny, exporty",
-  Dilna: "Mereni, servisni karta, defekty",
-  Ridic: "Vlastni vozidla, mereni a servisni poznamky",
-  "Spravce vozoveho parku": "Kompletni evidence, importy, nastaveni",
-  "Externi servis": "Servisni zakazky a vlastni zasahy"
-};
-
-const userRoleLabels = {
-  Management: "Manager",
-  Dilna: "Dilna",
-  Ridic: "Ridic",
-  "Spravce vozoveho parku": "Spravce",
-  "Externi servis": "Externi servis"
-};
-
-function roleKey(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ");
-}
-
-function normalizeUserRole(value) {
-  const key = roleKey(value);
-  if (!key) return "Ridic";
-  if (["manager", "management", "manazer"].includes(key)) return "Management";
-  if (key === "spravce" || key.includes("spravce vozoveho parku")) return "Spravce vozoveho parku";
-  if (key === "dilna") return "Dilna";
-  if (key === "ridic") return "Ridic";
-  if (key.includes("externi")) return "Externi servis";
-  return String(value || "").trim();
-}
-
-function userRoleLabel(value) {
-  const role = normalizeUserRole(value);
-  return userRoleLabels[role] || role;
-}
-
-function availableUserRoles() {
-  const roles = new Map();
-  [...userRoles, ...(state.users || []).map((user) => user.role)].forEach((role) => {
-    const normalized = normalizeUserRole(role);
-    roles.set(normalized, userRoleLabel(normalized));
-  });
-  return [...roles.keys()];
-}
-
-function userMergeKey(user) {
-  return String(user.email || user.id || user.name || "").trim().toLowerCase();
-}
-
-function isRemovedUserRecord(user) {
-  return removedUserEmails.has(String(user.email || "").trim().toLowerCase());
-}
-
-function userNameMergeKey(user) {
-  return String(user.name || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ");
-}
-
-function mergeDefaultUsers(existing = []) {
-  const existingByName = new Map();
-  const existingByKey = new Map();
-  (existing || []).filter((user) => !isRemovedUserRecord(user)).forEach((user) => {
-    const nameKey = userNameMergeKey(user);
-    const key = userMergeKey(user);
-    if (nameKey) existingByName.set(nameKey, true);
-    if (key) existingByKey.set(key, true);
-  });
-
-  const users = new Map();
-  (initialState.users || []).forEach((user) => {
-    const key = userMergeKey(user);
-    const nameKey = userNameMergeKey(user);
-    if (nameKey && existingByName.has(nameKey) && !existingByKey.has(key)) return;
-    if (key) users.set(key, structuredClone(user));
-  });
-  (existing || []).filter((user) => !isRemovedUserRecord(user)).forEach((user) => {
-    const key = userMergeKey(user);
-    if (!key) return;
-    users.set(key, {
-      ...(users.get(key) || {}),
-      ...user,
-      role: normalizeUserRole(user.role)
-    });
-  });
-  return [...users.values()];
-}
-
-function userDisplayPriority(user) {
-  const email = String(user.email || "").toLowerCase();
-  if (email && !email.endsWith("@kaiser.local")) return 0;
-  return 1;
-}
-
-function sortUsersForDisplay(users = []) {
-  return [...users].sort((a, b) => {
-    const priorityDiff = userDisplayPriority(a) - userDisplayPriority(b);
-    if (priorityDiff) return priorityDiff;
-    const roleDiff = userRoleLabel(a.role).localeCompare(userRoleLabel(b.role), "cs");
-    if (roleDiff) return roleDiff;
-    return String(a.name || "").localeCompare(String(b.name || ""), "cs");
-  });
-}
-
-function userRecordPriority(user) {
-  const id = String(user.id || "");
-  const email = String(user.email || "").toLowerCase();
-  if (/^USR-00[456]$/.test(id)) return 2;
-  if (email.endsWith("@kaiser.local")) return 3;
-  return 0;
-}
-
-function dedupeUsersForDisplay(users = []) {
-  const byName = new Map();
-  const withoutName = [];
-  (users || []).filter((user) => !isRemovedUserRecord(user)).forEach((user) => {
-    const nameKey = userNameMergeKey(user);
-    if (!nameKey) {
-      withoutName.push(user);
-      return;
-    }
-    const current = byName.get(nameKey);
-    if (!current || userRecordPriority(user) < userRecordPriority(current)) {
-      byName.set(nameKey, user);
-    }
-  });
-  return [...withoutName, ...byName.values()];
-}
-
-function userMatchesSearch(user, term) {
-  if (!term) return true;
-  const haystack = [
-    user.name,
-    user.email,
-    userRoleLabel(user.role),
-    user.depot,
-    userPermissions[normalizeUserRole(user.role)],
-    user.lastActive
-  ]
-    .join(" ")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-  const needle = String(term || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-  return haystack.includes(needle);
-}
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("cs-CZ", {
@@ -992,7 +553,6 @@ function loadState() {
       priceRefs: parsed.priceRefs || [],
       imports: parsed.imports || [],
       vehicleImports: parsed.vehicleImports || [],
-      users: parsed.users || structuredClone(initialState.users),
       settings: {
         ...structuredClone(initialState.settings),
         ...(parsed.settings || {})
@@ -1028,7 +588,7 @@ function hydrateProductionData(nextState) {
   nextState.services = mergeImportedServices(nextState.services);
   nextState.imports = mergeImportedRows(nextState.imports);
   nextState.tires = mergeImportedTires(nextState.tires, nextState.services);
-  nextState.users = mergeDefaultUsers(nextState.users);
+  delete nextState.users;
   return nextState;
 }
 
@@ -1224,14 +784,14 @@ function renderVersionInfo() {
 }
 
 function renderAccessStatus() {
-  const target = query("#loginStatusBox");
+  const target = query("#accessStatusBox");
   if (!target) return;
-  target.classList.remove("is-logged-out", "is-syncing");
+  target.classList.remove("is-problem", "is-syncing");
   target.innerHTML = `
-    <span class="login-status-dot" aria-hidden="true"></span>
+    <span class="access-status-dot" aria-hidden="true"></span>
     <span>
-      <strong data-login-status-title>Centralni pristup</strong>
-      <small data-login-status-subtitle>Evidence je otevrena bez vlastniho prihlaseni</small>
+      <strong data-access-status-title>Centralni pristup</strong>
+      <small data-access-status-subtitle>Evidence je otevrena bez vlastniho prihlaseni</small>
     </span>
   `;
   target.title = "Pristup bude chranen centralne pres Smart odpady nebo Cloudflare.";
@@ -1272,9 +832,6 @@ function setSection(section) {
   query("#pageTitle").textContent = titles[section] || "Evidence pneumatik";
   if (section === "vehicles") renderVehicles();
   if (section === "reports") renderReports();
-  if (section === "users") {
-    renderUsers();
-  }
   if (section === "settings") renderSettings();
 }
 
@@ -2253,159 +1810,6 @@ function escapeHtml(value) {
   );
 }
 
-function userInitials(name) {
-  return String(name || "?")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("") || "?";
-}
-
-function fillUserControls() {
-  const roles = availableUserRoles();
-  const roleOptions = roles
-    .map((role) => `<option value="${escapeHtml(role)}">${escapeHtml(userRoleLabel(role))}</option>`)
-    .join("");
-  const roleSelect = query('#userForm select[name="role"]');
-  if (roleSelect) {
-    const current = normalizeUserRole(roleSelect.value || "Ridic");
-    roleSelect.innerHTML = roleOptions;
-    roleSelect.value = roles.includes(current) ? current : "Ridic";
-  }
-
-  const roleFilter = query("#userRoleFilter");
-  if (roleFilter) {
-    const current = roleFilter.value || "all";
-    roleFilter.innerHTML = `<option value="all">Vsechny role</option>${roleOptions}`;
-    const normalizedCurrent = normalizeUserRole(current);
-    roleFilter.value = current === "all" || !roles.includes(normalizedCurrent) ? "all" : normalizedCurrent;
-  }
-}
-
-function renderUsers() {
-  const users = dedupeUsersForDisplay(state.users || []);
-  fillUserControls();
-
-  const roleFilter = query("#userRoleFilter")?.value || "all";
-  const statusFilter = query("#userStatusFilter")?.value || "all";
-  const searchTerm = query("#userSearch")?.value || "";
-  const filteredUsers = sortUsersForDisplay(users.filter((user) => {
-    const matchesRole = roleFilter === "all" || normalizeUserRole(user.role) === normalizeUserRole(roleFilter);
-    const matchesStatus = statusFilter === "all" || user.status === statusFilter;
-    const matchesSearch = userMatchesSearch(user, searchTerm);
-    return matchesRole && matchesStatus && matchesSearch;
-  }));
-
-  const activeCount = users.filter((user) => user.status === "aktivni").length;
-  const managerCount = users.filter((user) => normalizeUserRole(user.role) === "Management").length;
-  const adminCount = users.filter((user) => normalizeUserRole(user.role) === "Spravce vozoveho parku").length;
-  const driverCount = users.filter((user) => normalizeUserRole(user.role) === "Ridic").length;
-  query("#userCountBadge").textContent = `${activeCount} aktivnich / ${users.length} celkem`;
-
-  query("#userMetrics").innerHTML = `
-    <div class="user-metric"><span>Aktivni</span><strong>${activeCount}</strong></div>
-    <div class="user-metric"><span>Manageri</span><strong>${managerCount}</strong></div>
-    <div class="user-metric"><span>Spravci</span><strong>${adminCount}</strong></div>
-    <div class="user-metric"><span>Ridici</span><strong>${driverCount}</strong></div>
-    <div class="user-metric"><span>Ve filtru</span><strong>${filteredUsers.length}</strong></div>
-  `;
-
-  query("#userList").innerHTML =
-    filteredUsers
-      .map((user) => {
-        const isActive = user.status === "aktivni";
-        return `
-          <article class="user-card ${isActive ? "" : "is-paused"}">
-            <div class="user-avatar" aria-hidden="true">${escapeHtml(userInitials(user.name))}</div>
-            <div class="user-main">
-              <div class="user-card-header">
-                <div>
-                  <strong>${escapeHtml(user.name)}</strong>
-                  <p>${escapeHtml(user.email)}</p>
-                </div>
-                <span class="badge ${isActive ? "badge-ok" : "badge-danger"}">${isActive ? "aktivni" : "pozastaveno"}</span>
-              </div>
-              <dl class="user-detail-grid">
-                <div><dt>Role</dt><dd>${escapeHtml(userRoleLabel(user.role))}</dd></div>
-                <div><dt>Stredisko</dt><dd>${escapeHtml(user.depot)}</dd></div>
-                <div><dt>Prava</dt><dd>${escapeHtml(userPermissions[normalizeUserRole(user.role)] || "Vlastni pristup")}</dd></div>
-                <div><dt>Posledni aktivita</dt><dd>${escapeHtml(user.lastActive || "-")}</dd></div>
-              </dl>
-              <div class="user-access-note">
-                <strong>Pristup</strong>
-                <span>Tento zaznam nastavuje roli v evidenci. Prihlasovani resi centralni pristup.</span>
-              </div>
-              <div class="user-actions">
-                <button class="button button-soft" type="button" data-user-fill="${escapeHtml(user.id)}">Upravit</button>
-                <button class="button ${isActive ? "button-soft" : "button-primary"}" type="button" data-user-toggle="${escapeHtml(user.id)}">
-                  ${isActive ? "Pozastavit" : "Aktivovat"}
-                </button>
-              </div>
-            </div>
-          </article>
-        `;
-      })
-      .join("") || `<div class="empty-state">Zadny uzivatel neodpovida filtru.</div>`;
-}
-
-function addUser(event) {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const data = Object.fromEntries(new FormData(form).entries());
-  const email = String(data.email || "").trim().toLowerCase();
-  const existing = (state.users || []).find((user) => user.email.toLowerCase() === email);
-  const userData = {
-    name: String(data.name || "").trim(),
-    email,
-    role: normalizeUserRole(data.role),
-    depot: data.depot,
-    status: data.status,
-    phone: String(data.phone || "").trim(),
-    lastActive: existing?.lastActive || todayIso()
-  };
-
-  const wasExisting = Boolean(existing);
-  let savedUser = existing;
-  if (existing) {
-    Object.assign(existing, userData);
-  } else {
-    savedUser = {
-      id: `USR-${String(Date.now()).slice(-6)}`,
-      ...userData
-    };
-    state.users.unshift(savedUser);
-  }
-
-  saveState();
-  form.reset();
-  renderAll();
-  setSection("users");
-  showToast(wasExisting ? "Uzivatel je aktualizovany." : "Uzivatel je pridany.");
-}
-
-function fillUserForm(userId) {
-  const user = (state.users || []).find((item) => item.id === userId);
-  const form = query("#userForm");
-  if (!user || !form) return;
-  form.elements.name.value = user.name;
-  form.elements.email.value = user.email;
-  form.elements.role.value = normalizeUserRole(user.role);
-  form.elements.depot.value = user.depot;
-  form.elements.status.value = user.status;
-  form.elements.phone.value = user.phone || "";
-  showToast("Uzivatel je pripraveny k uprave ve formulari.");
-}
-
-function toggleUserStatus(userId) {
-  const user = (state.users || []).find((item) => item.id === userId);
-  if (!user) return;
-  user.status = user.status === "aktivni" ? "pozastaveno" : "aktivni";
-  saveState();
-  renderUsers();
-  showToast(user.status === "aktivni" ? "Uzivatel je aktivni." : "Uzivatel je pozastaveny.");
-}
-
 function saveSettings(event) {
   event.preventDefault();
   const form = event.currentTarget;
@@ -2823,7 +2227,6 @@ function renderAll() {
   renderImportPreview();
   renderVehicleImportPreview();
   renderReports();
-  renderUsers();
   renderSettings();
 }
 
@@ -2835,12 +2238,6 @@ function bindEvents() {
   document.addEventListener("click", (event) => {
     const jumpTarget = event.target.closest("[data-section-jump]");
     if (jumpTarget) setSection(jumpTarget.dataset.sectionJump);
-
-    const userFill = event.target.closest("[data-user-fill]");
-    if (userFill) fillUserForm(userFill.dataset.userFill);
-
-    const userToggle = event.target.closest("[data-user-toggle]");
-    if (userToggle) toggleUserStatus(userToggle.dataset.userToggle);
   });
 
   query("#globalSearch").addEventListener("input", renderTires);
@@ -2874,10 +2271,6 @@ function bindEvents() {
   query("#serviceForm").addEventListener("submit", addService);
   query('#serviceForm input[name="date"]').value = todayIso();
   query("#exportCsv").addEventListener("click", exportCsv);
-  query("#userForm").addEventListener("submit", addUser);
-  query("#userRoleFilter").addEventListener("change", renderUsers);
-  query("#userStatusFilter").addEventListener("change", renderUsers);
-  query("#userSearch")?.addEventListener("input", renderUsers);
   query("#settingsForm").addEventListener("submit", saveSettings);
 
   query("#loadSampleImport").addEventListener("click", () => {
@@ -2922,7 +2315,7 @@ function bindEvents() {
 
   query("#resetDemoData").addEventListener("click", () => {
     const confirmed = window.confirm(
-      "Obnovit jen importovane faktury a nahled importu? Vozidla, uzivatele, mereni ani osazene pozice se tim nemení."
+      "Obnovit jen importovane faktury a nahled importu? Vozidla, mereni ani osazene pozice se tim nemeni."
     );
     if (!confirmed) return;
     state.imports = structuredClone(initialState.imports || []);
@@ -2930,7 +2323,7 @@ function bindEvents() {
     importSamplePreviewOnly = false;
     saveState();
     renderAll();
-    showToast("Importovana data byla obnovena. Vozidla, uzivatele, mereni a osazeni zustaly beze zmen.");
+    showToast("Importovana data byla obnovena. Vozidla, mereni a osazeni zustaly beze zmen.");
   });
 }
 

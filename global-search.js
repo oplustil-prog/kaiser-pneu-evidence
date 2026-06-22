@@ -153,8 +153,8 @@
   }
 
   function currentState() {
-    if (typeof state === "undefined") return { vehicles: [], tires: [], services: [], users: [] };
-    return state || { vehicles: [], tires: [], services: [], users: [] };
+    if (typeof state === "undefined") return { vehicles: [], tires: [], services: [] };
+    return state || { vehicles: [], tires: [], services: [] };
   }
 
   function resultRows(term) {
@@ -233,18 +233,7 @@
         )}`
       }));
 
-    const users = (data.users || [])
-      .filter((user) => matches([user.name, user.email, user.role, user.depot, user.status, user.phone], term))
-      .slice(0, 4)
-      .map((user) => ({
-        type: "Uzivatel",
-        section: "users",
-        id: user.id || user.email,
-        title: user.name || user.email,
-        meta: `${user.email || "bez e-mailu"} / ${user.role || "role nezadana"}`
-      }));
-
-    return [...vehicles, ...tires, ...services, ...users].slice(0, MAX_RESULTS);
+    return [...vehicles, ...tires, ...services].slice(0, MAX_RESULTS);
   }
 
   function renderPanel() {
@@ -313,13 +302,6 @@
       const stateFilter = byId("tireStateFilter");
       if (stateFilter) stateFilter.value = "all";
     }
-    if (section === "users") {
-      const roleFilter = byId("userRoleFilter");
-      const statusFilter = byId("userStatusFilter");
-      if (roleFilter) roleFilter.value = "all";
-      if (statusFilter) statusFilter.value = "all";
-    }
-
     setSectionSafe(section);
     const panel = byId("globalSearchPanel");
     if (panel) panel.hidden = true;
