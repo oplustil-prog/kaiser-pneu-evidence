@@ -33,7 +33,7 @@ const APP_VERSION = {
     "Evidence pneumatik zustava dostupna hned po nacteni aplikace.",
     "Rychle mereni umi vyplnit vice pozic vybraneho vozidla a ulozit je najednou.",
     "Mereni kontroluje, ze novy stav km neni nizsi nez aktualni tachometr vozidla.",
-    "Aplikace neposila ani neuklada uzivatelska hesla.",
+    "Aplikace nepouziva vlastni prihlasovaci ucty.",
     "Mereni spolehlive propisuje aktualni stav km do tachometru vozidla.",
     "Vynuceno nove nacteni stylu mapy osazeni.",
     "Mapa osazeni zvyraznuje problemove pozice pulzem a potlacuje neosazene pozice.",
@@ -59,7 +59,7 @@ const APP_VERSION = {
     "Automaticke ukladani zmen do Supabase cloudu je bez vlastniho loginu aplikace.",
     "Cloudove nacteni a automaticke ukladani jsou v ostrem provozu zamcene.",
     "Produkční Supabase nastaveni je chranene proti prepsani.",
-    "Prihlaseny uzivatel ma zamceny nahled e-mailu a maskovaneho hesla.",
+    "Prehled uzivatelu zustava zamceny pro produkcni nastaveni roli.",
     "Kliknuti na logo vraci aplikaci na hlavni dashboard.",
     "Dashboard metriky, upozorneni na 30denni rychle mereni a proklik na mereni.",
     "Mapa osazeni z pudorysu, servisni karta, uzivatele a PDF karta vozidla."
@@ -2334,7 +2334,7 @@ function renderUsers() {
               </dl>
               <div class="user-access-note">
                 <strong>Pristup</strong>
-                <span>Tento zaznam nastavuje roli v evidenci. Vlastni prihlaseni a hesla aplikace nepouziva.</span>
+                <span>Tento zaznam nastavuje roli v evidenci. Prihlasovani resi centralni pristup.</span>
               </div>
               <div class="user-actions">
                 <button class="button button-soft" type="button" data-user-fill="${escapeHtml(user.id)}">Upravit</button>
